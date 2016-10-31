@@ -39,7 +39,7 @@ void Sample::set_data_vector(int t, gps::SampleType type, double *data, int data
     if (data_format == SampleDataFormatEigenVector) {
         Eigen::VectorXd &vector = boost::get<Eigen::VectorXd>(internal_data_[type][t]);
         if (vector.rows() != data_rows || data_cols != 1)
-            ROS_ERROR("Invalid size in set_data_vector! %i vs %i and cols %i for type %i",
+            ROS_ERROR("Invalid size in set_data_vector! %li vs %i and cols %i for type %i",
                 vector.rows(), data_rows, data_cols, (int)type);
         memcpy(vector.data(), data, sizeof(double) * data_rows * data_cols);
     }
@@ -190,7 +190,7 @@ void Sample::get_data(int t, Eigen::VectorXd &data, std::vector<gps::SampleType>
     for(int i=0; i<datatypes.size(); i++){
 	int dtype = (int)datatypes[i];
 	if(dtype >= internal_data_.size()){
-	    ROS_ERROR("Requested internal data of dtype %d, but internal_data_ only has %d elements", dtype,
+	    ROS_ERROR("Requested internal data of dtype %d, but internal_data_ only has %ld elements", dtype,
 		      internal_data_.size());
 	}
 	const SampleList &sample_list = internal_data_[datatypes[i]];

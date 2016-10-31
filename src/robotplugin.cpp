@@ -282,7 +282,7 @@ void RobotPlugin::publish_sample_report(boost::scoped_ptr<Sample>& sample, int T
             total_expected_shape *= shape[i];
         }
         if(total_expected_shape != tmp_data.size()){
-            ROS_ERROR("Data stored in sample has different length than expected (%d vs %d)",
+            ROS_ERROR("Data stored in sample has different length than expected (%ld vs %d)",
                     tmp_data.size(), total_expected_shape);
         }
         for(int i=0; i<tmp_data.size(); i++){

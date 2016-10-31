@@ -4,7 +4,7 @@
   <version>0.0.0</version>
   <description>The gps_agent_pkg catkinized package</description>
 
-  <maintainer email="ogunmolu@amazon.com">Olalekan Ogunmolu</maintainer>
+  <maintainer email="patlekano@gmail.com">Olalekan Ogunmolu</maintainer>
 
   <license>BSD</license>
 
@@ -25,7 +25,9 @@
   <build_depend>rospy</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>tf</build_depend>
+  <build_depend>tf</build_depend>  
+  <build_depend>message_generation</build_depend>
+
   <run_depend>control_toolbox</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>orocos_kdl</run_depend>
@@ -41,9 +43,8 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>tf</run_depend>
+  <run_depend>message_runtime</run_depend>
 
-  <rosdep name="eigen" />
-  <!-- The export tag contains other, unspecified, tags -->
   <export>
     <pr2_controller_interface plugin="${prefix}/controller_plugins.xml" />
   </export>
