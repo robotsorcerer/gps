@@ -14,7 +14,10 @@ set(pluginlib_DIR                 ${ROS_DEFAULT_DIR}/pluginlib/cmake)
 set(pr2_controller_interface_DIR  ${ROS_DEFAULT_DIR}/pr2_controller_interface/cmake)
 set(pr2_controller_manager_DIR    ${ROS_DEFAULT_DIR}/pr2_controller_manager/cmake/)
 set(pr2_controllers_msgs_DIR      ${ROS_DEFAULT_DIR}/pr2_controllers_msgs/cmake)
-#set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
+set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
+
+find_package(PkgConfig)
+pkg_search_module(Eigen3 REQUIRED eigen3)
 
 find_package(catkin REQUIRED COMPONENTS
   control_toolbox
