@@ -1,7 +1,7 @@
-PROTO_SRC_DIR=src/proto
+PROTO_SRC_DIR=proto
 DST_DIR=build
 # Hack to compile directly into src folders for now
-CPP_OUT_DIR=src/gps_agent_pkg/include/gps/proto
+CPP_OUT_DIR=gps_agent_pkg/include/gps/proto
 PROTO_BUILD_DIR=$DST_DIR/$PROTO_SRC_DIR
 PY_PROTO_BUILD_DIR=python/gps/proto
 
