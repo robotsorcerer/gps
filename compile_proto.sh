@@ -1,4 +1,4 @@
-PROTO_SRC_DIR=proto
+PROTO_SRC_DIR=gps_agent_pkg/proto
 DST_DIR=build
 # Hack to compile directly into src folders for now
 CPP_OUT_DIR=gps_agent_pkg/include/gps/proto
