@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+  <name>gps</name>
+  <version>0.0.0</version>
+  <description>The gps package</description>
+
+  <maintainer email="patlekano@gmail.com">Lekan</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>gps_agent_pkg</run_depend>
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <metapackage/>
+  </export>
+</package>
