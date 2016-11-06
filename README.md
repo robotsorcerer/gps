@@ -10,4 +10,9 @@ The code base is **a work in progress**. See the [FAQ](http://rll.berkeley.edu/g
 =========================================
 This is a reimplementationin ROS-Indigo by [Olalekan Ogunmolu](https://twitter.com/patmeansnoble)
 
-![PR2_Example](<iframe width="560" height="315" src="https://www.youtube.com/embed/HzwAbarXbDg" frameborder="0" allowfullscreen></iframe>)
+<div class="fig figcenter fighighlight">
+<a href="https://www.youtube.com/embed/HzwAbarXbDg">
+	<img src="https://i.ytimg.com/vi/yczG8CUbK2M/1.jpg?time=1466972319359" height="400px" width="600px" align="middle" ></a>
+	</br>
+	<div class="figcaption" align="middle" hspace="80">PR2_Example</div>
+</div>

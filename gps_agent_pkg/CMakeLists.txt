@@ -16,6 +16,8 @@ set(pr2_controller_manager_DIR    ${ROS_DEFAULT_DIR}/pr2_controller_manager/cmak
 set(pr2_controllers_msgs_DIR      ${ROS_DEFAULT_DIR}/pr2_controllers_msgs/cmake)
 set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
 
+set(USE_CAFFE USE_CAFFE_GPU ON)
+
 find_package(PkgConfig)
 pkg_search_module(Eigen3 REQUIRED eigen3)
 
