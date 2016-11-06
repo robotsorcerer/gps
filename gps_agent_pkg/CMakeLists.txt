@@ -62,14 +62,14 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
-   geometry_msgs   pr2_controllers_msgs   sensor_msgs   std_msgs
+   geometry_msgs   pr2_controllers_msgs   sensor_msgs   std_msgs  
  )
 
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES gps_agent_pkg
-#  CATKIN_DEPENDS control_toolbox geometry_msgs orocos_kdl pluginlib pr2_controller_interface pr2_controller_manager pr2_controllers_msgs message_runtime pr2_mechanism_model realtime_tools roscpp roslib rospy sensor_msgs std_msgs tf
+#  CATKIN_DEPENDS message_runtime control_toolbox geometry_msgs #orocos_kdl pluginlib pr2_controller_interface pr2_controller_manager pr2_controllers_msgs message_runtime pr2_mechanism_model realtime_tools roscpp roslib rospy sensor_msgs std_msgs tf
 #  DEPENDS system_lib
 )
 
@@ -106,7 +106,7 @@ endif (USE_CAFFE)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  #$ENV{GPS_ROOT_DIR}/build/gps  
+  $ENV{GPS_ROOT_DIR}/build/gps  
 )
 
 set(DDP_FILES src/robotplugin.cpp
