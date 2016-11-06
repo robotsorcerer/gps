@@ -103,7 +103,7 @@ class ServiceEmulator(object):
         sub_type: Subscriber message type.
     """
     def __init__(self, pub_topic, pub_type, sub_topic, sub_type):
-        self._pub = rospy.Publisher(pub_topic, pub_type)
+        self._pub = rospy.Publisher(pub_topic, pub_type, queue_size=10)
         self._sub = rospy.Subscriber(sub_topic, sub_type, self._callback)
 
         self._waiting = False
