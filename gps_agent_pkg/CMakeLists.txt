@@ -15,6 +15,7 @@ set(pr2_controller_interface_DIR  ${ROS_DEFAULT_DIR}/pr2_controller_interface/cm
 set(pr2_controller_manager_DIR    ${ROS_DEFAULT_DIR}/pr2_controller_manager/cmake/)
 set(pr2_controllers_msgs_DIR      ${ROS_DEFAULT_DIR}/pr2_controllers_msgs/cmake)
 set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
+set(Caffe_DIR                     /home/lex/Documents/caffe/build_cudnn)
 
 set(USE_CAFFE USE_CAFFE_GPU ON)
 
@@ -39,6 +40,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   tf
+  Caffe
 )
 
 ## System dependencies are found with CMake's conventions
