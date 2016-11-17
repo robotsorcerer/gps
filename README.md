@@ -12,7 +12,9 @@ This is a reimplementationin ROS-Indigo by [Olalekan Ogunmolu](https://twitter.c
 
 <div class="fig figcenter fighighlight">
 <a href="https://www.youtube.com/embed/HzwAbarXbDg">
-	<img src="https://i.ytimg.com/vi/yczG8CUbK2M/1.jpg?time=1466972319359" height="400px" width="600px" align="middle" ></a>
+	<img src="https://i.ytimg.com/vi/HzwAbarXbDg/1.jpg" height="400px" width="600px" align="middle" ></a>
 	</br>
 	<div class="figcaption" align="middle" hspace="80">PR2_Example</div>
 </div>
+
+<!-- https://www.youtube.com/watch?v=HzwAbarXbDg -->''
