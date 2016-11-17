@@ -1,0 +1,10 @@
+
+
+exp_name:   my_experiment_11-17-16_00-14
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+

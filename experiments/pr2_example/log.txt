@@ -94,3 +94,23 @@ itr | avg_cost |   cost     step   entropy
   7 |  -597.73 |  -597.73     0.04 -1352.46
   8 |  -598.41 |  -598.41     0.19 -1358.24
   9 |  -600.46 |  -600.46     0.02 -1389.94
+
+
+exp_name:   my_experiment_11-17-16_05-22
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   my_experiment_11-17-16_05-27
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
