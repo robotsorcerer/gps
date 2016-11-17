@@ -17,4 +17,4 @@ This is a reimplementationin ROS-Indigo by [Olalekan Ogunmolu](https://twitter.c
 	<div class="figcaption" align="middle" hspace="80">PR2_Example</div>
 </div>
 
-<!-- https://www.youtube.com/watch?v=HzwAbarXbDg -->''
+<!-- https://www.youtube.com/watch?v=HzwAbarXbDg -->
