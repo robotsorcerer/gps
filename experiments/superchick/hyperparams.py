@@ -32,11 +32,11 @@ EE_POINTS = np.array([[0.02, -0.025, 0.05], [0.02, -0.025, -0.05],
                       [0.02, 0.05, 0.0]])
 
 SENSOR_DIMS = {
-    JOINT_ANGLES: 7,
-    JOINT_VELOCITIES: 7,
+    JOINT_ANGLES: 1,
+    JOINT_VELOCITIES: 1,
     END_EFFECTOR_POINTS: 3 * EE_POINTS.shape[0],
     END_EFFECTOR_POINT_VELOCITIES: 3 * EE_POINTS.shape[0],
-    ACTION: 7,
+    ACTION: 1,
 }
 
 PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])

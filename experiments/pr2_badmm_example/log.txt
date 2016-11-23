@@ -8,3 +8,133 @@ iterations: 10
 conditions: 2
 samples:    5
 
+
+
+exp_name:   my_experiment_11-21-16_14-14
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-21-16_14-23
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-21-16_14-25
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-21-16_17-56
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-21-16_18-18
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-21-16_18-22
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-21-16_18-42
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-23-16_13-41
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-23-16_13-44
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-23-16_13-46
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-23-16_13-54
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-23-16_13-56
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_11-23-16_13-59
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+

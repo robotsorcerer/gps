@@ -5,12 +5,12 @@ project(gps_agent_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+#set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 set(ROS_DEFAULT_DIR /opt/ros/indigo/share/)
 
 set(orocos_kdl_DIR                ${ROS_DEFAULT_DIR}/orocos_kdl)
-set(pluginlib_DIR                 ${ROS_DEFAULT_DIR}/pluginlib/cmake)
+set(pluginlib_DIR           /      ${ROS_DEFAULT_DIR}/pluginlib/cmake)
 set(pr2_controller_interface_DIR  ${ROS_DEFAULT_DIR}/pr2_controller_interface/cmake)
 set(pr2_controller_manager_DIR    ${ROS_DEFAULT_DIR}/pr2_controller_manager/cmake/)
 set(pr2_controllers_msgs_DIR      ${ROS_DEFAULT_DIR}/pr2_controllers_msgs/cmake)
@@ -126,7 +126,7 @@ set(DDP_FILES src/robotplugin.cpp
               src/trialcontroller.cpp
               src/encodersensor.cpp
               src/encoderfilter.cpp
-        src/rostopicsensor.cpp
+              src/rostopicsensor.cpp
               src/util.cpp)
 
 add_library(gps_agent_lib

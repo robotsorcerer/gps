@@ -7,14 +7,13 @@ For full documentation, see [rll.berkeley.edu/gps](http://rll.berkeley.edu/gps).
 
 The code base is **a work in progress**. See the [FAQ](http://rll.berkeley.edu/gps/faq.html) for information on planned future additions to the code.
  
-=========================================
+=====================================================================================================================================================
+
 This is a reimplementationin ROS-Indigo by [Olalekan Ogunmolu](https://twitter.com/patmeansnoble)
 
 <div class="fig figcenter fighighlight">
 <a href="https://www.youtube.com/embed/HzwAbarXbDg">
-	<img src="https://i.ytimg.com/vi/HzwAbarXbDg/1.jpg" height="400px" width="600px" align="middle" ></a>
+	<img src="https://i.ytimg.com/vi/HzwAbarXbDg/2.jpg" height="400px" width="400px" align="middle" ></a>
 	</br>
 	<div class="figcaption" align="middle" hspace="80">PR2_Example</div>
 </div>
-
-<!-- https://www.youtube.com/watch?v=HzwAbarXbDg -->
