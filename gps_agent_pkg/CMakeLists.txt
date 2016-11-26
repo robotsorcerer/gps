@@ -5,8 +5,6 @@ project(gps_agent_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 
-#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 set(ROS_DEFAULT_DIR /opt/ros/indigo/share/)
 
 set(orocos_kdl_DIR                ${ROS_DEFAULT_DIR}/orocos_kdl)
@@ -17,7 +15,24 @@ set(pr2_controllers_msgs_DIR      ${ROS_DEFAULT_DIR}/pr2_controllers_msgs/cmake)
 set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
 set(Caffe_DIR                     /home/lex/Documents/caffe/build_cudnn)
 
-set(USE_CAFFE USE_CAFFE_GPU ON)
+#set(USE_CAFFE USE_CAFFE_GPU ON)
+
+OPTION(ENABLE_CXX11 "Enable C++11 support" ON)
+OPTION(USE_CAFFE "Enable Caffe support" ON)
+OPTION(USE_CAFFE_GPU "Enable Caffe GPU support" ON)
+
+IF(ENABLE_CXX11)
+  INCLUDE(CheckCXXCompilerFlag)
+  CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+  CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+  IF(COMPILER_SUPPORTS_CXX11)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  ELSEIF(COMPILER_SUPPORTS_CXX0X)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+  ELSE()
+    MESSAGE(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+  ENDIF()
+ENDIF(ENABLE_CXX11)
 
 find_package(PkgConfig)
 pkg_search_module(Eigen3 REQUIRED eigen3)
@@ -71,16 +86,22 @@ add_message_files(
 
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES gps_agent_pkg
-#  CATKIN_DEPENDS message_runtime control_toolbox geometry_msgs #orocos_kdl pluginlib pr2_controller_interface pr2_controller_manager pr2_controllers_msgs message_runtime pr2_mechanism_model realtime_tools roscpp roslib rospy sensor_msgs std_msgs tf
-#  DEPENDS system_lib
+ INCLUDE_DIRS include
+#  LIBRARIES kinematic_model
+ CATKIN_DEPENDS roscpp 
+ 				rospy 
+ DEPENDS system_lib Eigen3
 )
 
 ###########
 ## Build ##
 ###########
-include_directories(include)
+include_directories(include
+					SYSTEM 
+					${Boost_INCLUDE_DIR}
+					${catkin_INCLUDE_DIRS}
+					${EIGEN3_INCLUDE_DIRS}
+					)
 # Include Caffe
 if (USE_CAFFE)
     # add definitions for the C++ code
@@ -113,8 +134,10 @@ include_directories(
   $ENV{GPS_ROOT_DIR}/build/gps  
 )
 
+
 set(DDP_FILES src/robotplugin.cpp
-              src/pr2plugin.cpp
+              #src/pr2plugin.cpp
+              src/superchickplugin.cpp
               src/sample.cpp
               src/sensor.cpp
               src/neuralnetwork.cpp
@@ -131,8 +154,8 @@ set(DDP_FILES src/robotplugin.cpp
 
 add_library(gps_agent_lib
             ${DDP_FILES}
-   #src/${PROJECT_NAME}/gps_agent_pkg.cpp
 )
+link_directories(${catkin_LIBRARY_DIRS})
 
 # Include Caffe in controller
 if (USE_CAFFE)

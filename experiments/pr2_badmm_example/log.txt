@@ -138,3 +138,13 @@ iterations: 10
 conditions: 2
 samples:    5
 
+
+
+exp_name:   my_experiment_11-23-16_15-49
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+

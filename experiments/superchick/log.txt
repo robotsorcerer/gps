@@ -1,0 +1,197 @@
+
+
+exp_name:   superchick_11-23-16_15-26
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_11-23-16_15-44
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_11-23-16_15-54
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+target number = 0
+actuator name = trial_arm
+
+initial position
+joint angles =
+[ 0.  0.  0.  0.  0.  0.  0.]
+end effector positions =
+[ 0.  0.  0.]
+end effector rotations =
+[[ 0.  0.  0.]
+ [ 0.  0.  0.]
+ [ 0.  0.  0.]]
+
+target position
+joint angles =
+[ 0.  0.  0.  0.  0.  0.  0.]
+end effector positions =
+[ 0.  0.  0.]
+end effector rotations =
+[[ 0.  0.  0.]
+ [ 0.  0.  0.]
+ [ 0.  0.  0.]]
+
+initial image (left) =
+None
+
+target image (right) =
+None
+
+target number = 0
+actuator name = trial_arm
+
+initial position
+joint angles =
+[ 0.  0.  0.  0.  0.  0.  0.]
+end effector positions =
+[ 0.  0.  0.]
+end effector rotations =
+[[ 0.  0.  0.]
+ [ 0.  0.  0.]
+ [ 0.  0.  0.]]
+
+target position
+joint angles =
+[ 0.  0.  0.  0.  0.  0.  0.]
+end effector positions =
+[ 0.  0.  0.]
+end effector rotations =
+[[ 0.  0.  0.]
+ [ 0.  0.  0.]
+ [ 0.  0.  0.]]
+
+initial image (left) =
+None
+
+target image (right) =
+None
+
+target number = 0
+actuator name = auxiliary_arm
+
+initial position
+joint angles =
+[ 0.  0.  0.  0.  0.  0.  0.]
+end effector positions =
+[ 0.  0.  0.]
+end effector rotations =
+[[ 0.  0.  0.]
+ [ 0.  0.  0.]
+ [ 0.  0.  0.]]
+
+target position
+joint angles =
+[ 0.  0.  0.  0.  0.  0.  0.]
+end effector positions =
+[ 0.  0.  0.]
+end effector rotations =
+[[ 0.  0.  0.]
+ [ 0.  0.  0.]
+ [ 0.  0.  0.]]
+
+initial image (left) =
+None
+
+target image (right) =
+None
+
+
+
+exp_name:   superchick_11-23-16_16-00
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_11-23-16_16-01
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_11-23-16_16-01
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_11-23-16_16-02
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_11-25-16_17-15
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_11-25-16_17-15
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_11-25-16_20-32
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_11-26-16_12-02
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
