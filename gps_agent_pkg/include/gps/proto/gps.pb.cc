@@ -122,14 +122,15 @@ void protobuf_AddDesc_gps_2eproto_impl() {
     "AT\020\020\022!\n\035END_EFFECTOR_POINTS_NO_TARGET\020\021\022"
     "+\n\'END_EFFECTOR_POINT_VELOCITIES_NO_TARG"
     "ET\020\022\022\024\n\020TOTAL_DATA_TYPES\020\023\022\017\n\013POINT_CLOU"
-    "D\020\024*J\n\014ActuatorType\022\r\n\tTRIAL_ARM\020\000\022\021\n\rAU"
-    "XILIARY_ARM\020\001\022\030\n\024TOTAL_ACTUATOR_TYPES\020\002*"
-    "_\n\023PositionControlMode\022\016\n\nNO_CONTROL\020\000\022\017"
-    "\n\013JOINT_SPACE\020\001\022\016\n\nTASK_SPACE\020\002\022\027\n\023TOTAL"
-    "_CONTROL_MODES\020\003*o\n\016ControllerType\022\030\n\024LI"
-    "N_GAUSS_CONTROLLER\020\000\022\024\n\020CAFFE_CONTROLLER"
-    "\020\001\022\021\n\rTF_CONTROLLER\020\002\022\032\n\026TOTAL_CONTROLLE"
-    "R_TYPES\020\003", 969);
+    "D\020\024*\201\001\n\014ActuatorType\022\r\n\tTRIAL_ARM\020\000\022\021\n\rA"
+    "UXILIARY_ARM\020\001\022\030\n\024TOTAL_ACTUATOR_TYPES\020\002"
+    "\022\020\n\014BASE_BLADDER\020\003\022\021\n\rRIGHT_BLADDER\020\004\022\020\n"
+    "\014LEFT_BLADDER\020\005*_\n\023PositionControlMode\022\016"
+    "\n\nNO_CONTROL\020\000\022\017\n\013JOINT_SPACE\020\001\022\016\n\nTASK_"
+    "SPACE\020\002\022\027\n\023TOTAL_CONTROL_MODES\020\003*o\n\016Cont"
+    "rollerType\022\030\n\024LIN_GAUSS_CONTROLLER\020\000\022\024\n\020"
+    "CAFFE_CONTROLLER\020\001\022\021\n\rTF_CONTROLLER\020\002\022\032\n"
+    "\026TOTAL_CONTROLLER_TYPES\020\003", 1025);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "gps.proto", &protobuf_RegisterTypes);
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_gps_2eproto);
@@ -188,6 +189,9 @@ bool ActuatorType_IsValid(int value) {
     case 0:
     case 1:
     case 2:
+    case 3:
+    case 4:
+    case 5:
       return true;
     default:
       return false;

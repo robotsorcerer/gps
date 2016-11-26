@@ -21,25 +21,27 @@ from gps.algorithm.dynamics.dynamics_prior_gmm import DynamicsPriorGMM
 from gps.algorithm.traj_opt.traj_opt_lqr_python import TrajOptLQRPython
 from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.gui.target_setup_gui import load_pose_from_npz
-from gps.proto.supergps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
+from gps.proto.gps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
         END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES, ACTION, \
-        TRIAL_ARM, AUXILIARY_ARM, JOINT_SPACE
+        TRIAL_ARM, AUXILIARY_ARM, JOINT_SPACE, RIGHT_BLADDER#, LEFT_BLADDER, \
+        #BASE_BLADDER
 from gps.utility.general_utils import get_ee_points
 from gps.gui.config import generate_experiment_info
 
 
 EE_POINTS = np.array([[0.02, -0.025, 0.05], [0.02, -0.025, -0.05],
-                      [0.02, 0.05, 0.0]])
+                      [0.02, 0.05, 0.0]
+                      ])
 
 SENSOR_DIMS = {
-    JOINT_ANGLES: 7,
-    JOINT_VELOCITIES: 7,
-    END_EFFECTOR_POINTS: 3 * EE_POINTS.shape[0],
-    END_EFFECTOR_POINT_VELOCITIES: 3 * EE_POINTS.shape[0],
-    ACTION: 7,
+    JOINT_ANGLES: 1,
+    JOINT_VELOCITIES: 1,
+    END_EFFECTOR_POINTS: 3, # * EE_POINTS.shape[0],
+    END_EFFECTOR_POINT_VELOCITIES: 3,# * EE_POINTS.shape[0],
+    ACTION: 2,
 }
 
-PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
+SUPERCHICK_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
 EXP_DIR = BASE_DIR + '/../experiments/superchick/'
@@ -57,6 +59,7 @@ common = {
     'log_filename': EXP_DIR + 'log.txt',
     'conditions': 1,
 }
+
 
 # TODO(chelsea/zoe) : Move this code to a utility function
 # Set up each condition.
@@ -127,7 +130,7 @@ algorithm = {
 
 algorithm['init_traj_distr'] = {
     'type': init_lqr,
-    'init_gains':  1.0 / PR2_GAINS,
+    'init_gains':  1.0 / SUPERCHICK_GAINS,
     'init_acc': np.zeros(SENSOR_DIMS[ACTION]),
     'init_var': 1.0,
     'stiffness': 0.5,
@@ -139,14 +142,14 @@ algorithm['init_traj_distr'] = {
 
 torque_cost = {
     'type': CostAction,
-    'wu': 5e-3 / PR2_GAINS,
+    'wu': 5e-3 / SUPERCHICK_GAINS,
 }
 
 fk_cost1 = {
     'type': CostFK,
     # Target end effector is subtracted out of EE_POINTS in ROS so goal
     # is 0.
-    'target_end_effector': np.zeros(3 * EE_POINTS.shape[0]),
+    'target_end_effector': np.zeros(3),
     'wp': np.ones(SENSOR_DIMS[END_EFFECTOR_POINTS]),
     'l1': 0.1,
     'l2': 0.0001,

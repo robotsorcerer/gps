@@ -27,7 +27,7 @@ from gps.algorithm.policy_opt.tf_model_example import multi_modal_network, multi
 
 from gps.proto.gps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
         END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES, RGB_IMAGE, RGB_IMAGE_SIZE, ACTION, \
-        END_EFFECTOR_POINTS_NO_TARGET, END_EFFECTOR_POINT_VELOCITIES_NO_TARGET, IMAGE_FEAT
+        END_EFFECTOR_POINTS_NO_TARGET, END_EFFECTOR_POINT_VELOCITIES_NO_TARGET, IMAGE_FEAT, POINT_CLOUD
 from gps.gui.config import generate_experiment_info
 
 IMAGE_WIDTH = 80
@@ -36,10 +36,10 @@ IMAGE_CHANNELS = 3
 NUM_FP = 15
 
 SENSOR_DIMS = {
-    JOINT_ANGLES: 2,
-    JOINT_VELOCITIES: 2,
-    END_EFFECTOR_POINTS: 6,
-    END_EFFECTOR_POINT_VELOCITIES: 6,
+    JOINT_ANGLES: 1,
+    JOINT_VELOCITIES: 1,
+    END_EFFECTOR_POINTS: 3,
+    END_EFFECTOR_POINT_VELOCITIES: 3,
     END_EFFECTOR_POINTS_NO_TARGET: 3,
     END_EFFECTOR_POINT_VELOCITIES_NO_TARGET: 3,
     ACTION: 2,
@@ -48,7 +48,7 @@ SENSOR_DIMS = {
     IMAGE_FEAT: NUM_FP * 2,  # affected by num_filters set below.
 }
 
-PR2_GAINS = np.array([1.0, 1.0])
+SUPERCHICK_GAINS = np.array([1.0, 1.0])
 
 BASE_DIR = '/'.join(str.split(__file__, '/')[:-2])
 EXP_DIR = '/'.join(str.split(__file__, '/')[:-1]) + '/'
@@ -86,7 +86,7 @@ agent = {
     'T': 50,
     'state_include': [JOINT_ANGLES, JOINT_VELOCITIES, END_EFFECTOR_POINTS_NO_TARGET,
                       END_EFFECTOR_POINT_VELOCITIES_NO_TARGET, IMAGE_FEAT],
-    'obs_include': [JOINT_ANGLES, JOINT_VELOCITIES, END_EFFECTOR_POINTS_NO_TARGET, END_EFFECTOR_POINT_VELOCITIES_NO_TARGET, RGB_IMAGE],
+    'obs_include': [JOINT_ANGLES, JOINT_VELOCITIES, END_EFFECTOR_POINTS_NO_TARGET, END_EFFECTOR_POINT_VELOCITIES_NO_TARGET, RGB_IMAGE, POINT_CLOUD],
     'target_idx': np.array(list(range(3,6))),
     'meta_include': [RGB_IMAGE_SIZE],
     'image_width': IMAGE_WIDTH,
@@ -136,7 +136,7 @@ algorithm['policy_opt'] = {
 
 algorithm['init_traj_distr'] = {
     'type': init_lqr,
-    'init_gains':  100.0 / PR2_GAINS,
+    'init_gains':  100.0 / SUPERCHICK_GAINS,
     'init_acc': np.zeros(SENSOR_DIMS[ACTION]),
     'init_var': 1.0,
     'dt': agent['dt'],
@@ -145,7 +145,7 @@ algorithm['init_traj_distr'] = {
 
 torque_cost_1 = [{
     'type': CostAction,
-    'wu': 1 / PR2_GAINS,
+    'wu': 1 / SUPERCHICK_GAINS,
 } for i in range(common['conditions'])]
 
 fk_cost_1 = [{

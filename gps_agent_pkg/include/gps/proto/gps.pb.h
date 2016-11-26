@@ -81,11 +81,14 @@ inline bool SampleType_Parse(
 enum ActuatorType {
   TRIAL_ARM = 0,
   AUXILIARY_ARM = 1,
-  TOTAL_ACTUATOR_TYPES = 2
+  TOTAL_ACTUATOR_TYPES = 2,
+  BASE_BLADDER = 3,
+  RIGHT_BLADDER = 4,
+  LEFT_BLADDER = 5
 };
 bool ActuatorType_IsValid(int value);
 const ActuatorType ActuatorType_MIN = TRIAL_ARM;
-const ActuatorType ActuatorType_MAX = TOTAL_ACTUATOR_TYPES;
+const ActuatorType ActuatorType_MAX = LEFT_BLADDER;
 const int ActuatorType_ARRAYSIZE = ActuatorType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* ActuatorType_descriptor();

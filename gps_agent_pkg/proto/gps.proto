@@ -47,6 +47,9 @@ enum ActuatorType {
   TRIAL_ARM = 0;
   AUXILIARY_ARM = 1;
   TOTAL_ACTUATOR_TYPES = 2;
+  BASE_BLADDER = 3;
+  RIGHT_BLADDER = 4;
+  LEFT_BLADDER = 5;
 }
 
 // Enum for position control modes (sent in PositionCommand msg)

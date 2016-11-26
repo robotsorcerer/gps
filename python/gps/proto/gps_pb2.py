@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='gps.proto',
   package='gps',
   syntax='proto2',
-  serialized_pb=_b('\n\tgps.proto\x12\x03gps\"}\n\x06Sample\x12\x0e\n\x01T\x18\x01 \x01(\r:\x03\x31\x30\x30\x12\n\n\x02\x64X\x18\x02 \x01(\r\x12\n\n\x02\x64U\x18\x03 \x01(\r\x12\n\n\x02\x64O\x18\x04 \x01(\r\x12\r\n\x01X\x18\x05 \x03(\x02\x42\x02\x10\x01\x12\r\n\x01U\x18\x06 \x03(\x02\x42\x02\x10\x01\x12\x0f\n\x03obs\x18\x07 \x03(\x02\x42\x02\x10\x01\x12\x10\n\x04meta\x18\x08 \x03(\x02\x42\x02\x10\x01*\x99\x04\n\nSampleType\x12\n\n\x06\x41\x43TION\x10\x00\x12\x10\n\x0cJOINT_ANGLES\x10\x01\x12\x14\n\x10JOINT_VELOCITIES\x10\x02\x12\x17\n\x13\x45ND_EFFECTOR_POINTS\x10\x03\x12!\n\x1d\x45ND_EFFECTOR_POINT_VELOCITIES\x10\x04\x12 \n\x1c\x45ND_EFFECTOR_POINT_JACOBIANS\x10\x05\x12$\n END_EFFECTOR_POINT_ROT_JACOBIANS\x10\x06\x12\x1a\n\x16\x45ND_EFFECTOR_POSITIONS\x10\x07\x12\x1a\n\x16\x45ND_EFFECTOR_ROTATIONS\x10\x08\x12\x1a\n\x16\x45ND_EFFECTOR_JACOBIANS\x10\t\x12\x19\n\x15\x45ND_EFFECTOR_HESSIANS\x10\n\x12\r\n\tRGB_IMAGE\x10\x0b\x12\x0f\n\x0b\x44\x45PTH_IMAGE\x10\x0c\x12\x12\n\x0eRGB_IMAGE_SIZE\x10\r\x12\x11\n\rCONTEXT_IMAGE\x10\x0e\x12\x16\n\x12\x43ONTEXT_IMAGE_SIZE\x10\x0f\x12\x0e\n\nIMAGE_FEAT\x10\x10\x12!\n\x1d\x45ND_EFFECTOR_POINTS_NO_TARGET\x10\x11\x12+\n\'END_EFFECTOR_POINT_VELOCITIES_NO_TARGET\x10\x12\x12\x14\n\x10TOTAL_DATA_TYPES\x10\x13\x12\x0f\n\x0bPOINT_CLOUD\x10\x14*J\n\x0c\x41\x63tuatorType\x12\r\n\tTRIAL_ARM\x10\x00\x12\x11\n\rAUXILIARY_ARM\x10\x01\x12\x18\n\x14TOTAL_ACTUATOR_TYPES\x10\x02*_\n\x13PositionControlMode\x12\x0e\n\nNO_CONTROL\x10\x00\x12\x0f\n\x0bJOINT_SPACE\x10\x01\x12\x0e\n\nTASK_SPACE\x10\x02\x12\x17\n\x13TOTAL_CONTROL_MODES\x10\x03*o\n\x0e\x43ontrollerType\x12\x18\n\x14LIN_GAUSS_CONTROLLER\x10\x00\x12\x14\n\x10\x43\x41\x46\x46\x45_CONTROLLER\x10\x01\x12\x11\n\rTF_CONTROLLER\x10\x02\x12\x1a\n\x16TOTAL_CONTROLLER_TYPES\x10\x03')
+  serialized_pb=_b('\n\tgps.proto\x12\x03gps\"}\n\x06Sample\x12\x0e\n\x01T\x18\x01 \x01(\r:\x03\x31\x30\x30\x12\n\n\x02\x64X\x18\x02 \x01(\r\x12\n\n\x02\x64U\x18\x03 \x01(\r\x12\n\n\x02\x64O\x18\x04 \x01(\r\x12\r\n\x01X\x18\x05 \x03(\x02\x42\x02\x10\x01\x12\r\n\x01U\x18\x06 \x03(\x02\x42\x02\x10\x01\x12\x0f\n\x03obs\x18\x07 \x03(\x02\x42\x02\x10\x01\x12\x10\n\x04meta\x18\x08 \x03(\x02\x42\x02\x10\x01*\x99\x04\n\nSampleType\x12\n\n\x06\x41\x43TION\x10\x00\x12\x10\n\x0cJOINT_ANGLES\x10\x01\x12\x14\n\x10JOINT_VELOCITIES\x10\x02\x12\x17\n\x13\x45ND_EFFECTOR_POINTS\x10\x03\x12!\n\x1d\x45ND_EFFECTOR_POINT_VELOCITIES\x10\x04\x12 \n\x1c\x45ND_EFFECTOR_POINT_JACOBIANS\x10\x05\x12$\n END_EFFECTOR_POINT_ROT_JACOBIANS\x10\x06\x12\x1a\n\x16\x45ND_EFFECTOR_POSITIONS\x10\x07\x12\x1a\n\x16\x45ND_EFFECTOR_ROTATIONS\x10\x08\x12\x1a\n\x16\x45ND_EFFECTOR_JACOBIANS\x10\t\x12\x19\n\x15\x45ND_EFFECTOR_HESSIANS\x10\n\x12\r\n\tRGB_IMAGE\x10\x0b\x12\x0f\n\x0b\x44\x45PTH_IMAGE\x10\x0c\x12\x12\n\x0eRGB_IMAGE_SIZE\x10\r\x12\x11\n\rCONTEXT_IMAGE\x10\x0e\x12\x16\n\x12\x43ONTEXT_IMAGE_SIZE\x10\x0f\x12\x0e\n\nIMAGE_FEAT\x10\x10\x12!\n\x1d\x45ND_EFFECTOR_POINTS_NO_TARGET\x10\x11\x12+\n\'END_EFFECTOR_POINT_VELOCITIES_NO_TARGET\x10\x12\x12\x14\n\x10TOTAL_DATA_TYPES\x10\x13\x12\x0f\n\x0bPOINT_CLOUD\x10\x14*\x81\x01\n\x0c\x41\x63tuatorType\x12\r\n\tTRIAL_ARM\x10\x00\x12\x11\n\rAUXILIARY_ARM\x10\x01\x12\x18\n\x14TOTAL_ACTUATOR_TYPES\x10\x02\x12\x10\n\x0c\x42\x41SE_BLADDER\x10\x03\x12\x11\n\rRIGHT_BLADDER\x10\x04\x12\x10\n\x0cLEFT_BLADDER\x10\x05*_\n\x13PositionControlMode\x12\x0e\n\nNO_CONTROL\x10\x00\x12\x0f\n\x0bJOINT_SPACE\x10\x01\x12\x0e\n\nTASK_SPACE\x10\x02\x12\x17\n\x13TOTAL_CONTROL_MODES\x10\x03*o\n\x0e\x43ontrollerType\x12\x18\n\x14LIN_GAUSS_CONTROLLER\x10\x00\x12\x14\n\x10\x43\x41\x46\x46\x45_CONTROLLER\x10\x01\x12\x11\n\rTF_CONTROLLER\x10\x02\x12\x1a\n\x16TOTAL_CONTROLLER_TYPES\x10\x03')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -141,11 +141,23 @@ _ACTUATORTYPE = _descriptor.EnumDescriptor(
       name='TOTAL_ACTUATOR_TYPES', index=2, number=2,
       options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='BASE_BLADDER', index=3, number=3,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='RIGHT_BLADDER', index=4, number=4,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='LEFT_BLADDER', index=5, number=5,
+      options=None,
+      type=None),
   ],
   containing_type=None,
   options=None,
-  serialized_start=685,
-  serialized_end=759,
+  serialized_start=686,
+  serialized_end=815,
 )
 _sym_db.RegisterEnumDescriptor(_ACTUATORTYPE)
 
@@ -175,8 +187,8 @@ _POSITIONCONTROLMODE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=761,
-  serialized_end=856,
+  serialized_start=817,
+  serialized_end=912,
 )
 _sym_db.RegisterEnumDescriptor(_POSITIONCONTROLMODE)
 
@@ -206,8 +218,8 @@ _CONTROLLERTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=858,
-  serialized_end=969,
+  serialized_start=914,
+  serialized_end=1025,
 )
 _sym_db.RegisterEnumDescriptor(_CONTROLLERTYPE)
 
@@ -236,6 +248,9 @@ POINT_CLOUD = 20
 TRIAL_ARM = 0
 AUXILIARY_ARM = 1
 TOTAL_ACTUATOR_TYPES = 2
+BASE_BLADDER = 3
+RIGHT_BLADDER = 4
+LEFT_BLADDER = 5
 NO_CONTROL = 0
 JOINT_SPACE = 1
 TASK_SPACE = 2
