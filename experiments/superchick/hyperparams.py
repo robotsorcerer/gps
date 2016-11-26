@@ -21,7 +21,7 @@ from gps.algorithm.dynamics.dynamics_prior_gmm import DynamicsPriorGMM
 from gps.algorithm.traj_opt.traj_opt_lqr_python import TrajOptLQRPython
 from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.gui.target_setup_gui import load_pose_from_npz
-from gps.proto.gps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
+from gps.proto.supergps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
         END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES, ACTION, \
         TRIAL_ARM, AUXILIARY_ARM, JOINT_SPACE
 from gps.utility.general_utils import get_ee_points
