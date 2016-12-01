@@ -12,4 +12,4 @@ This code reimplements the code at Chelsea's account using ROS_Indigo. I used ro
  
 See example simulation results of running the pr2_example at 
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/HzwAbarXbDg" frameborder="0" allowfullscreen></iframe>
+![PR2](<img src="https://www.youtube.com/embed/HzwAbarXbDg")
