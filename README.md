@@ -7,12 +7,9 @@ For full documentation, see [rll.berkeley.edu/gps](http://rll.berkeley.edu/gps).
 
 The code base is **a work in progress**. See the [FAQ](http://rll.berkeley.edu/gps/faq.html) for information on planned future additions to the code.
  
-=========================================
-This is a reimplementationin ROS-Indigo by [Olalekan Ogunmolu](https://twitter.com/patmeansnoble)
+===========================================
+This code reimplements the code at Chelsea's account using ROS_Indigo. I used ros indigo since I am not all too familiar with Fuerte which was used in Chelsea's lab.
+ 
+See example simulation results of running the pr2_example at 
 
-<div class="fig figcenter fighighlight">
-<a href="https://www.youtube.com/embed/HzwAbarXbDg">
-	<img src="https://i.ytimg.com/vi/yczG8CUbK2M/1.jpg?time=1466972319359" height="400px" width="600px" align="middle" ></a>
-	</br>
-	<div class="figcaption" align="middle" hspace="80">PR2_Example</div>
-</div>
+![PR2_GPS](<iframe width="560" height="315" src="https://www.youtube.com/embed/HzwAbarXbDg" frameborder="0" allowfullscreen></iframe>)
