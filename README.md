@@ -13,3 +13,10 @@ This code reimplements the code at Chelsea's account using ROS_Indigo. I used ro
 See example simulation results of running the pr2_example at 
 
 ![![PR2](https://www.youtube.com/embed/HzwAbarXbDg)](https://img.youtube.com/vi/HzwAbarXbDg/hqdefault.jpg)
+
+<div class="fig figcenter fighighlight">
+<a href="https://www.youtube.com/embed/HzwAbarXbDg">
+	<img src="https://img.youtube.com/vi/HzwAbarXbDg/hqdefault.jpg" height="380px" width="540px" align="middle" hspace="100"></a>
+	</br>
+	<div class="figcaption" align="left" hspace="80">Twist commands to the p3_dx robot</div>
+</div>
