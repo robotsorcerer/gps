@@ -5,8 +5,6 @@ project(gps_agent_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 set(ROS_DEFAULT_DIR /opt/ros/indigo/share/)
 
 set(orocos_kdl_DIR                ${ROS_DEFAULT_DIR}/orocos_kdl)
@@ -17,7 +15,9 @@ set(pr2_controllers_msgs_DIR      ${ROS_DEFAULT_DIR}/pr2_controllers_msgs/cmake)
 set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
 set(Caffe_DIR                     ${CAFFE_ROOT})
 
-set(USE_CAFFE USE_CAFFE_GPU ON)
+OPTION(ENABLE_CXX11 "Enable C++11 support" ON)
+OPTION(USE_CAFFE "Enable Caffe support" ON)
+OPTION(USE_CAFFE_GPU "Enable Caffe GPU support" ON)
 
 find_package(PkgConfig)
 pkg_search_module(Eigen3 REQUIRED eigen3)
@@ -126,7 +126,7 @@ set(DDP_FILES src/robotplugin.cpp
               src/trialcontroller.cpp
               src/encodersensor.cpp
               src/encoderfilter.cpp
-        src/rostopicsensor.cpp
+              src/rostopicsensor.cpp
               src/util.cpp)
 
 add_library(gps_agent_lib
