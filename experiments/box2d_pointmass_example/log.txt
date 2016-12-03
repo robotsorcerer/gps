@@ -67,3 +67,20 @@ itr | avg_cost |   cost     step   entropy
   7 |   409.34 |   409.34     0.81   150.32
   8 |   399.88 |   399.88     2.00   130.46
   9 |   414.46 |   414.46     0.20    31.06
+
+
+exp_name:   box2d_pointmass_example_12-02-16_16-38
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 1
+samples:    5
+
+box2d_pointmass_example_12-02-16_16-38
+    |          |          condition 0      
+itr | avg_cost |   cost     step   entropy 
+  0 | 13795.45 | 13795.45     0.20   321.89
+  1 |  7589.42 |  7589.42     1.00   320.94
+  2 |  2142.37 |  2142.37     2.00   316.38
+  3 |   737.00 |   737.00     2.00   304.09

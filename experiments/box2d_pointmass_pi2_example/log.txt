@@ -1,0 +1,19 @@
+
+
+exp_name:   box2d_pointmass_pi2_example_12-02-16_16-39
+alg_type:   AlgorithmTrajOptPi2
+alg_dyn:    None
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 20
+conditions: 1
+samples:    30
+
+box2d_pointmass_pi2_example_12-02-16_16-39
+    |          |          condition 0      
+itr | avg_cost |   cost     step   entropy 
+  0 | 12817.30 | 12817.30     0.20     0.00
+  1 |  9728.13 |  9728.13     0.20   -66.10
+  2 |  7262.95 |  7262.95     0.20  -119.26
+  3 |  5343.10 |  5343.10     0.20  -182.68
+  4 |  4260.07 |  4260.07     0.20  -234.58
+  5 |  3656.47 |  3656.47     0.20  -296.26

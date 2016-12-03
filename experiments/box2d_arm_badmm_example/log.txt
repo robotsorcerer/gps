@@ -1,0 +1,20 @@
+
+
+exp_name:   box2d_arm_badmm_example_12-02-16_16-40
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 4
+samples:    5
+
+
+
+exp_name:   box2d_arm_badmm_example_12-02-16_16-41
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostState)
+iterations: 10
+conditions: 4
+samples:    5
+
