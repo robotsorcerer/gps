@@ -1,4 +1,8 @@
-"""This is what I used in saving the initial and final pose of superchick"""
+"""This is what I used in saving the initial and final pose of superchick
+
+Lekan O'Molux::Dec 03, 2016
+High Bay
+"""
 
 import os.path
 import numpy as np
@@ -25,7 +29,7 @@ saver(EXP_DIR + 'target.npz', 'base_bladder', str(3), 'initial', start_pose)
 saver(EXP_DIR + 'target.npz', 'right_bladder', str(4), 'initial', start_pose) 
 saver(EXP_DIR + 'target.npz', 'left_bladder', str(5), 'initial', start_pose) 
 
-ja_tgt = np.array([0])
+ja_tgt = np.zeros(3)
 ee_pos_tgt = np.array([544.5532, 304.3763, 961.4792])
 ee_rot_tgt = np.array([ [0, 0, 0.12], [0., 0., 0.], [0., 0.13,0.105] ]) #Made up
 

@@ -10,7 +10,8 @@ import os.path
 import numpy as np
 
 from gps import __file__ as gps_filepath
-from gps.agent.ros.agent_ros import AgentROS
+# from gps.agent.ros.agent_ros import AgentROS
+from gps.agent.ros.agent_chick import AgentCHICK
 from gps.algorithm.algorithm_traj_opt import AlgorithmTrajOpt
 from gps.algorithm.cost.cost_fk import CostFK
 from gps.algorithm.cost.cost_action import CostAction
@@ -23,14 +24,13 @@ from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.gui.target_setup_gui import load_pose_from_npz
 from gps.proto.gps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
         END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES, ACTION, \
-        TRIAL_ARM, AUXILIARY_ARM, JOINT_SPACE, RIGHT_BLADDER#, LEFT_BLADDER, \
-        #BASE_BLADDER
+        TRIAL_ARM, AUXILIARY_ARM, JOINT_SPACE, RIGHT_BLADDER, LEFT_BLADDER, \
+        BASE_BLADDER
 from gps.utility.general_utils import get_ee_points
 from gps.gui.config import generate_experiment_info
 
-
-EE_POINTS = np.array([[0.02, -0.025, 0.05]#, [0.02, -0.025, -0.05],
-                      #[0.02, 0.05, 0.0]
+#We have one head and we are going to a target point in the world.
+EE_POINTS = np.array([[0.02, -0.025, 0.05]
                       ])
 
 SENSOR_DIMS = {
@@ -38,11 +38,10 @@ SENSOR_DIMS = {
     JOINT_VELOCITIES: 1,
     END_EFFECTOR_POINTS: 3 * EE_POINTS.shape[0],
     END_EFFECTOR_POINT_VELOCITIES: 3 * EE_POINTS.shape[0],
-    ACTION: 1,  #using 1 bladder
+    ACTION: 3,  #using 1 bladder for now
 }
 
-SUPERCHICK_GAINS = np.array([3.09, 1.08, 0.393#, 0.674, 0.111, 0.152, 0.098
-                            ])
+SUPERCHICK_GAINS = np.array([3.09, 1.08, 0.393])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
 EXP_DIR = BASE_DIR + '/../experiments/superchick/'
@@ -56,45 +55,84 @@ common = {
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
-    'target_filename': EXP_DIR + 'chick.npz',
+    'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
-    'conditions': 1,
+    'conditions': 1,#3,
 }
 
 # Set up each condition.
-for i in xrange(common['conditions']):
+#cause the enums are described from 3, 4, 5 for the bladders in proto
+"""
+We override the default joint and end_effector eigens for the pr2 robot
+and instantiate our soft robot
+"""
+DEFAULT_JOINT_ANGLES = np.zeros(3) 
+DEFAULT_END_EFFECTOR_POSITIONS = np.array([544.5532, 304.3763, 957.4792])
+DEFAULT_END_EFFECTOR_ROTATIONS = np.zeros((3, 3))
+
+for i in xrange(common['conditions'], common['conditions']+6):
 
     ja_x0, ee_pos_x0, ee_rot_x0 = load_pose_from_npz(
-        common['target_filename'], 'base_bladder', str(i), 'initial'
+        common['target_filename'], 'base_bladder', str(i), 'initial',
+        default_ja=DEFAULT_JOINT_ANGLES,
+        default_ee_pos=DEFAULT_END_EFFECTOR_POSITIONS,
+        default_ee_rot=DEFAULT_END_EFFECTOR_ROTATIONS
     )
-    ja_aux, _, _ = load_pose_from_npz(
-        common['target_filename'], 'auxiliary_arm', str(i), 'initial'
+    ja_right, _, _ = load_pose_from_npz(
+        common['target_filename'], 'right_bladder', str(i), 'initial',
+        default_ja=DEFAULT_JOINT_ANGLES,
+        default_ee_pos=DEFAULT_END_EFFECTOR_POSITIONS,
+        default_ee_rot=DEFAULT_END_EFFECTOR_ROTATIONS
+    )
+    ja_left, _, _ = load_pose_from_npz(
+        common['target_filename'], 'left_bladder', str(i), 'initial',
+        default_ja=DEFAULT_JOINT_ANGLES,
+        default_ee_pos=DEFAULT_END_EFFECTOR_POSITIONS,
+        default_ee_rot=DEFAULT_END_EFFECTOR_ROTATIONS
     )
     _, ee_pos_tgt, ee_rot_tgt = load_pose_from_npz(
-        common['target_filename'], 'base_bladder', str(i), 'target'
+        common['target_filename'], 'base_bladder', str(i), 'target',
+        default_ja=DEFAULT_JOINT_ANGLES,
+        default_ee_pos=DEFAULT_END_EFFECTOR_POSITIONS,
+        default_ee_rot=DEFAULT_END_EFFECTOR_ROTATIONS
     )
 
+    print('ja_x0: ', ja_x0)
+
     x0 = np.zeros(32)
-    x0[:7] = ja_x0
-    x0[14:(14+3*EE_POINTS.shape[0])] = np.ndarray.flatten(
-        get_ee_points(EE_POINTS, ee_pos_x0, ee_rot_x0).T
-    )
+    x0[:3] = ja_x0
+    x0[6:(6+3*EE_POINTS.shape[1])] = np.ndarray.flatten(
+        get_ee_points(EE_POINTS, ee_pos_x0, ee_rot_x0).T #3X3 mat
+    )  
+    #Will be 1 X 9 after flattening. Should x0 start from 14 in my case?
 
     ee_tgt = np.ndarray.flatten(
         get_ee_points(EE_POINTS, ee_pos_tgt, ee_rot_tgt).T
     )
 
-    aux_x0 = np.zeros(7)
-    aux_x0[:] = ja_aux
+    right_x0 = np.zeros(3)
+    right_x0[:] = ja_right
+
+    left_x0 = np.zeros(3)
+    left_x0[:] = ja_left
+
+    """
+    superchick cannot be controlled in the joint space since 
+    it has no encoders
+    """
 
     reset_condition = {
-        TRIAL_ARM: {
-            'mode': JOINT_SPACE,
-            'data': x0[0:7],
+        BASE_BLADDER: {
+            'mode': TASK_SPACE,
+            'data': x0[0:3],
         },
-        AUXILIARY_ARM: {
-            'mode': JOINT_SPACE,
-            'data': aux_x0,
+        RIGHT_BLADDER: {
+            'mode': TASK_SPACE,
+            'data': right_x0,
+        },
+        LEFT_BLADDER: {
+            'mode': TASK_SPACE,
+            'data': left_x0,
         },
     }
 
@@ -107,7 +145,7 @@ if not os.path.exists(common['data_files_dir']):
     os.makedirs(common['data_files_dir'])
 
 agent = {
-    'type': AgentROS,
+    'type': AgentCHICK,
     'dt': 0.05,
     'conditions': common['conditions'],
     'T': 100,

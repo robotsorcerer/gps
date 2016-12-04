@@ -1,7 +1,8 @@
 """ Default configuration and hyperparameter values for GUI objects. """
 import itertools
 
-from gps.proto.gps_pb2 import TRIAL_ARM, AUXILIARY_ARM
+from gps.proto.gps_pb2 import TRIAL_ARM, AUXILIARY_ARM, BASE_BLADDER, \
+                                RIGHT_BLADDER, LEFT_BLADDER
 from gps.gui.ps3_config import PS3_BUTTON, INVERTED_PS3_BUTTON
 
 
@@ -98,8 +99,10 @@ config = {
 
     # Target Setup
     'num_targets': 10,
-    'actuator_types': [TRIAL_ARM, AUXILIARY_ARM],
-    'actuator_names': ['trial_arm', 'auxiliary_arm'],
+    'actuator_types': [TRIAL_ARM, AUXILIARY_ARM, \
+                        BASE_BLADDER, LEFT_BLADDER, RIGHT_BLADDER],
+    'actuator_names': ['trial_arm', 'auxiliary_arm', 'base_bladder', \
+                        'right_bladder', 'left_bladder'],
     'target_output_fontsize': 10,
 
     # GPS Training
