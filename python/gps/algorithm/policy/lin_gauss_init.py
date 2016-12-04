@@ -53,6 +53,7 @@ def init_lqr(hyperparams):
         config['stiffness'] * config['stiffness_vel'] * np.ones(dU),
         np.zeros(dX - dU*2), np.ones(dU)
     ]))
+    
     Ltt = Ltt / config['init_var']  # Cost function - quadratic term.
     lt = -Ltt.dot(np.r_[x0, np.zeros(dU)])  # Cost function - linear term.
 

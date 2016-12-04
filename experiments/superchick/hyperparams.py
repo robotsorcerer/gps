@@ -24,8 +24,8 @@ from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.gui.target_setup_gui import load_pose_from_npz
 from gps.proto.gps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
         END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES, ACTION, \
-        TRIAL_ARM, AUXILIARY_ARM, JOINT_SPACE, RIGHT_BLADDER, LEFT_BLADDER, \
-        BASE_BLADDER
+        TRIAL_ARM, AUXILIARY_ARM, JOINT_SPACE, TASK_SPACE, \
+        RIGHT_BLADDER, LEFT_BLADDER, BASE_BLADDER
 from gps.utility.general_utils import get_ee_points
 from gps.gui.config import generate_experiment_info
 
@@ -57,7 +57,7 @@ common = {
     'data_files_dir': EXP_DIR + 'data_files/',
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
-    'conditions': 1,#3,
+    'conditions': 1,
 }
 
 # Set up each condition.
@@ -70,7 +70,8 @@ DEFAULT_JOINT_ANGLES = np.zeros(3)
 DEFAULT_END_EFFECTOR_POSITIONS = np.array([544.5532, 304.3763, 957.4792])
 DEFAULT_END_EFFECTOR_ROTATIONS = np.zeros((3, 3))
 
-for i in xrange(common['conditions'], common['conditions']+6):
+for i in xrange(common['conditions']#, common['conditions']+6
+                ):
 
     ja_x0, ee_pos_x0, ee_rot_x0 = load_pose_from_npz(
         common['target_filename'], 'base_bladder', str(i), 'initial',
