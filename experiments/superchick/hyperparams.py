@@ -29,19 +29,20 @@ from gps.utility.general_utils import get_ee_points
 from gps.gui.config import generate_experiment_info
 
 
-EE_POINTS = np.array([[0.02, -0.025, 0.05], [0.02, -0.025, -0.05],
-                      [0.02, 0.05, 0.0]
+EE_POINTS = np.array([[0.02, -0.025, 0.05]#, [0.02, -0.025, -0.05],
+                      #[0.02, 0.05, 0.0]
                       ])
 
 SENSOR_DIMS = {
     JOINT_ANGLES: 1,
     JOINT_VELOCITIES: 1,
-    END_EFFECTOR_POINTS: 3, # * EE_POINTS.shape[0],
-    END_EFFECTOR_POINT_VELOCITIES: 3,# * EE_POINTS.shape[0],
-    ACTION: 2,
+    END_EFFECTOR_POINTS: 3 * EE_POINTS.shape[0],
+    END_EFFECTOR_POINT_VELOCITIES: 3 * EE_POINTS.shape[0],
+    ACTION: 1,  #using 1 bladder
 }
 
-SUPERCHICK_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
+SUPERCHICK_GAINS = np.array([3.09, 1.08, 0.393#, 0.674, 0.111, 0.152, 0.098
+                            ])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
 EXP_DIR = BASE_DIR + '/../experiments/superchick/'
@@ -55,24 +56,22 @@ common = {
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
-    'target_filename': EXP_DIR + 'target.npz',
+    'target_filename': EXP_DIR + 'chick.npz',
     'log_filename': EXP_DIR + 'log.txt',
     'conditions': 1,
 }
 
-
-# TODO(chelsea/zoe) : Move this code to a utility function
 # Set up each condition.
 for i in xrange(common['conditions']):
 
     ja_x0, ee_pos_x0, ee_rot_x0 = load_pose_from_npz(
-        common['target_filename'], 'trial_arm', str(i), 'initial'
+        common['target_filename'], 'base_bladder', str(i), 'initial'
     )
     ja_aux, _, _ = load_pose_from_npz(
         common['target_filename'], 'auxiliary_arm', str(i), 'initial'
     )
     _, ee_pos_tgt, ee_rot_tgt = load_pose_from_npz(
-        common['target_filename'], 'trial_arm', str(i), 'target'
+        common['target_filename'], 'base_bladder', str(i), 'target'
     )
 
     x0 = np.zeros(32)
@@ -116,7 +115,7 @@ agent = {
     'ee_points_tgt': ee_tgts,
     'reset_conditions': reset_conditions,
     'sensor_dims': SENSOR_DIMS,
-    'state_include': [JOINT_ANGLES, JOINT_VELOCITIES, END_EFFECTOR_POINTS,
+    'state_include': [END_EFFECTOR_POINTS,
                       END_EFFECTOR_POINT_VELOCITIES],
     'end_effector_points': EE_POINTS,
     'obs_include': [],

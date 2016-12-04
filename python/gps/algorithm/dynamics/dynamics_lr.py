@@ -39,7 +39,7 @@ class DynamicsLR(Dynamics):
         for t in range(T - 1):
             xux = np.c_[X[:, t, :], U[:, t, :], X[:, t+1, :]]
             xux_mean = np.mean(xux, axis=0)
-            empsig = (xux - xux_mean).T.dot(xux - xux_mean) / N
+            empsig = (xux - xux_mean).T.dot(xux - xux_mean) / N  # (1/N)(x - xbar)'*(x-xbar)
             sigma = 0.5 * (empsig + empsig.T)
             sigma[it, it] += self._hyperparams['regularization']
 

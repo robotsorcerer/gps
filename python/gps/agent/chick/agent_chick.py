@@ -7,10 +7,10 @@ import rospy
 
 from gps.agent.agent import Agent
 from gps.agent.agent_utils import generate_noise, setup
-from gps.agent.config import AGENT_ROS
+from gps.agent.config import AGENT_CHICK
 from gps.agent.ros.ros_utils import ServiceEmulator, msg_to_sample, \
         policy_to_msg, tf_policy_to_action_msg, tf_obs_msg_to_numpy
-from gps.proto.gps_pb2 import TRIAL_ARM, AUXILIARY_ARM
+from gps.proto.gps_pb2 import BASE_BLADDER, RIGHT_BLADDER, LEFT_BLADDER
 from gps_agent_pkg.msg import TrialCommand, SampleResult, PositionCommand, \
         RelaxCommand, DataRequest, TfActionCommand, TfObsData
 try:
@@ -19,7 +19,7 @@ except ImportError:  # user does not have tf installed.
     TfPolicy = None
 
 
-class AgentROS(Agent):
+class AgentCHICK(Agent):
     """
     All communication between the algorithms and ROS is done through
     this class.
@@ -31,7 +31,7 @@ class AgentROS(Agent):
             hyperparams: Dictionary of hyperparameters.
             init_node: Whether or not to initialize a new ROS node.
         """
-        config = copy.deepcopy(AGENT_ROS)
+        config = copy.deepcopy(AGENT_CHICK)
         config.update(hyperparams)
         Agent.__init__(self, config)
         if init_node:
