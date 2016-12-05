@@ -35,7 +35,7 @@ from gps.utility.general_utils import get_ee_points
 from gps.gui.config import generate_experiment_info
 
 #We have one head and we are going to a target point in the world.
-EE_POINTS = np.array([[0.02, -0.025, 0.05]
+EE_POINTS = np.array([[0.02, -0.025, 0.05], [0.02, -0.025, -0.05], [0.02, 0.05, 0.0]
                       ])
 
 SENSOR_DIMS = {
@@ -75,12 +75,15 @@ DEFAULT_JOINT_ANGLES = np.zeros(3)
 DEFAULT_END_EFFECTOR_POSITIONS = np.array([544.5532, 304.3763, 957.4792])
 quaternion_init = np.array([0.506603297202, -0.52078853261,
                             0.464484263034, 0.506346494962])
-DEFAULT_END_EFFECTOR_ROTATIONS = trans.quaternion_matrix(quaternion_init)
+proj_init = trans.quaternion_matrix(quaternion_init)
+#slice the rotation part from the homogeneous matrix
+DEFAULT_END_EFFECTOR_ROTATIONS = proj_init[0:3, 0:3]
 
 TARGET_END_EFFECTOR_POSITIONS = np.array([544.5532, 304.3763, 961.4792])  #raise head by ~4mm
 quaternion_tgt = np.array([0.506603297202+0.2, -0.52078853261-0.2,
                             0.464484263034+0.2, 0.506346494962+0.2])
-TARGET_END_EFFECTOR_ROTATIONS = trans.quaternion_matrix(quaternion_tgt)
+proj_tgt = trans.quaternion_matrix(quaternion_tgt)
+TARGET_END_EFFECTOR_ROTATIONS = proj_tgt[0:3, 0:3]
 
 for i in xrange(common['conditions']#, common['conditions']+6
                 ):
@@ -106,18 +109,32 @@ for i in xrange(common['conditions']#, common['conditions']+6
     _, ee_pos_tgt, ee_rot_tgt = load_pose_from_npz(
         common['target_filename'], 'base_bladder', str(i), 'target',
         default_ja=DEFAULT_JOINT_ANGLES, #same anyway
-        default_ee_pos=np.array([544.5532, 304.3763, 961.4792])
+        default_ee_pos=np.array([544.5532, 304.3763, 961.4792]),
         default_ee_rot=TARGET_END_EFFECTOR_ROTATIONS
     )
 
     print('ja_x0: ', ja_x0)
 
-    x0 = np.zeros(18)
+    """
+    The state includes the joint angles and velocities (7x2=14) 
+    and the pose&velocity of the end effector, represented as 
+    3 points in 3D (3x3x2=18).
+    The rest of the state is left to zero because we assume that
+    the initial velocity of the arm is 0.
+
+    =================================================================
+    For superchck, we have joint angles and vels (3x2=6)
+    pose and vel of end effector points as 3 point in 3D = (3x3x2=18).
+    The rest of the state is initialized zero because 
+    I assume the head velocity is 0.
+
+    
+    """
+    x0 = np.zeros(24)
     x0[:3] = ja_x0
-    x0[3:(3+3*EE_POINTS.shape[1])] = np.ndarray.flatten(
+    x0[6:(6+3*EE_POINTS.shape[0])] = np.ndarray.flatten(
         get_ee_points(EE_POINTS, ee_pos_x0, ee_rot_x0).T #3X3 mat
     )  
-    #Will be 1 X 9 after flattening. Should x0 start from 14 in my case?
 
     ee_tgt = np.ndarray.flatten(
         get_ee_points(EE_POINTS, ee_pos_tgt, ee_rot_tgt).T

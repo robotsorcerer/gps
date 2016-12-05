@@ -92,7 +92,9 @@ ee_pos = np.array([544.5532, 304.3763, 957.4792])
 #this was retrieved from vicon with head at rest
 quaternion_init = np.array([0.506603297202, -0.52078853261,
 	    					0.464484263034, 0.506346494962])
-ee_rot = tftf.quaternion_matrix(quaternion_init)
+proj_init = tftf.quaternion_matrix(quaternion_init)
+#slice the rotation part from the homogeneous matrix
+ee_rot = proj_init[0:3, 0:3]  
 
 #define start pose; I am working in task space
 start_pose = (ja, ee_pos, ee_rot)
@@ -105,7 +107,9 @@ ja_tgt = np.zeros(3)
 ee_pos_tgt = np.array([544.5532, 304.3763, 961.4792])  #raise head by ~4mm
 quaternion_tgt = np.array([0.506603297202+0.2, -0.52078853261-0.2,
 	    					0.464484263034+0.2, 0.506346494962+0.2])
-ee_rot_tgt = tftf.quaternion_matrix(quaternion_tgt)
+proj_tgt = tftf.quaternion_matrix(quaternion_tgt)
+#slice the rotation part from the homogeneous matrix
+ee_rot_tgt = proj_tgt[0:3, 0:3]
 
 #define end pose;  I am working in task space
 end_pose = (ja_tgt, ee_pos_tgt, ee_rot_tgt)
@@ -120,6 +124,10 @@ saver(EXP_DIR + 'target.npz', 'base_bladder', str(3), 'target', end_pose)
 saver(EXP_DIR + 'target.npz', 'right_bladder', str(4), 'target', end_pose) 
 saver(EXP_DIR + 'target.npz', 'left_bladder', str(5), 'target', end_pose) 
 
+
+"""
+Check for saver and loader to be dumped to screen out
+"""
 ja_res, ee_pos_res, ee_rot_res = loader('target.npz', 'left_bladder', str(1), 'initial',
         default_ja=ja,
         default_ee_pos=ee_pos,
