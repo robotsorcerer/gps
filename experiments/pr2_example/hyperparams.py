@@ -58,7 +58,7 @@ common = {
 # TODO(chelsea/zoe) : Move this code to a utility function
 # Set up each condition.
 for i in xrange(common['conditions']):
-
+    
     ja_x0, ee_pos_x0, ee_rot_x0 = load_pose_from_npz(
         common['target_filename'], 'trial_arm', str(i), 'initial'
     )

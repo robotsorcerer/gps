@@ -9,8 +9,13 @@ import os.path
 
 import numpy as np
 
+#ros tf imports
+import rospy
+import roslib
+roslib.load_manifest('gps_agent_pkg')
+from tf import transformations as trans
+
 from gps import __file__ as gps_filepath
-# from gps.agent.ros.agent_ros import AgentROS
 from gps.agent.ros.agent_chick import AgentCHICK
 from gps.algorithm.algorithm_traj_opt import AlgorithmTrajOpt
 from gps.algorithm.cost.cost_fk import CostFK
@@ -68,7 +73,14 @@ and instantiate our soft robot
 """
 DEFAULT_JOINT_ANGLES = np.zeros(3) 
 DEFAULT_END_EFFECTOR_POSITIONS = np.array([544.5532, 304.3763, 957.4792])
-DEFAULT_END_EFFECTOR_ROTATIONS = np.zeros((3, 3))
+quaternion_init = np.array([0.506603297202, -0.52078853261,
+                            0.464484263034, 0.506346494962])
+DEFAULT_END_EFFECTOR_ROTATIONS = trans.quaternion_matrix(quaternion_init)
+
+TARGET_END_EFFECTOR_POSITIONS = np.array([544.5532, 304.3763, 961.4792])  #raise head by ~4mm
+quaternion_tgt = np.array([0.506603297202+0.2, -0.52078853261-0.2,
+                            0.464484263034+0.2, 0.506346494962+0.2])
+TARGET_END_EFFECTOR_ROTATIONS = trans.quaternion_matrix(quaternion_tgt)
 
 for i in xrange(common['conditions']#, common['conditions']+6
                 ):
@@ -93,9 +105,9 @@ for i in xrange(common['conditions']#, common['conditions']+6
     )
     _, ee_pos_tgt, ee_rot_tgt = load_pose_from_npz(
         common['target_filename'], 'base_bladder', str(i), 'target',
-        default_ja=DEFAULT_JOINT_ANGLES,
-        default_ee_pos=DEFAULT_END_EFFECTOR_POSITIONS,
-        default_ee_rot=DEFAULT_END_EFFECTOR_ROTATIONS
+        default_ja=DEFAULT_JOINT_ANGLES, #same anyway
+        default_ee_pos=np.array([544.5532, 304.3763, 961.4792])
+        default_ee_rot=TARGET_END_EFFECTOR_ROTATIONS
     )
 
     print('ja_x0: ', ja_x0)

@@ -475,3 +475,13 @@ iterations: 10
 conditions: 1
 samples:    5
 
+
+
+exp_name:   superchick_12-04-16_22-58
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+

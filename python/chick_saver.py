@@ -75,6 +75,10 @@ from gps.gui.util import save_pose_to_npz as saver
 from gps.gui.util import load_pose_from_npz as loader
 from gps import __file__ as gps_filepath
 
+import rospy
+import roslib
+roslib.load_manifest('gps_agent_pkg')
+from tf import transformations as tftf
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
 print('BASE_DIR', BASE_DIR)
@@ -85,9 +89,12 @@ print('EXP DIR', EXP_DIR)
 
 ja = np.zeros(3)  #assume the other two bladders are working
 ee_pos = np.array([544.5532, 304.3763, 957.4792])
-ee_rot = np.zeros((3,3))
+#this was retrieved from vicon with head at rest
+quaternion_init = np.array([0.506603297202, -0.52078853261,
+	    					0.464484263034, 0.506346494962])
+ee_rot = tftf.quaternion_matrix(quaternion_init)
 
-#define start pose
+#define start pose; I am working in task space
 start_pose = (ja, ee_pos, ee_rot)
 
 saver(EXP_DIR + 'target.npz', 'base_bladder', str(3), 'initial', start_pose) 
@@ -95,13 +102,20 @@ saver(EXP_DIR + 'target.npz', 'right_bladder', str(4), 'initial', start_pose)
 saver(EXP_DIR + 'target.npz', 'left_bladder', str(5), 'initial', start_pose) 
 
 ja_tgt = np.zeros(3)
-ee_pos_tgt = np.array([544.5532, 304.3763, 961.4792])
-ee_rot_tgt = np.array([ [0, 0, 0.12], [0., 0., 0.], [0., 0.13,0.105] ]) #Made up
+ee_pos_tgt = np.array([544.5532, 304.3763, 961.4792])  #raise head by ~4mm
+quaternion_tgt = np.array([0.506603297202+0.2, -0.52078853261-0.2,
+	    					0.464484263034+0.2, 0.506346494962+0.2])
+ee_rot_tgt = tftf.quaternion_matrix(quaternion_tgt)
 
-#define end pose
+#define end pose;  I am working in task space
 end_pose = (ja_tgt, ee_pos_tgt, ee_rot_tgt)
 
-#save the targets
+"""
+save the targets; right now, I only care about base_bladders
+so the other bladders are being initialized based on base_bladder
+parameters
+"""
+
 saver(EXP_DIR + 'target.npz', 'base_bladder', str(3), 'target', end_pose) 
 saver(EXP_DIR + 'target.npz', 'right_bladder', str(4), 'target', end_pose) 
 saver(EXP_DIR + 'target.npz', 'left_bladder', str(5), 'target', end_pose) 
