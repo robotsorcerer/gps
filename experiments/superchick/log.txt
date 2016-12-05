@@ -355,3 +355,123 @@ iterations: 10
 conditions: 1
 samples:    5
 
+
+
+exp_name:   superchick_12-04-16_17-59
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-09
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-15
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-18
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-19
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-20
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-25
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-26
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-30
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-31
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-50
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+
+
+
+exp_name:   superchick_12-04-16_18-51
+alg_type:   AlgorithmTrajOpt
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 1
+samples:    5
+

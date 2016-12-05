@@ -53,8 +53,10 @@ def init_lqr(hyperparams):
         config['stiffness'] * config['stiffness_vel'] * np.ones(dU),
         np.zeros(dX - dU*2), np.ones(dU)
     ]))
-    
+    print('x0 : ', '\n', x0.shape)
     Ltt = Ltt / config['init_var']  # Cost function - quadratic term.
+    # print('T, dU, dX, dO, %d, %d, %d,%d ', agent.T, agent.dU, agent.dX, agent.dO)
+    print('Ltt: ', Ltt.shape)
     lt = -Ltt.dot(np.r_[x0, np.zeros(dU)])  # Cost function - linear term.
 
     # Perform dynamic programming.

@@ -100,9 +100,9 @@ for i in xrange(common['conditions']#, common['conditions']+6
 
     print('ja_x0: ', ja_x0)
 
-    x0 = np.zeros(32)
+    x0 = np.zeros(18)
     x0[:3] = ja_x0
-    x0[6:(6+3*EE_POINTS.shape[1])] = np.ndarray.flatten(
+    x0[3:(3+3*EE_POINTS.shape[1])] = np.ndarray.flatten(
         get_ee_points(EE_POINTS, ee_pos_x0, ee_rot_x0).T #3X3 mat
     )  
     #Will be 1 X 9 after flattening. Should x0 start from 14 in my case?
@@ -159,6 +159,9 @@ agent = {
     'end_effector_points': EE_POINTS,
     'obs_include': [],
 }
+
+print 'agent x0'
+print(agent['x0'])
 
 algorithm = {
     'type': AlgorithmTrajOpt,

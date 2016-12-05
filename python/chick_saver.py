@@ -2,7 +2,72 @@
 
 Lekan O'Molux::Dec 03, 2016
 High Bay
+
+These are the parameters retrieved from vicon in the home pose of the head
+
+/vicon/headtwist:
+	linear: 
+	  x: 531.557739258
+	  y: 312.454711914
+	  z: 956.795532227
+	angular: 
+	  x: 0.0
+	  y: 2.07609391212
+	  z: -0.0174869764596
+/vicon/Superdude/head
+	  frame_id: /world
+	child_frame_id: vicon/Superdude/head
+	transform: 
+	  translation: 
+	    x: 0.532392488588
+	    y: 0.205199755367
+	    z: 0.962377883184
+	  rotation: 			#this is the rotation quaternion
+	    x: 0.506603297202
+	    y: -0.52078853261
+	    z: 0.464484263034
+	    w: 0.506346494962
+/vicon/markers:
+	  marker_name: fore
+	  subject_name: Superdude
+	  segment_name: head
+	  translation: 
+	    x: 532.777038574
+	    y: 204.879714966
+	    z: 962.852050781
+	  occluded: False
+	- 
+	  marker_name: chin
+	  subject_name: Superdude
+	  segment_name: head
+	  translation: 
+	    x: 542.662841797
+	    y: 392.132049561
+	    z: 974.222412109
+	  occluded: False
+	- 
+	  marker_name: right_cheek
+	  subject_name: Superdude
+	  segment_name: head
+	  translation: 
+	    x: 470.894744873
+	    y: 324.036834717
+	    z: 969.925720215
+	  occluded: False
+	- 
+	  marker_name: left_cheek
+	  subject_name: Superdude
+	  segment_name: head
+	  translation: 
+	    x: 583.813781738
+	    y: 332.731903076
+	    z: 925.693603516
+	  occluded: False
+
+
 """
+
+
 
 import os.path
 import numpy as np
