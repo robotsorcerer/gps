@@ -51,7 +51,8 @@ def init_lqr(hyperparams):
     Ltt = np.diag(np.hstack([
         config['stiffness'] * np.ones(dU),
         config['stiffness'] * config['stiffness_vel'] * np.ones(dU),
-        np.zeros(dX - dU*2), np.ones(dU)
+        np.zeros(dX - dU*2
+            ), np.ones(dU)
     ]))
 
     Ltt = Ltt / config['init_var']  # Cost function - quadratic term.
