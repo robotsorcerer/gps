@@ -56,8 +56,8 @@ def init_lqr(hyperparams):
     ]))
 
     Ltt = Ltt / config['init_var']  # Cost function - quadratic term.
-    print('T: ', T, ' dU: ', dU, 'dX: ', dX, 'dt: ', dt, 'x0', x0.shape)
-    print('Ltt: ', Ltt.shape)
+    # print('T: ', T, ' dU: ', dU, 'dX: ', dX, 'dt: ', dt, 'x0', x0.shape)
+    # print('Ltt: ', Ltt.shape)
     lt = -Ltt.dot(np.r_[x0, np.zeros(dU)])  # Cost function - linear term.
 
     # Perform dynamic programming.
