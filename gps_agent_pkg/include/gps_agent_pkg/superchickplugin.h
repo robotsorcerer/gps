@@ -4,27 +4,37 @@ This is the PR2-specific version of the robot plugin.
 #pragma once
 
 // Headers.
-#include <superchick_controller_interface/controller.h>
-#include <superchick_mechanism_model/joint.h>
-#include <superchick_mechanism_model/chain.h>
-#include <superchick_mechanism_model/robot.h>
 #include <Eigen/Dense>
+// To register the plugins
 #include <pluginlib/class_list_macros.h>
 
 // Superclass.
 #include "gps_agent_pkg/robotplugin.h"
 #include "gps_agent_pkg/controller.h"
 #include "gps_agent_pkg/positioncontroller.h"
-#include "gps_agent_pkg/encodersensor.h"
 #include "gps/proto/gps.pb.h"
 
+// MoveIt!
+#include <moveit/robot_model_loader/robot_model_loader.h>
+#include <moveit/robot_model/robot_model.h>
+#include <moveit/robot_state/robot_state.h>
 namespace gps_control
 {
 
-class GPSSuperchickPlugin: public RobotPlugin, public superchick_controller_interface::Controller
+class GPSSuperchickPlugin: public RobotPlugin
 {
 private:
-    // superchick-specific chain object necessary to construct the KDL chain.
+    robot_model_loader::RobotModelLoader robot_model_loader;
+    // ("robot_description");
+    robot_model::RobotModelPtr RobotModel;
+    const robot_state::JointModelGroup* base_model_group;
+    robot_state::RobotStatePtr RobotState(new robot_state::RobotState(RobotModel));
+    const robot_state::JointModelGroup* base_model_group;
+    const std::vector<std::string> *joint_names;
+    std::vector<double> joint_values;
+
+
+/*    // superchick-specific chain object necessary to construct the KDL chain.
     superchick_mechanism_model::Chain passive_arm_chain_, active_arm_chain_;
     // This is a pointer to the robot state, which we get when initialized and have to keep after that.
     superchick_mechanism_model::RobotState* robot_;
@@ -35,7 +45,7 @@ private:
     // Passive arm joint names.
     std::vector<std::string> passive_arm_joint_names_;
     // Active arm joint names.
-    std::vector<std::string> active_arm_joint_names_;
+    std::vector<std::string> active_arm_joint_names_;*/
     // Time of last state update.
     ros::Time last_update_time_;
     // Counter for keeping track of controller steps.
@@ -50,7 +60,7 @@ public:
     // Functions inherited from superclass.
     // This called by the superclass to allow us to initialize all the superchick-specific stuff.
     /* IMPORTANT: note that some sensors require a KDL chain to do FK, which we need the RobotState to get... */
-    virtual bool init(superchick_mechanism_model::RobotState* robot, ros::NodeHandle& n);
+    virtual bool init(ros::NodeHandle& n);
     // This is called by the controller manager before starting the controller.
     virtual void starting();
     // This is called by the controller manager before stopping the controller.

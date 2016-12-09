@@ -4,12 +4,9 @@
     <rosparam command="load" file="$(find gps_agent_pkg)/launch/superchick_controllers.yaml" />
 
     <!-- controller params -->
-    <param name="GPSSuperchickPlugin/root_name" value="big_bladder_link" />
-    <param name="GPSSuperchickPlugin/active_tip_name" value="headnBall_link" />
-    <param name="GPSSuperchickPlugin/passive_tip_name" value="rightbladder_to_neck" />
-
-    <!-- kalman filter matrices -->
-    <param name="GPSSuperchickPlugin/encoder_filter_params" textfile="$(find gps_agent_pkg)/encoder_filter_params.txt" />
+    <param name="GPSSuperchickPlugin/base_name" value="big_bladder_link" />
+    <param name="GPSSuperchickPlugin/head_name" value="headnBall_link" />
+    <param name="GPSSuperchickPlugin/right_name" value="rightbladder_to_neck" />
 
     <!-- Spawn Controller -->
     <node name="controller_spawner"
