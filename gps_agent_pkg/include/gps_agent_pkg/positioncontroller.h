@@ -10,6 +10,7 @@ space.
 // Superclass.
 #include "gps_agent_pkg/controller.h"
 #include "gps/proto/gps.pb.h"
+#include <geometry_msgs/Twist.h>
 
 namespace gps_control
 {

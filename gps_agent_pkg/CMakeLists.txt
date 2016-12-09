@@ -136,7 +136,6 @@ include_directories(
 
 
 set(DDP_FILES src/robotplugin.cpp
-              #src/pr2plugin.cpp
               src/superchickplugin.cpp
               src/sample.cpp
               src/sensor.cpp

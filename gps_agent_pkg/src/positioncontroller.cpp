@@ -10,17 +10,8 @@ using namespace gps_control;
 PositionController::PositionController(ros::NodeHandle& n, gps::ActuatorType arm, int size)
     : Controller(n, arm, size)
 {
-    // Initialize PD gains.
-    pd_gains_p_.resize(size);
-    pd_gains_d_.resize(size);
-    pd_gains_i_.resize(size);
-
     // Initialize velocity bounds.
     max_velocities_.resize(size);
-
-    // Initialize integral terms to zero.
-    pd_integral_.resize(size);
-    i_clamp_.resize(size);
 
     // Initialize current angle and position.
     current_angles_.resize(size);
@@ -33,9 +24,6 @@ PositionController::PositionController(ros::NodeHandle& n, gps::ActuatorType arm
 
     // Initialize joints temporary storage.
     temp_angles_.resize(size);
-
-    // Initialize Jacobian temporary storage.
-    temp_jacobian_.resize(6,size);
 
     // Set initial mode.
     mode_ = gps::NO_CONTROL;
@@ -53,6 +41,11 @@ PositionController::PositionController(ros::NodeHandle& n, gps::ActuatorType arm
 // Destructor.
 PositionController::~PositionController()
 {
+}
+
+void PositionController::pose_callback(const geometry_msgs::Twist& twist_msg)
+{
+    geometry_msgs::Twist
 }
 
 // Update the controller (take an action).
@@ -78,10 +71,10 @@ void PositionController::update(RobotPlugin *plugin, ros::Time current_time, boo
     // Update last update time.
     last_update_time_ = current_time;
 
-    // If doing task space control, compute joint positions target.
+    // If doing task space control, compute task positions target.
     if (mode_ == gps::TASK_SPACE)
     {
-        ROS_ERROR("Not implemented!");
+        ros::Subscriber sub = n.subscribe("/vicon/headtwist", 100, &PositionController::pose_callback, *this)
 
         // TODO: implement.
         // Get current end effector position.

@@ -83,30 +83,28 @@ void RobotPlugin::initialize_sensors(ros::NodeHandle& n)
 
     // Create all sensors.
     for (int i = 0; i < 2; i++)
-    // TODO: ZDM: read this when more sensors work
     //for (int i = 0; i < TotalSensorTypes; i++)
     {
         ROS_INFO_STREAM("creating sensor: " + to_string(i));
-        boost::shared_ptr<Sensor> sensor(Sensor::create_sensor((SensorType)i,n,this, gps::TRIAL_ARM));
+        boost::shared_ptr<Sensor> sensor(Sensor::create_sensor((SensorType)i,n,this, gps::BASE_BLADDER));
         sensors_.push_back(sensor);
     }
 
     // Create current state sample and populate it using the sensors.
     current_time_step_sample_.reset(new Sample(MAX_TRIAL_LENGTH));
-    initialize_sample(current_time_step_sample_, gps::TRIAL_ARM);
+    initialize_sample(current_time_step_sample_, gps::BASE_BLADDER);
 
     aux_sensors_.clear();
-    // Create all auxiliary sensors.  Currently only an encodersensor
     for (int i = 0; i < 1; i++)
     {
         ROS_INFO_STREAM("creating auxiliary sensor: " + to_string(i));
-        boost::shared_ptr<Sensor> sensor(Sensor::create_sensor((SensorType)i,n,this, gps::AUXILIARY_ARM));
+        boost::shared_ptr<Sensor> sensor(Sensor::create_sensor((SensorType)i,n,this, gps::RIGHT_BLADDER));
         aux_sensors_.push_back(sensor);
     }
 
     // Create current state sample and populate it using the sensors.
     aux_current_time_step_sample_.reset(new Sample(1));
-    initialize_sample(aux_current_time_step_sample_, gps::AUXILIARY_ARM);
+    initialize_sample(aux_current_time_step_sample_, gps::RIGHT_BLADDER);
 
     sensors_initialized_ = true;
 }
@@ -141,17 +139,17 @@ void RobotPlugin::initialize_position_controllers(ros::NodeHandle& n)
 {
     // Create passive arm position controller.
     // TODO: fix this to be something that comes out of the robot itself
-    passive_arm_controller_.reset(new PositionController(n, gps::AUXILIARY_ARM, 7));
+    passive_arm_controller_.reset(new PositionController(n, gps::RIGHT_BLADDER, 7));
 
     // Create active arm position controller.
-    active_arm_controller_.reset(new PositionController(n, gps::TRIAL_ARM, 7));
+    active_arm_controller_.reset(new PositionController(n, gps::BASE_BLADDER, 7));
 }
 
 // Helper function to initialize a sample from the current sensors.
 void RobotPlugin::initialize_sample(boost::scoped_ptr<Sample>& sample, gps::ActuatorType actuator_type)
 {
     // Go through all of the sensors and initialize metadata.
-    if (actuator_type == gps::TRIAL_ARM)
+    if (actuator_type == gps::BASE_BLADDER)
     {
         for (int i = 0; i < sensors_.size(); i++)
         {
@@ -161,7 +159,7 @@ void RobotPlugin::initialize_sample(boost::scoped_ptr<Sample>& sample, gps::Actu
         OptionsMap sample_metadata;
         sample->set_meta_data(gps::ACTION,active_arm_torques_.size(),SampleDataFormatEigenVector,sample_metadata);
     }
-    else if (actuator_type == gps::AUXILIARY_ARM)
+    else if (actuator_type == gps::RIGHT_BLADDER)
     {
         for (int i = 0; i < aux_sensors_.size(); i++)
         {
@@ -314,9 +312,9 @@ void RobotPlugin::position_subscriber_callback(const gps_agent_pkg::PositionComm
     }
     params["pd_gains"] = pd_gains;
 
-    if(arm == gps::TRIAL_ARM){
+    if(arm == gps::BASE_BLADDER){
         active_arm_controller_->configure_controller(params);
-    }else if (arm == gps::AUXILIARY_ARM){
+    }else if (arm == gps::RIGHT_BLADDER){
         passive_arm_controller_->configure_controller(params);
     }else{
         ROS_ERROR("Unknown position controller arm type");
@@ -337,7 +335,7 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
                 T, MAX_TRIAL_LENGTH);
     }
 
-    initialize_sample(current_time_step_sample_, gps::TRIAL_ARM);
+    initialize_sample(current_time_step_sample_, gps::BASE_BLADDER);
 
     float frequency = msg->frequency;  // Controller frequency
 
@@ -495,9 +493,9 @@ void RobotPlugin::relax_subscriber_callback(const gps_agent_pkg::RelaxCommand::C
     int8_t arm = msg->arm;
     params["mode"] = gps::NO_CONTROL;
 
-    if(arm == gps::TRIAL_ARM){
+    if(arm == gps::BASE_BLADDER){
         active_arm_controller_->configure_controller(params);
-    }else if (arm == gps::AUXILIARY_ARM){
+    }else if (arm == gps::RIGHT_BLADDER){
         passive_arm_controller_->configure_controller(params);
     }else{
         ROS_ERROR("Unknown position controller arm type");
@@ -511,11 +509,11 @@ void RobotPlugin::data_request_subscriber_callback(const gps_agent_pkg::DataRequ
     if (arm < 2 && arm >= 0)
     {
         gps::ActuatorType arm_type = (gps::ActuatorType) arm;
-        if (arm_type == gps::TRIAL_ARM)
+        if (arm_type == gps::BASE_BLADDER)
         {
             trial_data_request_waiting_ = true;
         }
-        else if (arm_type == gps::AUXILIARY_ARM)
+        else if (arm_type == gps::RIGHT_BLADDER)
         {
             aux_data_request_waiting_ = true;
         }
@@ -530,12 +528,12 @@ void RobotPlugin::data_request_subscriber_callback(const gps_agent_pkg::DataRequ
 Sensor *RobotPlugin::get_sensor(SensorType sensor, gps::ActuatorType actuator_type)
 {
     // TODO: ZDM: make this work for multiple sensors of each type -- pass in int instead of sensortype?
-    if(actuator_type == gps::TRIAL_ARM)
+    if(actuator_type == gps::BASE_BLADDER)
     {
         assert(sensor < TotalSensorTypes);
         return sensors_[sensor].get();
     }
-    else if (actuator_type == gps::AUXILIARY_ARM)
+    else if (actuator_type == gps::RIGHT_BLADDER)
     {
         assert((int)sensor < aux_sensors_.size());
         return aux_sensors_[sensor].get();
@@ -545,12 +543,12 @@ Sensor *RobotPlugin::get_sensor(SensorType sensor, gps::ActuatorType actuator_ty
 // Get forward kinematics solver.
 void RobotPlugin::get_fk_solver(boost::shared_ptr<KDL::ChainFkSolverPos> &fk_solver, boost::shared_ptr<KDL::ChainJntToJacSolver> &jac_solver, gps::ActuatorType arm)
 {
-    if (arm == gps::AUXILIARY_ARM)
+    if (arm == gps::RIGHT_BLADDER)
     {
         fk_solver = passive_arm_fk_solver_;
         jac_solver = passive_arm_jac_solver_;
     }
-    else if (arm == gps::TRIAL_ARM)
+    else if (arm == gps::BASE_BLADDER)
     {
         fk_solver = active_arm_fk_solver_;
         jac_solver = active_arm_jac_solver_;

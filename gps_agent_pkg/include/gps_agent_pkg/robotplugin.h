@@ -48,6 +48,7 @@ class Sample;
 class SampleResult;
 class PositionCommand;
 class TrialCommand;
+class BaseController;
 class RelaxCommand;
 
 
@@ -65,6 +66,12 @@ protected:
     boost::scoped_ptr<PositionController> active_arm_controller_;
     // Current trial controller (if any).
     boost::scoped_ptr<TrialController> trial_controller_;
+    // Current base_bladder controller (if any).
+    boost::scoped_ptr<BaseController> base_bladder_controller_;
+    // Current right_bladder controller (if any).
+    boost::scoped_ptr<BaseController> right_bladder_controller_;
+    // Current left_bladder controller (if any).
+    boost::scoped_ptr<BaseController> left_bladder_controller_;
     // Sensor data for the current time step.
     boost::scoped_ptr<Sample> current_time_step_sample_;
     // Auxiliary Sensor data for the current time step.
@@ -73,12 +80,6 @@ protected:
     std::vector<boost::shared_ptr<Sensor> > sensors_;
     // Auxiliary Sensors.
     std::vector<boost::shared_ptr<Sensor> > aux_sensors_;
-    // KDL chains for the end-effectors.
-    KDL::Chain passive_arm_fk_chain_, active_arm_fk_chain_;
-    // KDL solvers for the end-effectors.
-    boost::shared_ptr<KDL::ChainFkSolverPos> passive_arm_fk_solver_, active_arm_fk_solver_;
-    // KDL solvers for end-effector Jacobians.
-    boost::shared_ptr<KDL::ChainJntToJacSolver> passive_arm_jac_solver_, active_arm_jac_solver_;
     // Subscribers.
     // Subscriber for position control commands.
     ros::Subscriber position_subscriber_;
@@ -152,9 +153,7 @@ public:
     virtual Sensor *get_sensor(SensorType sensor, gps::ActuatorType actuator_type);
     // Get current encoder readings (robot-dependent).
     virtual void get_joint_encoder_readings(Eigen::VectorXd &angles, gps::ActuatorType arm) const = 0;
-    // Get forward kinematics solver.
-    virtual void get_fk_solver(boost::shared_ptr<KDL::ChainFkSolverPos> &fk_solver, boost::shared_ptr<KDL::ChainJntToJacSolver> &jac_solver, gps::ActuatorType arm);
-
+    
     //tf controller commands.
     //tf publish observation command.
     virtual void tf_publish_obs(Eigen::VectorXd obs);

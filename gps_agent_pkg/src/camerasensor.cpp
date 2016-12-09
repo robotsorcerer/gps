@@ -9,7 +9,7 @@ CameraSensor::CameraSensor(ros::NodeHandle& n, RobotPlugin *plugin): Sensor(n, p
     if (!n.getParam("rgb_topic",rgb_topic_name_))
         rgb_topic_name_ = "/camera/rgb/image_color";
     if (!n.getParam("depth_topic",depth_topic_name_))
-        depth_topic_name_ = "/camera/depth_registered/image_raw";
+        depth_topic_name_ = "/camera/depth_registered/sw_registered/image_rect";
 
     if (!rgb_topic_name_.empty())
       rgb_subscriber_ = n.subscribe(rgb_topic_name_, 1, &CameraSensor::update_rgb_image, this);
