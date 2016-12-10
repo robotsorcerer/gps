@@ -1,8 +1,7 @@
 """ Default configuration and hyperparameter values for GUI objects. """
 import itertools
 
-from gps.proto.gps_pb2 import TRIAL_ARM, AUXILIARY_ARM, BASE_BLADDER, \
-                                RIGHT_BLADDER, LEFT_BLADDER
+from gps.proto.gps_pb2 import TRIAL_ARM, AUXILIARY_ARM
 from gps.gui.ps3_config import PS3_BUTTON, INVERTED_PS3_BUTTON
 
 
@@ -88,7 +87,7 @@ config = {
     'permuted_inverted_ps3_bindings': permuted_inverted_ps3_bindings,
 
     # Images
-    'image_on': True,
+    'image_on': False,
     'image_topic': '/camera/rgb/image_color',
     'image_size': (240, 240),
     'image_overlay_actuator': 'trial_arm',
@@ -99,10 +98,8 @@ config = {
 
     # Target Setup
     'num_targets': 10,
-    'actuator_types': [TRIAL_ARM, AUXILIARY_ARM, \
-                        BASE_BLADDER, LEFT_BLADDER, RIGHT_BLADDER],
-    'actuator_names': ['trial_arm', 'auxiliary_arm', 'base_bladder', \
-                        'right_bladder', 'left_bladder'],
+    'actuator_types': [TRIAL_ARM, AUXILIARY_ARM],
+    'actuator_names': ['trial_arm', 'auxiliary_arm'],
     'target_output_fontsize': 10,
 
     # GPS Training

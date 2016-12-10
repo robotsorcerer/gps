@@ -12,7 +12,6 @@ Algorithm Output Textbox    displays algorithm output after each iteration
 3D Trajectory Visualizer    displays 3D trajectories after each iteration
 Image Visualizer            displays images received from a rostopic
 
-For more detailed documentation, visit: rll.berkeley.edu/gps/gui
 """
 import time
 import threading
@@ -81,27 +80,14 @@ class GPSTrainingGUI(object):
                 wspace=0, hspace=0)
 
         # Assign GUI component locations.
-        self._gs = gridspec.GridSpec(16, 8)
-        self._gs_action_panel           = self._gs[0:2,  0:8]
-        self._gs_action_output          = self._gs[2:3,  0:4]
-        self._gs_status_output          = self._gs[3:4,  0:4]
-        self._gs_cost_plotter           = self._gs[2:4,  4:8]
-        self._gs_algthm_output          = self._gs[4:8,  0:8]
+        self._gs = gridspec.GridSpec(16, 9)
+        self._gs_cost_plotter           = self._gs[2:15,  1:4]
         if config['image_on']:
             self._gs_traj_visualizer    = self._gs[8:16, 0:4]
-            self._gs_image_visualizer   = self._gs[8:16, 4:8]
         else:
-            self._gs_traj_visualizer    = self._gs[8:16, 0:8]
+            self._gs_traj_visualizer    = self._gs[2:15, 5:8]
 
         # Create GUI components.
-        self._action_panel = ActionPanel(self._fig, self._gs_action_panel, 1, 4, actions_arr)
-        self._action_output = Textbox(self._fig, self._gs_action_output, border_on=True)
-        self._status_output = Textbox(self._fig, self._gs_status_output, border_on=False)
-        self._algthm_output = Textbox(self._fig, self._gs_algthm_output,
-                max_display_size=config['algthm_output_max_display_size'],
-                log_filename=self._log_filename,
-                fontsize=config['algthm_output_fontsize'],
-                font_family='monospace')
         self._cost_plotter = MeanPlotter(self._fig, self._gs_cost_plotter,
                 color='blue', label='mean cost')
         self._traj_visualizer = Plotter3D(self._fig, self._gs_traj_visualizer,
@@ -112,8 +98,6 @@ class GPSTrainingGUI(object):
                     rostopic=config['image_topic'], show_overlay_buttons=True)
 
         # Setup GUI components.
-        self._algthm_output.log_text('\n')
-        self.set_output_text(self._hyperparams['info'])
         if config['initial_mode'] == 'run':
             self.run_mode()
         else:
@@ -206,7 +190,7 @@ class GPSTrainingGUI(object):
 
     def run_mode(self):
         self.mode = 'run'
-        self.set_action_text('running')
+        # self.set_action_text('running')
         self.set_action_bgcolor(self._colors[self.mode], alpha=1.0)
 
     def end_mode(self):
@@ -219,23 +203,18 @@ class GPSTrainingGUI(object):
 
     # GUI functions
     def set_action_text(self, text):
-        self._action_output.set_text(text)
         self._cost_plotter.draw_ticklabels()    # redraw overflow ticklabels
 
     def set_action_bgcolor(self, color, alpha=1.0):
-        self._action_output.set_bgcolor(color, alpha)
         self._cost_plotter.draw_ticklabels()    # redraw overflow ticklabels
 
     def set_status_text(self, text):
-        self._status_output.set_text(text)
         self._cost_plotter.draw_ticklabels()    # redraw overflow ticklabels
 
     def set_output_text(self, text):
-        self._algthm_output.set_text(text)
         self._cost_plotter.draw_ticklabels()    # redraw overflow ticklabels
 
     def append_output_text(self, text):
-        self._algthm_output.append_text(text)
         self._cost_plotter.draw_ticklabels()    # redraw overflow ticklabels
 
     def start_display_calculating(self):
