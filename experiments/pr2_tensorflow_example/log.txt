@@ -1,0 +1,60 @@
+
+
+exp_name:   my_experiment_12-10-16_18-10
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_12-10-16_22-34
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_12-10-16_22-36
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_12-10-16_22-46
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+
+
+exp_name:   my_experiment_12-10-16_22-48
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
+my_experiment_12-10-16_22-48
+    |                       |          condition 0                                  |          condition 1                                 
+itr | avg_cost avg_pol_cost |   cost     step   entropy  pol_cost kl_div_i kl_div_f |   cost     step   entropy  pol_cost kl_div_i kl_div_f
+  0 |  -575.60      -576.25 |  -575.13     5.00  -127.51  -576.25    29.70    19.93 |  -576.07     5.00  -127.51  -576.25    29.62    18.85
+  1 |  -576.25      -576.25 |  -576.25     0.50 -1071.60  -576.25     1.14     0.54 |  -576.25     0.50 -1070.05  -576.25     0.49     0.65
+  2 |  -576.25      -576.25 |  -576.25     2.50 -1130.16  -576.25     0.66     2.00 |  -576.25     2.50 -1142.48  -576.25     0.81     2.31
+  3 |  -576.25      -576.25 |  -576.25     0.25 -1340.05  -576.25     0.72     3.19 |  -576.25     3.30 -1353.48  -576.25     1.18     4.05
+  4 |  -576.25      -576.25 |  -576.25     1.25 -1395.11  -576.25     2.65     3.60 |  -576.25     2.92 -1786.27  -576.25     1.53     2.49
+  5 |  -576.25      -576.25 |  -576.25     5.00 -1621.74  -576.25     0.69     2.58 |  -576.25     5.00 -1843.89  -576.25     0.56     2.05
+  6 |  -576.25      -576.25 |  -576.25     5.00 -1729.19  -576.25     0.74     1.04 |  -576.25     5.00 -1761.43  -576.25     0.44     1.08
