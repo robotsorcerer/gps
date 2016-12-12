@@ -87,7 +87,7 @@ config = {
     'permuted_inverted_ps3_bindings': permuted_inverted_ps3_bindings,
 
     # Images
-    'image_on': True,
+    'image_on': False,
     'image_topic': '/camera/rgb/image_color',
     'image_size': (240, 240),
     'image_overlay_actuator': 'trial_arm',

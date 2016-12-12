@@ -58,3 +58,13 @@ itr | avg_cost avg_pol_cost |   cost     step   entropy  pol_cost kl_div_i kl_di
   4 |  -576.25      -576.25 |  -576.25     1.25 -1395.11  -576.25     2.65     3.60 |  -576.25     2.92 -1786.27  -576.25     1.53     2.49
   5 |  -576.25      -576.25 |  -576.25     5.00 -1621.74  -576.25     0.69     2.58 |  -576.25     5.00 -1843.89  -576.25     0.56     2.05
   6 |  -576.25      -576.25 |  -576.25     5.00 -1729.19  -576.25     0.74     1.04 |  -576.25     5.00 -1761.43  -576.25     0.44     1.08
+
+
+exp_name:   my_experiment_12-12-16_15-03
+alg_type:   AlgorithmBADMM
+alg_dyn:    DynamicsLRPrior
+alg_cost:   CostSum(CostAction, CostFK, CostFK)
+iterations: 10
+conditions: 2
+samples:    5
+
