@@ -18,8 +18,8 @@ set(Caffe_DIR                     $ENV{CAFFE_ROOT})
 #set(USE_CAFFE USE_CAFFE_GPU ON)
 
 OPTION(ENABLE_CXX11 "Enable C++11 support" ON)
-OPTION(USE_CAFFE "Enable Caffe support" ON)
-OPTION(USE_CAFFE_GPU "Enable Caffe GPU support" ON)
+OPTION(USE_CAFFE "Enable Caffe support" OFF)
+OPTION(USE_CAFFE_GPU "Enable Caffe GPU support" OFF)
 
 IF(ENABLE_CXX11)
   INCLUDE(CheckCXXCompilerFlag)
@@ -42,10 +42,10 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   orocos_kdl
   pluginlib
-  pr2_controller_interface
-  pr2_controller_manager
-  pr2_controllers_msgs
-  pr2_mechanism_model
+  moveit_msgs
+  moveit_core
+  moveit_ros_planning
+  moveit_ros_planning_interface
   genmsg
   message_generation
   realtime_tools
@@ -81,7 +81,7 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
-   geometry_msgs   pr2_controllers_msgs   sensor_msgs   std_msgs  
+   geometry_msgs sensor_msgs   std_msgs  
  )
 
 ## DEPENDS: system dependencies of this project that dependent projects also need
@@ -131,12 +131,16 @@ endif (USE_CAFFE)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  $ENV{GPS_ROOT_DIR}/build/gps  
+  $ENV{GPS_ROOT_DIR}/build/gps 
+  SYSTEM 
+  ${Boost_INCLUDE_DIR}
+  ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS} 
 )
 
 
 set(DDP_FILES src/robotplugin.cpp
-              src/superchickplugin.cpp
+              #src/superchickplugin.cpp
               src/sample.cpp
               src/sensor.cpp
               src/neuralnetwork.cpp
@@ -146,9 +150,8 @@ set(DDP_FILES src/robotplugin.cpp
               src/camerasensor.cpp
               src/positioncontroller.cpp
               src/trialcontroller.cpp
-              src/encodersensor.cpp
-              src/encoderfilter.cpp
               src/rostopicsensor.cpp
+              src/vicontopicsensor.cpp
               src/util.cpp)
 
 add_library(gps_agent_lib
@@ -158,10 +161,12 @@ link_directories(${catkin_LIBRARY_DIRS})
 
 # Include Caffe in controller
 if (USE_CAFFE)
-    target_link_libraries(gps_agent_lib caffe protobuf)
+    target_link_libraries(gps_agent_lib caffe protobuf  ${catkin_LIBRARIES} 
+    									${Eigen_LIBRARIES} ${Boost_LIBRARIES}) 
 endif (USE_CAFFE)
 
-target_link_libraries(gps_agent_lib pthread )
+target_link_libraries(gps_agent_lib pthread  ${catkin_LIBRARIES} 
+									${Eigen_LIBRARIES} ${Boost_LIBRARIES})
 
 add_dependencies(gps_agent_lib ${PROJECT_NAME}_gencpp)
 

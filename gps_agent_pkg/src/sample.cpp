@@ -1,4 +1,5 @@
 #include "gps_agent_pkg/sample.h"
+#include <geometry_msgs/Point.h>
 #include "gps/proto/gps.pb.h"
 #include "ros/ros.h"
 
@@ -91,6 +92,24 @@ void Sample::set_meta_data(gps::SampleType type, int data_size_rows, int data_si
     {
         for (int t = 0; t < T_; t++)
             internal_data_[type][t] = Eigen::MatrixXd(data_size_rows, data_size_cols);
+    }
+
+    //pre-allocate geometry_msgs point messages
+    if (data_format == SampleDataFormatGeometryPoint)
+    {
+        for (int t = 0; t < T_; t++)
+            internal_data_[type][t] = Eigen::VectorXd(data_size_rows); //(data_size_rows, data_size_cols);
+    }
+    //pre-allocate geometry_msgs twist messages
+    if (data_format == SampleDataFormatGeometryTwist)
+    {
+        for (int t = 0; t < T_; t++)
+            internal_data_[type][t] = Eigen::VectorXd(data_size_rows);; //(data_size_rows, data_size_cols);
+    }
+    if (data_format == SampleDataFormatPointCloud2)
+    {
+        for (int t = 0; t < T_; t++)
+            internal_data_[type][t] = Eigen::MatrixXd(data_size_rows, data_size_cols); //(data_size_rows, data_size_cols);
     }
     return;
 }

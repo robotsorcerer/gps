@@ -10,11 +10,21 @@ CameraSensor::CameraSensor(ros::NodeHandle& n, RobotPlugin *plugin): Sensor(n, p
         rgb_topic_name_ = "/camera/rgb/image_color";
     if (!n.getParam("depth_topic",depth_topic_name_))
         depth_topic_name_ = "/camera/depth_registered/sw_registered/image_rect";
+    if (!n.getParam("vicon_topic",vicon_topic_name))
+        vicon_topic_name = "/vicon/markers";
+    if (!n.getParam("vicon_twist_topic",vicon_twist_topic_name_))
+        vicon_twist_topic_name_ = "/vicon/headtwist";
+
 
     if (!rgb_topic_name_.empty())
       rgb_subscriber_ = n.subscribe(rgb_topic_name_, 1, &CameraSensor::update_rgb_image, this);
     if (!depth_topic_name_.empty())
       depth_subscriber_ = n.subscribe(depth_topic_name_, 1, &CameraSensor::update_depth_image, this);
+    if (!vicon_topic_name.empty())
+      vicon_subscriber_ = n.subscribe(vicon_topic_name, 1, &CameraSensor::update_vicon_markers, this);
+    if (!vicon_twist_topic_name_.empty())
+      vicon_twist_subscriber_ = n.subscribe(vicon_twist_topic_name_, 1, &CameraSensor::update_vicon_pose, this);
+
 
     // Initialize image config specs - image_width_init_, image_width_, etc.
     if (!n.getParam("image_width",image_width_))
@@ -25,7 +35,14 @@ CameraSensor::CameraSensor(ros::NodeHandle& n, RobotPlugin *plugin): Sensor(n, p
       image_width_init_ = IMAGE_WIDTH_INIT;
     if (!n.getParam("image_height_init",image_height_init_))
       image_height_init_ = IMAGE_HEIGHT_INIT;
-    image_size_ = image_width_*image_height_;
+      image_size_ = image_width_*image_height_;
+
+    //Initialize vicon cloud height and width
+    if (!n.getParam("vicon_height",vicon_height_))
+      vicon_height_ = VICON_CLOUD_HEIGHT;
+    if (!n.getParam("vicon_width",vicon_width_))
+      vicon_width_ = VICON_CLOUD_WIDTH;
+      vicon_size_ = vicon_height_ * vicon_width_;
 
     // Initialize rgb image.
     latest_rgb_image_.resize(image_size_*3,0);
@@ -33,9 +50,20 @@ CameraSensor::CameraSensor(ros::NodeHandle& n, RobotPlugin *plugin): Sensor(n, p
     // Initialize depth image.
     latest_depth_image_.resize(image_size_,0);
 
+    //initialize latest vicon markers
+    // latest_vicon_markers_.resize(4,0);
+
+    //initialize latest vicon pose
+    // latest_vicon_pose_.resize(6,0);
+
+    //initialize latest vicon clouds
+    // latest_vicon_clouds_.resize(vicon_size_,0);
+
     // Set time.
     latest_rgb_time_ = ros::Time(0.0);
     latest_depth_time_ = ros::Time(0.0);
+    latest_vicon_time_ = ros::Time(0.0);
+    latest_vicon_twist_time_ = ros::Time(0.0);
 }
 
 // Destructor.
@@ -109,6 +137,26 @@ void CameraSensor::update_depth_image(const sensor_msgs::Image::ConstPtr& msg) {
     }
 }
 
+void CameraSensor::update_vicon_markers(const vicon_bridge::Markers::ConstPtr& markers_msg)
+{   
+    latest_vicon_time_ = markers_msg->header.stamp;
+    //Retrieve geometry_msgs Point translation for four markers on superchicko    
+    for(int i=0; i < 4; ++i)
+    {
+        latest_vicon_markers_[i] = markers_msg -> markers[i].translation;
+    }
+}
+
+void CameraSensor::update_vicon_pose(const geometry_msgs::Twist::ConstPtr& pose_msg)
+{   
+    latest_vicon_twist_time_ = ros::Time::now();  //twist has no header
+    //Retrieve geometry_msgs Point translation for four markers on superchicko    
+    for(int i=0; i < 1; ++i)
+    {        
+        latest_vicon_pose_[i] = *pose_msg;
+    }
+}
+
 // Update the sensor (called every tick).
 void CameraSensor::update(RobotPlugin *plugin, ros::Time current_time, bool is_controller_step)
 {
@@ -131,6 +179,18 @@ void CameraSensor::set_sample_data_format(boost::scoped_ptr<Sample> sample) cons
     // Set joint velocities size and format.
     OptionsMap depth_metadata;
     sample->set_meta_data(gps::DEPTH_IMAGE,image_size_*2,SampleDataFormatUInt16,depth_metadata);
+
+    // Set vicon markers meta data
+    OptionsMap viconMarkers_metadata;
+    sample->set_meta_data(gps::VICON_MARKERS,4,SampleDataFormatGeometryPoint,viconMarkers_metadata);
+
+    //Set vicon markers meta data
+    OptionsMap viconTwist_metadata;
+    sample->set_meta_data(gps::VICON_POSE,1,SampleDataFormatGeometryTwist,viconTwist_metadata);
+
+    //Set vicon markers meta data
+    OptionsMap viconCloud_metadata;
+    sample->set_meta_data(gps::VICON_CLOUDS,1,SampleDataFormatPointCloud2,viconCloud_metadata);
 }
 
 // Set data on the provided sample.
@@ -141,4 +201,14 @@ void CameraSensor::set_sample_data(boost::scoped_ptr<Sample> sample) const
 
     // Set depth image.
     sample->set_data(0,gps::DEPTH_IMAGE,&latest_depth_image_[0],latest_depth_image_.size(),SampleDataFormatUInt16);
+
+    // Set vicon markers
+    sample->set_data(0,gps::VICON_MARKERS,&latest_vicon_markers_[0],latest_vicon_markers_.size(),SampleDataFormatGeometryPoint);
+
+    // Set vicon pose
+    sample->set_data(0,gps::VICON_POSE,&latest_vicon_pose_[0],latest_vicon_pose_.size(),SampleDataFormatGeometryTwist);
+
+    // Set vicon clouds
+    sample->set_data(0,gps::VICON_CLOUDS,&latest_vicon_clouds_[0],latest_vicon_clouds_.size(),SampleDataFormatGeometryTwist);
+
 }

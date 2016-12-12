@@ -15,9 +15,6 @@ This is the PR2-specific version of the robot plugin.
 #include "gps/proto/gps.pb.h"
 
 // MoveIt!
-#include <moveit/robot_model_loader/robot_model_loader.h>
-#include <moveit/robot_model/robot_model.h>
-#include <moveit/robot_state/robot_state.h>
 
 #include <moveit/move_group_interface/move_group.h>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
@@ -25,14 +22,17 @@ This is the PR2-specific version of the robot plugin.
 #include <moveit_msgs/DisplayRobotState.h>
 #include <moveit_msgs/DisplayTrajectory.h>
 
-#include <moveit_msgs/AttachedCollisionObject.h>
-#include <moveit_msgs/CollisionObject.h>
+#include <moveit/robot_model_loader/robot_model_loader.h>
+#include <moveit/robot_model/robot_model.h>
+#include <moveit/robot_state/robot_state.h>
+
 namespace gps_control
 {
 
 class GPSSuperchickPlugin: public RobotPlugin
 {
 private:
+/*   
     robot_model_loader::RobotModelLoader robot_model_loader;
     // ("robot_description");
     robot_model::RobotModelPtr RobotModel;
@@ -41,20 +41,21 @@ private:
     const robot_state::JointModelGroup* base_model_group;
     const std::vector<std::string> *joint_names;
     std::vector<double> joint_values;
+    */
 
+    //move_it robot model loader
+    robot_model_loader::RobotModelLoader *robot_model_loader;
+    //state of the robot
+    robot_state::RobotStatePtr RobotState;
+    //Robot Model
+    robot_model::RobotModelPtr RobotModel;
+    //joint names
+    const std::vector<std::string> joint_names;
+    // We can retreive the current set of joint values stored in the state for the base bladder.
+    std::vector<double> base_joint_values;
+    //base_joint group
+    const robot_state::JointModelGroup* base_joint_group;
 
-/*    // superchick-specific chain object necessary to construct the KDL chain.
-    superchick_mechanism_model::Chain passive_arm_chain_, active_arm_chain_;
-    // This is a pointer to the robot state, which we get when initialized and have to keep after that.
-    superchick_mechanism_model::RobotState* robot_;
-    // Passive arm joint states.
-    std::vector<superchick_mechanism_model::JointState*> passive_arm_joint_state_;
-    // Active arm joint states.
-    std::vector<superchick_mechanism_model::JointState*> active_arm_joint_state_;
-    // Passive arm joint names.
-    std::vector<std::string> passive_arm_joint_names_;
-    // Active arm joint names.
-    std::vector<std::string> active_arm_joint_names_;*/
     // Time of last state update.
     ros::Time last_update_time_;
     // Counter for keeping track of controller steps.
@@ -90,7 +91,7 @@ public:
     // Get current time.
     virtual ros::Time get_current_time() const;
     // Get current encoder readings (robot-dependent).
-    virtual void get_joint_encoder_readings(Eigen::VectorXd &angles, gps::ActuatorType arm) const;
+    // virtual void get_joint_encoder_readings(Eigen::VectorXd &angles, gps::ActuatorType arm) const;
 };
 
 }

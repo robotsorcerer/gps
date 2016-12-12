@@ -82,7 +82,7 @@ void RobotPlugin::initialize_sensors(ros::NodeHandle& n)
     sensors_.clear();
 
     // Create all sensors.
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3; i++)
     //for (int i = 0; i < TotalSensorTypes; i++)
     {
         ROS_INFO_STREAM("creating sensor: " + to_string(i));
@@ -95,6 +95,7 @@ void RobotPlugin::initialize_sensors(ros::NodeHandle& n)
     initialize_sample(current_time_step_sample_, gps::BASE_BLADDER);
 
     aux_sensors_.clear();
+    //hack to use vicon and kinect for now
     for (int i = 0; i < 1; i++)
     {
         ROS_INFO_STREAM("creating auxiliary sensor: " + to_string(i));
@@ -123,7 +124,7 @@ void RobotPlugin::configure_sensors(OptionsMap &opts)
     // Set sample data format on the actions, which are not handled by any sensor.
     OptionsMap sample_metadata;
     current_time_step_sample_->set_meta_data(
-        gps::ACTION,active_arm_torques_.size(),SampleDataFormatEigenVector,sample_metadata);
+        gps::ACTION,base_bladder_torques_.size(),SampleDataFormatEigenVector,sample_metadata);
 
     // configure auxiliary sensors
     for (int i = 0; i < aux_sensors_.size(); i++)
@@ -157,7 +158,7 @@ void RobotPlugin::initialize_sample(boost::scoped_ptr<Sample>& sample, gps::Actu
         }
         // Set sample data format on the actions, which are not handled by any sensor.
         OptionsMap sample_metadata;
-        sample->set_meta_data(gps::ACTION,active_arm_torques_.size(),SampleDataFormatEigenVector,sample_metadata);
+        sample->set_meta_data(gps::ACTION,base_bladder_torques_.size(),SampleDataFormatEigenVector,sample_metadata);
     }
     else if (actuator_type == gps::RIGHT_BLADDER)
     {
@@ -211,7 +212,7 @@ void RobotPlugin::update_controllers(ros::Time current_time, bool is_controller_
 {
     // Update passive arm controller.
     // TODO - don't pass in wrong sample if used
-    passive_arm_controller_->update(this, current_time, current_time_step_sample_, passive_arm_torques_);
+    right_bladder_controller_->update(this, current_time, current_time_step_sample_, right_bladder_torques_);
 
     bool trial_init = trial_controller_ != NULL && trial_controller_->is_configured() && controller_initialized_;
     if(!is_controller_step && trial_init){
@@ -219,8 +220,8 @@ void RobotPlugin::update_controllers(ros::Time current_time, bool is_controller_
     }
 
     // If we have a trial controller, update that, otherwise update position controller.
-    if (trial_init) trial_controller_->update(this, current_time, current_time_step_sample_, active_arm_torques_);
-    else active_arm_controller_->update(this, current_time, current_time_step_sample_, active_arm_torques_);
+    if (trial_init) trial_controller_->update(this, current_time, current_time_step_sample_, base_bladder_torques_);
+    else active_arm_controller_->update(this, current_time, current_time_step_sample_, base_bladder_torques_);
 
     // Check if the trial controller finished and delete it.
     if (trial_init && trial_controller_->is_finished()) {
@@ -539,7 +540,7 @@ Sensor *RobotPlugin::get_sensor(SensorType sensor, gps::ActuatorType actuator_ty
         return aux_sensors_[sensor].get();
     }
 }
-
+/*
 // Get forward kinematics solver.
 void RobotPlugin::get_fk_solver(boost::shared_ptr<KDL::ChainFkSolverPos> &fk_solver, boost::shared_ptr<KDL::ChainJntToJacSolver> &jac_solver, gps::ActuatorType arm)
 {
@@ -558,7 +559,7 @@ void RobotPlugin::get_fk_solver(boost::shared_ptr<KDL::ChainFkSolverPos> &fk_sol
         ROS_ERROR("Unknown ArmType %i requested for joint encoder readings!",arm);
     }
 }
-
+*/
 void RobotPlugin::tf_robot_action_command_callback(const gps_agent_pkg::TfActionCommand::ConstPtr& msg){
 
     bool trial_init = trial_controller_ != NULL && trial_controller_->is_configured();

@@ -10,12 +10,13 @@ space.
 // Superclass.
 #include "gps_agent_pkg/controller.h"
 #include "gps/proto/gps.pb.h"
+#include "gps_agent_pkg/camerasensor.h"
 #include <geometry_msgs/Twist.h>
 
 namespace gps_control
 {
 
-class PositionController : public Controller
+class PositionController : public Controller//, public CameraSensor
 {
 private:
     // P gains.
@@ -33,6 +34,8 @@ private:
     Eigen::MatrixXd temp_jacobian_;
     // Temporary storage for joint angle offset.
     Eigen::VectorXd temp_angles_;
+    // Temporary storage for pose offset.
+    Eigen::VectorXd temp_pose_;
     // Current target (joint space).
     Eigen::VectorXd target_angles_;
     // Current target (task space).
@@ -54,6 +57,10 @@ private:
     ros::Time start_time_;
     // Time of last update.
     ros::Time last_update_time_;
+    //Robot plugin
+    RobotPlugin *plugin;
+    //instantiate camera sensor class
+    CameraSensor *camerasensor;
 public:
     // Constructor.
     PositionController(ros::NodeHandle& n, gps::ActuatorType arm, int size);

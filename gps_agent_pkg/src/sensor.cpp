@@ -1,6 +1,7 @@
 #include "gps_agent_pkg/sensor.h"
-#include "gps_agent_pkg/encodersensor.h"
+#include "gps_agent_pkg/camerasensor.h"
 #include "gps_agent_pkg/rostopicsensor.h"
+#include "gps_agent_pkg/vicontopicsensor.h"
 
 using namespace gps_control;
 
@@ -8,19 +9,18 @@ using namespace gps_control;
 Sensor* Sensor::create_sensor(SensorType type, ros::NodeHandle& n, RobotPlugin *plugin, gps::ActuatorType actuator_type)
 {
     switch (type)
-    {
-/*    case EncoderSensorType:
-        return (Sensor *) (new EncoderSensor(n,plugin,actuator_type));*/
-    
-    case CameraSensorType:
-        return CameraSensor(n,plugin);
-    
-    case ROSTopicSensorType:
-	   return (Sensor *) (new ROSTopicSensor(n,plugin));
+    {    
+/*        case CameraSensorType:
+            return CameraSensor(n,plugin);*/
+        
+        case ROSTopicSensorType:
+    	   return (Sensor *) (new ROSTopicSensor(n,plugin));
+        case ViconSensorType:
+            return (Sensor *) (new ViconTopicSensor(n, plugin));
 
-    default:
-        ROS_ERROR("Unknown sensor type %i requested from sensor constructor!",type);
-        return NULL;
+        default:
+            ROS_ERROR("Unknown sensor type %i requested from sensor constructor!",type);
+            return NULL;
     }
 }
 

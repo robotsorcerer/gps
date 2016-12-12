@@ -48,7 +48,6 @@ class Sample;
 class SampleResult;
 class PositionCommand;
 class TrialCommand;
-class BaseController;
 class RelaxCommand;
 
 
@@ -60,18 +59,22 @@ protected:
     Eigen::VectorXd active_arm_torques_;
     // Temporary storage for passive arm torques to be applied at each step.
     Eigen::VectorXd  passive_arm_torques_;
+    // Temporary storage for active arm torques to be applied at each step.
+    Eigen::VectorXd base_bladder_torques_;
+    // Temporary storage for passive arm torques to be applied at each step.
+    Eigen::VectorXd  right_bladder_torques_;
     // Position controller for passive arm.
     boost::scoped_ptr<PositionController> passive_arm_controller_;
     // Position controller for active arm.
     boost::scoped_ptr<PositionController> active_arm_controller_;
+    // Position controller for base bladder.
+    boost::scoped_ptr<PositionController> base_bladder_controller_;
+    // Position controller for active arm.
+    boost::scoped_ptr<PositionController> right_bladder_controller_;
+    // Current left_bladder controller (if any).
+    boost::scoped_ptr<PositionController> left_bladder_controller_;
     // Current trial controller (if any).
     boost::scoped_ptr<TrialController> trial_controller_;
-    // Current base_bladder controller (if any).
-    boost::scoped_ptr<BaseController> base_bladder_controller_;
-    // Current right_bladder controller (if any).
-    boost::scoped_ptr<BaseController> right_bladder_controller_;
-    // Current left_bladder controller (if any).
-    boost::scoped_ptr<BaseController> left_bladder_controller_;
     // Sensor data for the current time step.
     boost::scoped_ptr<Sample> current_time_step_sample_;
     // Auxiliary Sensor data for the current time step.
@@ -151,8 +154,6 @@ public:
     virtual ros::Time get_current_time() const = 0;
     // Get sensor
     virtual Sensor *get_sensor(SensorType sensor, gps::ActuatorType actuator_type);
-    // Get current encoder readings (robot-dependent).
-    virtual void get_joint_encoder_readings(Eigen::VectorXd &angles, gps::ActuatorType arm) const = 0;
     
     //tf controller commands.
     //tf publish observation command.

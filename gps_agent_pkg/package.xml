@@ -12,42 +12,45 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>control_toolbox</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>orocos_kdl</build_depend>
   <build_depend>pluginlib</build_depend>
-  <build_depend>pr2_controller_interface</build_depend>
-  <build_depend>pr2_controller_manager</build_depend>
-  <build_depend>pr2_controllers_msgs</build_depend>
-  <build_depend>pr2_mechanism_model</build_depend>
   <build_depend>realtime_tools</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>roslib</build_depend>
   <build_depend>rospy</build_depend>
-  <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
   <build_depend>tf</build_depend>  
-  <build_depend>message_generation</build_depend>
-  <build_depend>kdl_parser</build_depend>  
+  <build_depend>orocos_kdl</build_depend>
+  <build_depend>message_generation</build_depend>  
+  <build_depend>vicon_bridge</build_depend>
+  <build_depend>moveit_msgs</build_depend>
+  <build_depend>moveit_core</build_depend>
+  <build_depend>moveit_ros</build_depend>
+  <build_depend>moveit_ros_planning</build_depend>
+  <build_depend>moveit_ros_planning_interface</build_depend>
 
   <run_depend>control_toolbox</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>orocos_kdl</run_depend>
   <run_depend>pluginlib</run_depend>
-  <run_depend>pr2_controller_interface</run_depend>
-  <run_depend>pr2_controller_manager</run_depend>
-  <run_depend>pr2_controllers_msgs</run_depend>
-  <run_depend>pr2_mechanism_model</run_depend>
   <run_depend>realtime_tools</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>roslib</run_depend>
   <run_depend>rospy</run_depend>
-  <run_depend>sensor_msgs</run_depend>
+  <run_depend>orocos_kdl</run_depend>
   <run_depend>std_msgs</run_depend>
-  <run_depend>tf</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>tf</run_depend>  
+  <run_depend>vicon_bridge</run_depend>
   <run_depend>message_runtime</run_depend>
-  <run_depend>kdl_parser</run_depend>
+  <run_depend>moveit_msgs</run_depend>
+  <run_depend>moveit_ros</run_depend>
+  <run_depend>cmake_modules</run_depend>
+  <run_depend>moveit_core</run_depend>
+  <run_depend>moveit_ros_planning</run_depend>
+  <run_depend>moveit_ros_planning_interface</run_depend>
 
   <export>
-    <pr2_controller_interface plugin="${prefix}/controller_plugins.xml" />
+    <superchick_controller_interface plugin="${prefix}/controller_plugins.xml" />
   </export>
 </package>

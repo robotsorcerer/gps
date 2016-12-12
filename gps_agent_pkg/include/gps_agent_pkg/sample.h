@@ -30,7 +30,10 @@ enum SampleDataFormat
     SampleDataFormatInt,
     SampleDataFormatDouble,
     SampleDataFormatEigenMatrix,
-    SampleDataFormatEigenVector
+    SampleDataFormatEigenVector,
+    SampleDataFormatGeometryPoint,
+    SampleDataFormatGeometryTwist,
+    SampleDataFormatPointCloud2
 };
 
 typedef boost::variant<bool,uint8_t,std::vector<int>,int,double,Eigen::MatrixXd,Eigen::VectorXd> SampleVariant;

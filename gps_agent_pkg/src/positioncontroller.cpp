@@ -1,6 +1,7 @@
-#include "gps_agent_pkg/positioncontroller.h"
-#include "gps_agent_pkg/robotplugin.h"
 #include "gps_agent_pkg/util.h"
+#include "gps_agent_pkg/robotplugin.h"
+#include "gps_agent_pkg/superchickplugin.h"
+#include "gps_agent_pkg/positioncontroller.h"
 
 using namespace gps_control;
 
@@ -36,6 +37,10 @@ PositionController::PositionController(ros::NodeHandle& n, gps::ActuatorType arm
 
     //
     report_waiting = false;
+
+
+    //instantiate camera sensor class
+    camerasensor = new CameraSensor; //(n, &robotplugin);
 }
 
 // Destructor.
@@ -43,16 +48,12 @@ PositionController::~PositionController()
 {
 }
 
-void PositionController::pose_callback(const geometry_msgs::Twist& twist_msg)
-{
-    geometry_msgs::Twist
-}
 
 // Update the controller (take an action).
 void PositionController::update(RobotPlugin *plugin, ros::Time current_time, boost::scoped_ptr<Sample>& sample, Eigen::VectorXd &torques)
 {
-    // Get current joint angles.
-    plugin->get_joint_encoder_readings(temp_angles_, arm_);
+/*    // Get current joint angles.
+    plugin->get_task_space_readings(temp_angles_, arm_);
 
     // Check dimensionality.
     assert(temp_angles_.rows() == torques.rows());
@@ -69,17 +70,35 @@ void PositionController::update(RobotPlugin *plugin, ros::Time current_time, boo
     current_angles_ = temp_angles_;
 
     // Update last update time.
-    last_update_time_ = current_time;
+    last_update_time_ = current_time;*/
 
     // If doing task space control, compute task positions target.
     if (mode_ == gps::TASK_SPACE)
     {
-        ros::Subscriber sub = n.subscribe("/vicon/headtwist", 100, &PositionController::pose_callback, *this)
-
+        
         // TODO: implement.
-        // Get current end effector position.
 
+        // Get current end effector position. latest_vicon_pose_
+        geometry_msgs::Twist current_headpose = camerasensor->latest_vicon_pose_[1];
+        //retrieve the markers just for a check
+        geometry_msgs::Point fore  = latest_vicon_markers_[0];
+        geometry_msgs::Point left  = latest_vicon_markers_[1];
+        geometry_msgs::Point right = latest_vicon_markers_[2];
+        geometry_msgs::Point chin  = latest_vicon_markers_[3];
         // Get current Jacobian.
+
+        // estimate twist, i.e. task space velocities
+        double update_time = current_time.toSec() - last_update_time_.toSec();
+        if (!last_update_time_.isZero())
+        { // Only compute velocities if we have a previous sample.
+            current_angle_velocities_ = (temp_angles_ - current_angles_)/update_time;
+        }
+
+        // Store new angles.
+        current_angles_ = temp_angles_;
+
+        // Update last update time.
+        last_update_time_ = current_time;
 
         // TODO: should also try Jacobian pseudoinverse, it may work a little better.
         // Compute desired joint angle offset using Jacobian transpose method.

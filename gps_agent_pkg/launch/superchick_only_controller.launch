@@ -5,7 +5,8 @@
 
     <!-- controller params -->
     <param name="GPSSuperchickPlugin/base_name" value="big_bladder_link" />
-    <param name="GPSSuperchickPlugin/head_name" value="headnBall_link" />
+    <param name="GPSSuperchickPlugin/base_group" value="base_bladder" />
+    <param name="GPSSuperchickPlugin/head_name" value="headnball_link" />
     <param name="GPSSuperchickPlugin/right_name" value="rightbladder_to_neck" />
 
     <!-- Spawn Controller -->

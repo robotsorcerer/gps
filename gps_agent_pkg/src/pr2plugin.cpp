@@ -1,12 +1,13 @@
-#include "gps_agent_pkg/superchickplugin.h"
+#include "gps_agent_pkg/pr2plugin.h"
 #include "gps_agent_pkg/positioncontroller.h"
 #include "gps_agent_pkg/trialcontroller.h"
+#include "gps_agent_pkg/encodersensor.h"
 #include "gps_agent_pkg/util.h"
 
 namespace gps_control {
 
 // Plugin constructor.
-GPSSuperchickPlugin::GPSSuperchickPlugin()
+GPSPR2Plugin::GPSPR2Plugin()
 {
     // Some basic variable initialization.
     controller_counter_ = 0;
@@ -14,95 +15,46 @@ GPSSuperchickPlugin::GPSSuperchickPlugin()
 }
 
 // Destructor.
-GPSSuperchickPlugin::~GPSSuperchickPlugin()
+GPSPR2Plugin::~GPSPR2Plugin()
 {
     // Nothing to do here, since all instance variables are destructed automatically.
 }
 
 // Initialize the object and store the robot state.
-bool GPSSuperchickPlugin::init(ros::NodeHandle& n)
+bool GPSPR2Plugin::init(pr2_mechanism_model::RobotState* robot, ros::NodeHandle& n)
 {
-    ros::AsyncSpinner spinner(1);
-    spinner.start();
-
     // Variables.
-    std::string base_group, head_name, right_name;
+    std::string root_name, active_tip_name, passive_tip_name;
 
-/*    // construct a
-    // :moveit_core:`RobotState` that maintains the configuration
-    // of the robot.
-    robot_state::RobotStatePtr RobotState(new robot_state::RobotState(RobotModel));
-    RobotState->setToDefaultValues();
-
-    
-
-    sleep(3.0);
-    
-    moveit::planning_interface::MoveGroup *group;
-    group = new moveit::planning_interface::MoveGroup("base_bladder");
-    group->setEndEffectorLink("headnball_link");
-
-    // We will use the :planning_scene_interface:`PlanningSceneInterface`
-    // class to deal directly with the world.
-    moveit::planning_interface::PlanningSceneInterface planning_scene_interface;  
-
-    // Create a publisher for visualizing plans in Rviz.
-    ros::Publisher display_publisher = node_handle.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
-    moveit_msgs::DisplayTrajectory display_trajectory;
-
-    // We can print the name of the reference frame for this robot.
-    ROS_INFO("Reference frame: %s", group->getPlanningFrame().c_str());
-    // print the name of the end-effector link for this group.
-    robot_state::RobotState begin_state(*group->getCurrentState());
-
-    const robot_state::JointModelGroup *base_model_group =
-                    begin_state.getJointModelGroup(group->getName());
-
-    std::string end_effector_id = base_model_group->getLinkModelNames().back();
-    ROS_INFO_STREAM("Reference frame: " << end_effector_id);*/
-
+    // Store the robot state.
+    robot_ = robot;
 
     // Create FK solvers.
     // Get the name of the root.
-    if(!n.getParam("/GPSSuperchickPlugin/base_group", base_group)) {
-        ROS_ERROR("Property base_group not found in namespace: '%s'", n.getNamespace().c_str());
+    if(!n.getParam("root_name", root_name)) {
+        ROS_ERROR("Property root_name not found in namespace: '%s'", n.getNamespace().c_str());
         return false;
     }
 
     // Get active and passive arm end-effector names.
-    if(!n.getParam("/GPSSuperchickPlugin/head_name", head_name)) {
-        ROS_ERROR("Property head_name not found in namespace: '%s'", n.getNamespace().c_str());
+    if(!n.getParam("active_tip_name", active_tip_name)) {
+        ROS_ERROR("Property active_tip_name not found in namespace: '%s'", n.getNamespace().c_str());
         return false;
     }
-    if(!n.getParam("/GPSSuperchickPlugin/right_name", right_name)) {
-        ROS_ERROR("Property right_name not found in namespace: '%s'", n.getNamespace().c_str());
-        return false;
-    }
-
-    RobotModel = robot_model_loader->getModel();    
-    ROS_INFO("Model frame: %s", RobotModel->getModelFrame().c_str());
-
-    //Retrieve robot frame
-    ROS_INFO("Model frame: %s", RobotModel->getModelFrame().c_str());
-    //Get Robot State
-    RobotState = new robot_state::RobotState(RobotModel);
-    //set the robot state to the default values
-    RobotState->setToDefaultValues();
-
-
-    // Create base_bladder group
-    if(!active_arm_chain_.init(robot_, base_name, head_name)) {
-        ROS_ERROR("Controller could not use the chain from '%s' to '%s'", base_name.c_str(), head_name.c_str());
+    if(!n.getParam("passive_tip_name", passive_tip_name)) {
+        ROS_ERROR("Property passive_tip_name not found in namespace: '%s'", n.getNamespace().c_str());
         return false;
     }
 
-    base_joint_group = RobotModel->getJointModelGroup(base_group);
-    RobotState->copyJointGroupPositions(base_joint_group, base_joint_values);
+    // Create active arm chain.
+    if(!active_arm_chain_.init(robot_, root_name, active_tip_name)) {
+        ROS_ERROR("Controller could not use the chain from '%s' to '%s'", root_name.c_str(), active_tip_name.c_str());
+        return false;
+    }
 
-/*
     // Create passive arm chain.
-    if(!passive_arm_chain_.init(robot_, base_name, right_name)) {
-        ROS_ERROR("Controller could not use the chain from '%s' to '%s'", base_name.c_str(), right_name.c_str());
+    if(!passive_arm_chain_.init(robot_, root_name, passive_tip_name)) {
+        ROS_ERROR("Controller could not use the chain from '%s' to '%s'", root_name.c_str(), passive_tip_name.c_str());
         return false;
     }
 
@@ -133,7 +85,7 @@ bool GPSSuperchickPlugin::init(ros::NodeHandle& n)
             break;
 
         // Push back the joint state and name.
-        superchick_mechanism_model::JointState* jointState = robot_->getJointState(joint_name);
+        pr2_mechanism_model::JointState* jointState = robot_->getJointState(joint_name);
         active_arm_joint_state_.push_back(jointState);
         if (jointState == NULL)
             ROS_INFO_STREAM("jointState: " + joint_name + " is null");
@@ -163,7 +115,7 @@ bool GPSSuperchickPlugin::init(ros::NodeHandle& n)
             break;
 
         // Push back the joint state and name.
-        superchick_mechanism_model::JointState* jointState = robot_->getJointState(joint_name);
+        pr2_mechanism_model::JointState* jointState = robot_->getJointState(joint_name);
         passive_arm_joint_state_.push_back(jointState);
         if (jointState == NULL)
             ROS_INFO_STREAM("jointState: " + joint_name + " is null");
@@ -180,10 +132,10 @@ bool GPSSuperchickPlugin::init(ros::NodeHandle& n)
         ROS_ERROR("Number of joints in the passive arm FK chain does not match the number of joints in the passive arm joint state!");
         return false;
     }
+
     // Allocate torques array.
     active_arm_torques_.resize(active_arm_fk_chain_.getNrOfJoints());
     passive_arm_torques_.resize(passive_arm_fk_chain_.getNrOfJoints());
-    */
 
     // Initialize ROS subscribers/publishers, sensors, and position controllers.
     // Note that this must be done after the FK solvers are created, because the sensors
@@ -195,7 +147,7 @@ bool GPSSuperchickPlugin::init(ros::NodeHandle& n)
 }
 
 // This is called by the controller manager before starting the controller.
-void GPSSuperchickPlugin::starting()
+void GPSPR2Plugin::starting()
 {
     // Get current time.
     last_update_time_ = robot_->getTime();
@@ -209,38 +161,22 @@ void GPSSuperchickPlugin::starting()
         sensors_[sensor]->reset(this,last_update_time_);
     }
 
-    // Planning to a Pose goal
-    // ^^^^^^^^^^^^^^^^^^^^^^^
-/*    geometry_msgs::Pose target_pose1;
-    target_pose1.orientation.w = 1.0;
-    target_pose1.position.x = 0.28;
-    target_pose1.position.y = -0.7;
-    target_pose1.position.z = -1.0;
-    group->setPoseTarget(target_pose1);*/
-
-    moveit::planning_interface::MoveGroup::Plan my_plan;
-    bool success = group->plan(my_plan);
-
-    ROS_INFO("Visualizing plan: (pose goal) %s",success?"":"FAILED");    
-    /* Sleep to give Rviz time to visualize the plan. */
-    sleep(5.0);
-
     // Reset position controllers.
-    right_bladder_controller_->reset(last_update_time_);
-    base_bladder_controller_->reset(last_update_time_);
+    passive_arm_controller_->reset(last_update_time_);
+    active_arm_controller_->reset(last_update_time_);
 
     // Reset trial controller, if any.
     if (trial_controller_ != NULL) trial_controller_->reset(last_update_time_);
 }
 
 // This is called by the controller manager before stopping the controller.
-void GPSSuperchickPlugin::stopping()
+void GPSPR2Plugin::stopping()
 {
     // Nothing to do here.
 }
 
 // This is the main update function called by the realtime thread when the controller is running.
-void GPSSuperchickPlugin::update()
+void GPSPR2Plugin::update()
 {
     // Get current time.
     last_update_time_ = robot_->getTime();
@@ -265,27 +201,38 @@ void GPSSuperchickPlugin::update()
 }
 
 // Get current time.
-ros::Time GPSSuperchickPlugin::get_current_time() const
+ros::Time GPSPR2Plugin::get_current_time() const
 {
     return last_update_time_;
 }
 
+// Get current encoder readings (robot-dependent).
+void GPSPR2Plugin::get_joint_encoder_readings(Eigen::VectorXd &angles, gps::ActuatorType arm) const
+{
+    if (arm == gps::AUXILIARY_ARM)
+    {
+        if (angles.rows() != passive_arm_joint_state_.size())
+            angles.resize(passive_arm_joint_state_.size());
+        for (unsigned i = 0; i < angles.size(); i++)
+            angles(i) = passive_arm_joint_state_[i]->position_;
+    }
+    else if (arm == gps::TRIAL_ARM)
+    {
+        if (angles.rows() != active_arm_joint_state_.size())
+            angles.resize(active_arm_joint_state_.size());
+        for (unsigned i = 0; i < angles.size(); i++)
+            angles(i) = active_arm_joint_state_[i]->position_;
+    }
+    else
+    {
+        ROS_ERROR("Unknown ArmType %i requested for joint encoder readings!",arm);
+    }
 }
 
-/*void GPSSuperchickPlugin::get_task_space_readings(EigenVectorXd &pose, gps::ActuatorType arm) const
-{
-    if(arm == gps::BASE_BLADDER)
-    {
-        pose.resize(6);
-        for(size_t i = 0; i < pose.size(); ++pose)
-        {
-            pose(i) = 
-        }
-    }
-}*/
+}
 
 // Register controller to pluginlib
-PLUGINLIB_EXPORT_CLASS(gps_agent_pkg, GPSSuperchickPlugin,
-                        gps_control::GPSSuperchickPlugin,
-                        superchick_controller_interface::Controller)
+PLUGINLIB_DECLARE_CLASS(gps_agent_pkg, GPSPR2Plugin,
+						gps_control::GPSPR2Plugin,
+						pr2_controller_interface::Controller)
 

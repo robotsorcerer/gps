@@ -22,8 +22,9 @@ namespace gps_control
 // Note that each sensor might produce multiple data types!
 enum SensorType
 {
-    EncoderSensorType = 0,
-    ROSTopicSensorType = 1,
+    ROSTopicSensorType = 0,
+    ViconSensorType = 1,
+    EnsensoSensorType = 2,
     CameraSensorType,
     TotalSensorTypes
 };
