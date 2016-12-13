@@ -70,6 +70,10 @@ class GPSTrainingGUI(object):
 
         # Setup figure.
         plt.ion()
+        params = {'font.weight': 'bold',
+                  'legend.fontsize': 15,
+                  'legend.linewidth': 2}
+        plt.rcParams.update(params)
         plt.rcParams['toolbar'] = 'None'
         for key in plt.rcParams:
             if key.startswith('keymap.'):
@@ -85,7 +89,7 @@ class GPSTrainingGUI(object):
         if config['image_on']:
             self._gs_traj_visualizer    = self._gs[8:16, 0:4]
         else:
-            self._gs_traj_visualizer    = self._gs[2:15, 5:8]
+            self._gs_traj_visualizer    = self._gs[2:15, 1:8]
 
         # Create GUI components.
         self._cost_plotter = MeanPlotter(self._fig, self._gs_cost_plotter,
@@ -271,20 +275,27 @@ class GPSTrainingGUI(object):
         if isinstance(algorithm, AlgorithmMDGPS) or isinstance(algorithm, AlgorithmBADMM):
             condition_titles = '%3s | %8s %12s' % ('', '', '')
             itr_data_fields  = '%3s | %8s %12s' % ('itr', 'avg_cost', 'avg_pol_cost')
+            lg_fields        = '%3s | %8s %12s' % ('itr', 'mu', 'sigma')
+            ee_samples       = '%3s | %8s %12s' & ('itr', 'ee_samples')
         else:
             condition_titles = '%3s | %8s' % ('', '')
             itr_data_fields  = '%3s | %8s' % ('itr', 'avg_cost')
+            lg_fields        = '%3s | %8s %12s' % ('itr', 'mu', 'sigma')
         for m in range(algorithm.M):
             condition_titles += ' | %8s %9s %-7d' % ('', 'condition', m)
             itr_data_fields  += ' | %8s %8s %8s' % ('  cost  ', '  step  ', 'entropy ')
+            lg_fields        = '%3s | %8s %12s' % ('itr', 'mu', 'sigma')
             if isinstance(algorithm, AlgorithmBADMM):
                 condition_titles += ' %8s %8s %8s' % ('', '', '')
                 itr_data_fields  += ' %8s %8s %8s' % ('pol_cost', 'kl_div_i', 'kl_div_f')
+                lg_fields        = '%3s | %8s %12s' % ('itr', 'mu', 'sigma')
             elif isinstance(algorithm, AlgorithmMDGPS):
                 condition_titles += ' %8s' % ('')
                 itr_data_fields  += ' %8s' % ('pol_cost')
+                lg_fields        = '%3s | %8s %12s' % ('itr', 'mu', 'sigma')
         self.append_output_text(condition_titles)
         self.append_output_text(itr_data_fields)
+        self.append_output_text(lg_fields)
 
     def _update_iteration_data(self, itr, algorithm, costs, pol_sample_lists):
         """
@@ -374,15 +385,16 @@ class GPSTrainingGUI(object):
         for i in range(mu_eept.shape[1]/3):
             mu, sigma = mu_eept[:, 3*i+0:3*i+3], sigma_eept[:, 3*i+0:3*i+3, 3*i+0:3*i+3]
             self._traj_visualizer.plot_3d_gaussian(i=m, mu=mu, sigma=sigma,
-                    edges=100, linestyle='-', linewidth=1.0, color='red',
+                    edges=100, linestyle='-', linewidth=1.8, color='red',
                     alpha=0.15, label='LG Controller Distributions')
-
+            # lg_distrb = '%3d | %8.2f %12.2f' % (i, mu, sigma)         
         # Linear Gaussian Controller Means (Dark Red)
         for i in range(mu_eept.shape[1]/3):
             mu = mu_eept[:, 3*i+0:3*i+3]
             self._traj_visualizer.plot_3d_points(i=m, points=mu, linestyle='None',
                     marker='x', markersize=5.0, markeredgewidth=1.0,
-                    color=(0.5, 0, 0), alpha=1.0, label='LG Controller Means')
+                    color=(0.5, 0, 0), alpha=1.0, label='LG Controller Means')        
+        # self.append_output_text(lg_distrb)
 
     def _update_samples_plots(self, sample_lists, m, color, label):
         """
@@ -395,6 +407,7 @@ class GPSTrainingGUI(object):
             for i in range(ee_pt.shape[1]/3):
                 ee_pt_i = ee_pt[:, 3*i+0:3*i+3]
                 self._traj_visualizer.plot_3d_points(m, ee_pt_i, color=color, label=label)
-
+                ee_samples=(m, ee_pt_i)
+                self.append_output_text(ee_samples)
     def save_figure(self, filename):
         self._fig.savefig(filename)

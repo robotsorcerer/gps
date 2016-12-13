@@ -13,7 +13,7 @@ set(pr2_controller_interface_DIR  ${ROS_DEFAULT_DIR}/pr2_controller_interface/cm
 set(pr2_controller_manager_DIR    ${ROS_DEFAULT_DIR}/pr2_controller_manager/cmake/)
 set(pr2_controllers_msgs_DIR      ${ROS_DEFAULT_DIR}/pr2_controllers_msgs/cmake)
 set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
-set(Caffe_DIR                     ${CAFFE_ROOT})
+set(Caffe_DIR                     $ENV{CAFFE_ROOT})
 
 OPTION(ENABLE_CXX11 "Enable C++11 support" ON)
 OPTION(USE_CAFFE "Enable Caffe support" ON)

@@ -45,15 +45,15 @@ class Plotter3D:
 
     def set_title(self, i, title):
         self._axarr[i].set_title(title)
-        self._axarr[i].title.set_fontsize(10)
+        self._axarr[i].title.set_fontsize(15)
 
     def add_legend(self, linestyle, marker, color, label):
         self._ax_legend.plot([], [], linestyle=linestyle, marker=marker,
                 color=color, label=label)
         self._ax_legend.legend(ncol=2, mode='expand', fontsize=10)
 
-    def plot(self, i, xs, ys, zs, linestyle='-', linewidth=1.0, marker=None,
-            markersize=5.0, markeredgewidth=1.0, color='black', alpha=1.0, label=''):
+    def plot(self, i, xs, ys, zs, linestyle='-', linewidth=2.50, marker=None,
+            markersize=5.0, markeredgewidth=2.0, color='black', alpha=1.0, label=''):
         # Manually clip at xlim, ylim, zlim (MPL doesn't support axis limits for 3D plots)
         if self._lims[i]:
             xlim, ylim, zlim = self._lims[i]
@@ -68,7 +68,7 @@ class Plotter3D:
                 label=label)[0]
         self._plots[i].append(plot)
 
-    def plot_3d_points(self, i, points, linestyle='-', linewidth=1.0,
+    def plot_3d_points(self, i, points, linestyle='-', linewidth=2.5,
             marker=None, markersize=5.0, markeredgewidth=1.0, color='black',
             alpha=1.0, label=''):
         self.plot(i, points[:, 0], points[:, 1], points[:, 2],
@@ -77,7 +77,7 @@ class Plotter3D:
                 color=color, alpha=alpha, label=label)
 
     def plot_3d_gaussian(self, i, mu, sigma, edges=100, linestyle='-.',
-            linewidth=1.0, color='black', alpha=0.1, label=''):
+            linewidth=2.5, color='black', alpha=0.3, label=''):
         """
         Plots ellipses in the xy plane representing the Gaussian distributions 
         specified by mu and sigma.

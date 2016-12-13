@@ -114,7 +114,7 @@ algorithm['traj_opt'] = {
 algorithm['policy_opt'] = {}
 
 config = {
-    'iterations': 10,
+    'iterations': 50,
     'num_samples': 5,
     'verbose_trials': 5,
     'common': common,
