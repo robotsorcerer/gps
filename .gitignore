@@ -1,0 +1,10 @@
+experiments/pr2_tensorflow_example/data_files/*.
+experiments/pr2_badmm_example/data_files/*.
+experiments/pr2_example/data_files/*.
+experiments/box2d_arm_badmm_example/data_files/*
+experiments/box2d_arm_example/data_files/*
+experiments/box2d_badmm_example/data_files/*
+experiments/box2d_pointmass_example/data_files/*
+experiments/box2d_pointmass_pi2_example/data_files/*
+experiments/box2d_pointmass_pigps_example/data_files/*
+
