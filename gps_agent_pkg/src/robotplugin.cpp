@@ -140,10 +140,19 @@ void RobotPlugin::initialize_position_controllers(ros::NodeHandle& n)
 {
     // Create passive arm position controller.
     // TODO: fix this to be something that comes out of the robot itself
-    passive_arm_controller_.reset(new PositionController(n, gps::RIGHT_BLADDER, 7));
+    passive_arm_controller_.reset(new PositionController(n, gps::AUXILIARY_ARM, 7));
 
     // Create active arm position controller.
-    active_arm_controller_.reset(new PositionController(n, gps::BASE_BLADDER, 7));
+    active_arm_controller_.reset(new PositionController(n, gps::TRIAL_ARM, 7));
+
+    // create base bladder controller
+    base_bladder_controller_.reset(new PositionController(n, gps::BASE_BLADDER, 1));
+
+    // create right bladder controller
+    right_bladder_controller_.reset(new PositionController(n, gps::RIGHT_BLADDER, 1));
+
+    // create right bladder controller
+    left_bladder_controller_.reset(new PositionController(n, gps::LEFT_BLADDER, 1));
 }
 
 // Helper function to initialize a sample from the current sensors.
@@ -220,8 +229,16 @@ void RobotPlugin::update_controllers(ros::Time current_time, bool is_controller_
     }
 
     // If we have a trial controller, update that, otherwise update position controller.
-    if (trial_init) trial_controller_->update(this, current_time, current_time_step_sample_, base_bladder_torques_);
-    else active_arm_controller_->update(this, current_time, current_time_step_sample_, base_bladder_torques_);
+    if (trial_init) 
+    {
+        trial_controller_->update(this, current_time, current_time_step_sample_, active_arm_torques_);
+        trial_controller_->update(this, current_time, current_time_step_sample_, base_bladder_torques_);
+    }
+    else 
+    { 
+        active_arm_controller_->update(this, current_time, current_time_step_sample_, active_arm_torques_);
+        base_bladder_controller_->update(this, current_time, current_time_step_sample_, base_bladder_torques_);
+    }
 
     // Check if the trial controller finished and delete it.
     if (trial_init && trial_controller_->is_finished()) {
@@ -236,6 +253,7 @@ void RobotPlugin::update_controllers(ros::Time current_time, bool is_controller_
         OptionsMap options;
         options["mode"] = gps::NO_CONTROL;
         active_arm_controller_->configure_controller(options);
+        base_bladder_controller_->configure_controller(options);
 
         // Switch the sensors to run at full frequency.
         for (int sensor = 0; sensor < TotalSensorTypes; sensor++)
@@ -243,7 +261,8 @@ void RobotPlugin::update_controllers(ros::Time current_time, bool is_controller_
             //sensors_[sensor]->set_update(active_arm_controller_->get_update_delay());
         }
     }
-    if (active_arm_controller_->report_waiting){
+    if (active_arm_controller_->report_waiting)
+    {
         if (active_arm_controller_->is_finished()){
             publish_sample_report(current_time_step_sample_);
             active_arm_controller_->report_waiting = false;
@@ -255,6 +274,20 @@ void RobotPlugin::update_controllers(ros::Time current_time, bool is_controller_
             passive_arm_controller_->report_waiting = false;
         }
     }
+    if (base_bladder_controller_->report_waiting)
+    {
+        if (base_bladder_controller_->is_finished())
+        {
+            publish_sample_report(current_time_step_sample_);
+            base_bladder_controller_->report_waiting = false;
+        }
+    }
+    if (right_bladder_controller_->report_waiting){
+        if (right_bladder_controller_->is_finished()){
+            publish_sample_report(current_time_step_sample_);
+            right_bladder_controller_->report_waiting = false;
+        }
+    }
 
 }
 
@@ -264,7 +297,8 @@ void RobotPlugin::publish_sample_report(boost::scoped_ptr<Sample>& sample, int T
     sample->get_available_dtypes(dtypes);
 
     report_publisher_->msg_.sensor_data.resize(dtypes.size());
-    for(int d=0; d<dtypes.size(); d++){ //Fill in each sample type
+    for(int d=0; d<dtypes.size(); d++)
+    { //Fill in each sample type
         report_publisher_->msg_.sensor_data[d].data_type = dtypes[d];
         Eigen::VectorXd tmp_data;
         sample->get_data(T, tmp_data, (gps::SampleType)dtypes[d]);
@@ -276,15 +310,18 @@ void RobotPlugin::publish_sample_report(boost::scoped_ptr<Sample>& sample, int T
         shape.insert(shape.begin(), T);
         report_publisher_->msg_.sensor_data[d].shape.resize(shape.size());
         int total_expected_shape = 1;
-        for(int i=0; i< shape.size(); i++){
+        for(int i=0; i< shape.size(); i++)
+        {
             report_publisher_->msg_.sensor_data[d].shape[i] = shape[i];
             total_expected_shape *= shape[i];
         }
-        if(total_expected_shape != tmp_data.size()){
+        if(total_expected_shape != tmp_data.size())
+        {
             ROS_ERROR("Data stored in sample has different length than expected (%ld vs %d)",
                     tmp_data.size(), total_expected_shape);
         }
-        for(int i=0; i<tmp_data.size(); i++){
+        for(int i=0; i<tmp_data.size(); i++)
+        {
             report_publisher_->msg_.sensor_data[d].data[i] = tmp_data[i];
         }
     }
@@ -312,18 +349,21 @@ void RobotPlugin::position_subscriber_callback(const gps_agent_pkg::PositionComm
         }
     }
     params["pd_gains"] = pd_gains;
-
     if(arm == gps::BASE_BLADDER){
-        active_arm_controller_->configure_controller(params);
+        base_bladder_controller_->configure_controller(params);
     }else if (arm == gps::RIGHT_BLADDER){
+        right_bladder_controller_->configure_controller(params);
+    }else if(arm == gps::TRIAL_ARM){
+        active_arm_controller_->configure_controller(params);
+    }else if (arm == gps::AUXILIARY_ARM){
         passive_arm_controller_->configure_controller(params);
     }else{
         ROS_ERROR("Unknown position controller arm type");
     }
 }
 
-void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::ConstPtr& msg){
-
+void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::ConstPtr& msg)
+{
     OptionsMap controller_params;
     ROS_INFO_STREAM("received trial command");
 
@@ -368,7 +408,8 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
         controller_params["T"] = (int)msg->T;
         controller_params["dX"] = dX;
         controller_params["dU"] = dU;
-        for(int t=0; t<(int)msg->T; t++){
+        for(int t=0; t<(int)msg->T; t++)
+        {
             Eigen::MatrixXd K;
             K.resize(dU, dX);
             for(int u=0; u<dU; u++){
@@ -391,7 +432,6 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
         gps_agent_pkg::CaffeParams params = msg->controller.caffe;
         trial_controller_.reset(new CaffeNNController());
 
-        // TODO(chelsea/zoe): put this somewhere else.
         int dim_bias = params.dim_bias;
         Eigen::MatrixXd scale;
         scale.resize(dim_bias, dim_bias);
@@ -493,11 +533,16 @@ void RobotPlugin::relax_subscriber_callback(const gps_agent_pkg::RelaxCommand::C
     OptionsMap params;
     int8_t arm = msg->arm;
     params["mode"] = gps::NO_CONTROL;
-
-    if(arm == gps::BASE_BLADDER){
+    
+    if(arm == gps::TRIAL_ARM){
         active_arm_controller_->configure_controller(params);
-    }else if (arm == gps::RIGHT_BLADDER){
+    }else if (arm == gps::AUXILIARY_ARM){
         passive_arm_controller_->configure_controller(params);
+    }
+    else if(arm == gps::BASE_BLADDER){
+        base_bladder_controller_->configure_controller(params);
+    }else if (arm == gps::RIGHT_BLADDER){
+        right_bladder_controller_->configure_controller(params);
     }else{
         ROS_ERROR("Unknown position controller arm type");
     }
@@ -540,30 +585,42 @@ Sensor *RobotPlugin::get_sensor(SensorType sensor, gps::ActuatorType actuator_ty
         return aux_sensors_[sensor].get();
     }
 }
-/*
+
 // Get forward kinematics solver.
 void RobotPlugin::get_fk_solver(boost::shared_ptr<KDL::ChainFkSolverPos> &fk_solver, boost::shared_ptr<KDL::ChainJntToJacSolver> &jac_solver, gps::ActuatorType arm)
 {
-    if (arm == gps::RIGHT_BLADDER)
+    if (arm == gps::AUXILIARY_ARM)
     {
         fk_solver = passive_arm_fk_solver_;
         jac_solver = passive_arm_jac_solver_;
     }
-    else if (arm == gps::BASE_BLADDER)
+    else if (arm == gps::TRIAL_ARM)
     {
         fk_solver = active_arm_fk_solver_;
         jac_solver = active_arm_jac_solver_;
+    }
+    else if (arm == gps::RIGHT_BLADDER)
+    {
+        fk_solver = right_bladder_fk_solver_;
+        jac_solver = right_bladder_jac_solver_;
+    }
+    else if (arm == gps::BASE_BLADDER)
+    {
+        fk_solver = base_bladder_fk_solver_;
+        jac_solver = base_bladder_jac_solver_;
     }
     else
     {
         ROS_ERROR("Unknown ArmType %i requested for joint encoder readings!",arm);
     }
 }
-*/
-void RobotPlugin::tf_robot_action_command_callback(const gps_agent_pkg::TfActionCommand::ConstPtr& msg){
+
+void RobotPlugin::tf_robot_action_command_callback(const gps_agent_pkg::TfActionCommand::ConstPtr& msg)
+{
 
     bool trial_init = trial_controller_ != NULL && trial_controller_->is_configured();
-    if(trial_init){
+    if(trial_init)
+    {
         // Unpack the action vector
         int idx = 0;
         int dU = (int)msg->dU;
@@ -576,9 +633,7 @@ void RobotPlugin::tf_robot_action_command_callback(const gps_agent_pkg::TfAction
         }
         int last_command_id_received = msg ->id;
         trial_controller_->update_action_command(last_command_id_received, latest_action_command);
-
     }
-
 }
 
 void RobotPlugin::tf_publish_obs(Eigen::VectorXd obs){

@@ -91,6 +91,7 @@ catkin_package(
  CATKIN_DEPENDS roscpp 
  				rospy 
  DEPENDS system_lib Eigen3
+ 				moveit_core
 )
 
 ###########
@@ -140,7 +141,7 @@ include_directories(
 
 
 set(DDP_FILES src/robotplugin.cpp
-              #src/superchickplugin.cpp
+              src/superchickplugin.cpp
               src/sample.cpp
               src/sensor.cpp
               src/neuralnetwork.cpp
@@ -157,6 +158,7 @@ set(DDP_FILES src/robotplugin.cpp
 add_library(gps_agent_lib
             ${DDP_FILES}
 )
+set_target_properties(gps_agent_lib PROPERTIES VERSION ${${PROJECT_NAME}_VERSION})
 link_directories(${catkin_LIBRARY_DIRS})
 
 # Include Caffe in controller
@@ -169,5 +171,10 @@ target_link_libraries(gps_agent_lib pthread  ${catkin_LIBRARIES}
 									${Eigen_LIBRARIES} ${Boost_LIBRARIES})
 
 add_dependencies(gps_agent_lib ${PROJECT_NAME}_gencpp)
+
+install(TARGETS gps_agent_lib LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+install(FILES superchick_moveit_controller_manager_plugin_description.xml
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+       )
 
 

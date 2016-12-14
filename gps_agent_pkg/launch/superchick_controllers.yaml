@@ -1,8 +1,5 @@
-active_arm_joint_name_1: "bigbladder_to_head"
-active_arm_joint_name_2: "rightbladder_to_neck"
-active_arm_joint_name_3: "leftbladder_to_neck"
+base_joint_name: "bigbladder_to_head"
+right_joint_name: "rightbladder_to_neck"
+left_joint_name: "leftbladder_to_neck"
 
-passive_arm_joint_name_1: "table_to_big_bladder"
-passive_arm_joint_name_2: "table_to_rightneckbladder"
-passive_arm_joint_name_3: "table_to_leftneckbladder"
 

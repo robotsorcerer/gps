@@ -11,6 +11,8 @@ with the robot.
 #include <boost/shared_ptr.hpp>
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
+
+//fk chains from orocos
 #include <kdl/chain.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
@@ -83,6 +85,16 @@ protected:
     std::vector<boost::shared_ptr<Sensor> > sensors_;
     // Auxiliary Sensors.
     std::vector<boost::shared_ptr<Sensor> > aux_sensors_;
+    // KDL chains for the end-effectors.
+    KDL::Chain passive_arm_fk_chain_, active_arm_fk_chain_, \
+                base_bladder_fk_chain_, right_bladder_fk_chain_;
+    // KDL solvers for the end-effectors.
+    boost::shared_ptr<KDL::ChainFkSolverPos> passive_arm_fk_solver_, active_arm_fk_solver_, \
+                                            base_bladder_fk_solver_, right_bladder_fk_solver_;
+    // KDL solvers for end-effector Jacobians.
+    boost::shared_ptr<KDL::ChainJntToJacSolver> passive_arm_jac_solver_, active_arm_jac_solver_, \
+                                                base_bladder_jac_solver_, right_bladder_jac_solver_;
+
     // Subscribers.
     // Subscriber for position control commands.
     ros::Subscriber position_subscriber_;
@@ -143,6 +155,8 @@ public:
     virtual void data_request_subscriber_callback(const gps_agent_pkg::DataRequest::ConstPtr& msg);
     //tf callback
     virtual void tf_robot_action_command_callback(const gps_agent_pkg::TfActionCommand::ConstPtr& msg);
+    // Get forward kinematics solver.
+    virtual void get_fk_solver(boost::shared_ptr<KDL::ChainFkSolverPos> &fk_solver, boost::shared_ptr<KDL::ChainJntToJacSolver> &jac_solver, gps::ActuatorType arm);
 
     // Update functions.
     // Update the sensors at each time step.

@@ -39,9 +39,9 @@ private:
     // Latest image.
     std::vector<uint8_t> latest_rgb_image_;
     std::vector<uint16_t> latest_depth_image_;
-    //Latest vicons
-    std::vector<geometry_msgs::Point> latest_vicon_markers_;
-    std::vector<geometry_msgs::Twist> latest_vicon_pose_;
+    // //Latest vicons
+    // std::vector<geometry_msgs::Point> latest_vicon_markers_;
+    // std::vector<geometry_msgs::Twist> latest_vicon_pose_;
     std::vector<sensor_msgs::PointCloud2> latest_vicon_clouds_;
 
     // Time at which the image was first published.
@@ -80,6 +80,9 @@ public:
     virtual void set_sample_data_format(boost::scoped_ptr<Sample> sample) const;
     // Set data on the provided sample.
     virtual void set_sample_data(boost::scoped_ptr<Sample> sample) const;
+    
+    std::vector<geometry_msgs::Point> latest_vicon_markers_;
+    std::vector<geometry_msgs::Twist> latest_vicon_pose_;
 };
 
 }

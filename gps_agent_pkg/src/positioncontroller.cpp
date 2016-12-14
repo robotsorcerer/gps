@@ -1,7 +1,9 @@
 #include "gps_agent_pkg/util.h"
 #include "gps_agent_pkg/robotplugin.h"
+#include "gps_agent_pkg/camerasensor.h"
 #include "gps_agent_pkg/superchickplugin.h"
 #include "gps_agent_pkg/positioncontroller.h"
+
 
 using namespace gps_control;
 
@@ -23,6 +25,9 @@ PositionController::PositionController(ros::NodeHandle& n, gps::ActuatorType arm
     target_angles_.resize(size);
     target_pose_.resize(size);
 
+    // Initialize Jacobian temporary storage.
+    temp_jacobian_.resize(6,size);
+
     // Initialize joints temporary storage.
     temp_angles_.resize(size);
 
@@ -37,10 +42,6 @@ PositionController::PositionController(ros::NodeHandle& n, gps::ActuatorType arm
 
     //
     report_waiting = false;
-
-
-    //instantiate camera sensor class
-    camerasensor = new CameraSensor; //(n, &robotplugin);
 }
 
 // Destructor.
@@ -58,9 +59,10 @@ void PositionController::update(RobotPlugin *plugin, ros::Time current_time, boo
     // Check dimensionality.
     assert(temp_angles_.rows() == torques.rows());
     assert(temp_angles_.rows() == current_angles_.rows());
-
+*/
     // Estimate joint angle velocities.
-    double update_time = current_time.toSec() - last_update_time_.toSec();
+    double update_time;// = current_time.toSec() - last_update_time_.toSec();
+    /*
     if (!last_update_time_.isZero())
     { // Only compute velocities if we have a previous sample.
         current_angle_velocities_ = (temp_angles_ - current_angles_)/update_time;
@@ -79,30 +81,35 @@ void PositionController::update(RobotPlugin *plugin, ros::Time current_time, boo
         // TODO: implement.
 
         // Get current end effector position. latest_vicon_pose_
-        geometry_msgs::Twist current_headpose = camerasensor->latest_vicon_pose_[1];
+        current_headpose_ = camerasensor->latest_vicon_pose_[1];
         //retrieve the markers just for a check
-        geometry_msgs::Point fore  = latest_vicon_markers_[0];
-        geometry_msgs::Point left  = latest_vicon_markers_[1];
-        geometry_msgs::Point right = latest_vicon_markers_[2];
-        geometry_msgs::Point chin  = latest_vicon_markers_[3];
+        fore_  = camerasensor->latest_vicon_markers_[0];
+        left_  = camerasensor->latest_vicon_markers_[1];
+        right_ = camerasensor->latest_vicon_markers_[2];
+        chin_  = camerasensor->latest_vicon_markers_[3];
+
+        //assign current pose for four markers
+        temp_pose_ << fore_.x, fore_.y, fore_.z, left_.x, left_.y, left_.z, \
+                        right_.x, right_.y, right_.z, chin_.x, chin_.y, chin_.z;
+                     
         // Get current Jacobian.
 
         // estimate twist, i.e. task space velocities
-        double update_time = current_time.toSec() - last_update_time_.toSec();
+        update_time = current_time.toSec() - last_update_time_.toSec();
         if (!last_update_time_.isZero())
         { // Only compute velocities if we have a previous sample.
-            current_angle_velocities_ = (temp_angles_ - current_angles_)/update_time;
+            current_pose_velocities_ = (temp_pose_ - current_pose_)/update_time;
         }
 
-        // Store new angles.
-        current_angles_ = temp_angles_;
+        // Store new pose.
+        current_pose_ = temp_pose_;  
 
         // Update last update time.
         last_update_time_ = current_time;
 
         // TODO: should also try Jacobian pseudoinverse, it may work a little better.
         // Compute desired joint angle offset using Jacobian transpose method.
-        target_angles_ = current_angles_ + temp_jacobian_.transpose() * (target_pose_ - current_pose_);
+        target_pose_ = current_pose_ + temp_jacobian_.transpose() * (target_pose_ - current_pose_);
     }
 
     // If we're doing any kind of control at all, compute torques now.
@@ -145,18 +152,27 @@ void PositionController::configure_controller(OptionsMap &options)
     // needs to report when finished
     report_waiting = true;
     mode_ = (gps::PositionControlMode) boost::get<int>(options["mode"]);
-    if (mode_ != gps::NO_CONTROL){
+    if (mode_ != gps::NO_CONTROL)
+    {
         Eigen::VectorXd data = boost::get<Eigen::VectorXd>(options["data"]);
         Eigen::MatrixXd pd_gains = boost::get<Eigen::MatrixXd>(options["pd_gains"]);
-        for(int i=0; i<pd_gains.rows(); i++){
+        for(int i=0; i<pd_gains.rows(); i++)
+        {
             pd_gains_p_(i) = pd_gains(i, 0);
             pd_gains_i_(i) = pd_gains(i, 1);
             pd_gains_d_(i) = pd_gains(i, 2);
             i_clamp_(i) = pd_gains(i, 3);
         }
-        if(mode_ == gps::JOINT_SPACE){
+        ROS_INFO_STREAM("data: " << data);
+        if(mode_ == gps::JOINT_SPACE)
+        {
             target_angles_ = data;
-        }else{
+        }
+        else if(mode_== gps::TASK_SPACE)
+        {
+            target_pose_ = data;
+        }
+        else{
             ROS_ERROR("Unimplemented position control mode!");
         }
     }
@@ -171,6 +187,13 @@ bool PositionController::is_finished() const
         double epsvel = 0.01;
         double error = (current_angles_ - target_angles_).norm();
         double vel = current_angle_velocities_.norm();
+        return (error < epspos && vel < epsvel);
+    }
+    if (mode_ == gps::TASK_SPACE){
+        double epspos = 0.185;
+        double epsvel = 0.01;
+        double error = (current_pose_ - target_pose_).norm();
+        double vel = current_pose_velocities_.norm();
         return (error < epspos && vel < epsvel);
     }
     else if (mode_ == gps::NO_CONTROL){

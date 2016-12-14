@@ -10,11 +10,14 @@ space.
 // Superclass.
 #include "gps_agent_pkg/controller.h"
 #include "gps/proto/gps.pb.h"
-#include "gps_agent_pkg/camerasensor.h"
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Point.h>
 
 namespace gps_control
 {
+//Forward Declarations
+class CameraSensor;
+class RobotPlugin;
 
 class PositionController : public Controller//, public CameraSensor
 {
@@ -46,6 +49,8 @@ private:
     Eigen::VectorXd current_angle_velocities_;
     // Latest pose.
     Eigen::VectorXd current_pose_;
+    // Latest pose velocities.
+    Eigen::VectorXd current_pose_velocities_;
 
     //Eigen::VectorXd torques_;
 
@@ -59,11 +64,18 @@ private:
     ros::Time last_update_time_;
     //Robot plugin
     RobotPlugin *plugin;
+    //create scoped pointer for plugin
+    boost::scoped_ptr<RobotPlugin> plugin_instance;
     //instantiate camera sensor class
     CameraSensor *camerasensor;
+    //Marker Points
+    geometry_msgs::Point fore_, chin_, left_, right_;
+    //Pose computed from vicon
+    geometry_msgs::Twist current_headpose_;
 public:
     // Constructor.
     PositionController(ros::NodeHandle& n, gps::ActuatorType arm, int size);
+    friend CameraSensor;
     // Destructor.
     virtual ~PositionController();
     // Update the controller (take an action).

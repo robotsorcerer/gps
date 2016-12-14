@@ -1,0 +1,11 @@
+<library path="libmoveit_controller_manager_example">
+
+<class name="moveit_simple_controller_manager/MoveItSimpleControllerManager"
+       type="moveit_simple_controller_manager::MoveItSimpleControllerManager"
+       base_class_type="moveit_controller_manager::MoveItControllerManager">
+    <description>
+      A controller for Superchick MoveIt. 
+    </description>
+  </class>
+
+</library>
