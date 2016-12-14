@@ -1,0 +1,11 @@
+<library path="libgps_agent_pkg">
+
+<class name="gps_control/GPSSuperchickPluginManager"
+       type="gps_control::GPSSuperchickPluginManager"
+       base_class_type="moveit_controller_manager::MoveItControllerManager">
+    <description>
+      A controller for Superchick in MoveIt. 
+    </description>
+  </class>
+
+</library>
