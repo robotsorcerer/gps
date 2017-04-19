@@ -16,26 +16,26 @@ RUN apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys D2486D2DD83DB
 RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-latest.list
 
 # install gazebo packages
-RUN apt-get update && apt-get install -q -y \
-    libgazebo6-dev=6.7.0* \
-		gazebo6=6.7.0* \
-		build-essential \
-		gcc \
-		g++ \
-		wget \
-		make \
-		nano \
-		protobuf-compiler \
-		libhdf5-dev \
-		libprotobuf-dev \
-		protobuf-compiler \
-		libboost-all-dev \
-		swig \
-		python-pygame \
-		git \
-		libgflags-dev \
-		libgoogle-glog-dev  \
-		liblmdb-dev
+# RUN apt-get update && apt-get install -q -y \
+#     libgazebo6-dev=6.7.0* \
+# 		gazebo6=6.7.0* \
+# 		build-essential \
+# 		gcc \
+# 		g++ \
+# 		wget \
+# 		make \
+# 		nano \
+# 		protobuf-compiler \
+# 		libhdf5-dev \
+# 		libprotobuf-dev \
+# 		protobuf-compiler \
+# 		libboost-all-dev \
+# 		swig \
+# 		python-pygame \
+# 		git \
+# 		libgflags-dev \
+# 		libgoogle-glog-dev  \
+# 		liblmdb-dev
 
 RUN rm -rf /var/lib/apt/lists/*
 

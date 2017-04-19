@@ -6,11 +6,11 @@ This code is a reimplementation of the guided policy search algorithm and LQG-ba
 For full documentation, see [rll.berkeley.edu/gps](http://rll.berkeley.edu/gps).
 
 The code base is **a work in progress**. See the [FAQ](http://rll.berkeley.edu/gps/faq.html) for information on planned future additions to the code.
- 
+
 ===========================================
 This code reimplements the code at Chelsea's account using ROS_Indigo. I used ros indigo since I am not all too familiar with Fuerte which was used in Chelsea's lab.
- 
-See example simulation results of running the pr2_example at 
+
+See example simulation results of running the pr2_example at
 
 <div class="fig figcenter fighighlight">
 <a href="https://youtu.be/HzwAbarXbDg">
@@ -18,3 +18,8 @@ See example simulation results of running the pr2_example at
 	</br>
 	<div class="figcaption" align="left" hspace="80"></div>
 </div>
+
+
+### Docker Image
+
+The docker image is located at [lakehanne/gps/](https://hub.docker.com/r/lakehanne/gps/)
