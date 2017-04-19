@@ -14,35 +14,22 @@ RUN apt-get update && apt-get install -q -y \
     && rm -rf /var/lib/apt/lists/*
 
 FROM ubuntu:trusty
-
 # setup keys
 RUN apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys D2486D2DD83DB69272AFE98867170598AF249743
-
 # setup sources.list
 RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-latest.list
-
 # install gazebo packages
 RUN apt-get update && apt-get install -q -y \
     gazebo6=6.7.0* \
     && rm -rf /var/lib/apt/lists/*
-
-# setup environment
-EXPOSE 11345
-
-# setup entrypoint
-COPY ./gzserver_entrypoint.sh /
-
-ENTRYPOINT ["/gzserver_entrypoint.sh"]
-CMD ["gzserver"]
-
 # setup environment
 EXPOSE 5000
-
 # setup entrypoint
 COPY ./gzserver_entrypoint.sh /
 
 ENTRYPOINT ["/gzserver_entrypoint.sh"]
 CMD ["gzserver"]
+
 RUN apt-get update && apt-get install -y build-essential \
     libgl1-mesa-dev-lts-utopic \
     autoconf \
@@ -114,7 +101,7 @@ RUN cd ~ && \
 		python setup.py build && \
 		python setup.py install
 
-ENV PYTHONPATH=${PYTHONPATH:+:${PYTHONPATH}}:/home/$USER/catkin_ws/src/gps
+ENV PYTHONPATH=${PYTHONPATH:+:${PYTHONPATH}}:~/catkin_ws/src/gps
 
 RUN source ~/.bashrc && \
 	  cd ~/catkin_ws && \
