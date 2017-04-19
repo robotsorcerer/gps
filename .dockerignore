@@ -1,0 +1,3 @@
+.git/*
+experiments/pr2_example/data_files
+experiments/pr2_example/data_files/{hyperparams.pyc, log.txt}
