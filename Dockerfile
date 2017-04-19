@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -q -y \
 		git \
 		libgflags-dev \
 		libgoogle-glog-dev  \
-		liblmdb-dev \
+		liblmdb-dev
 
 RUN rm -rf /var/lib/apt/lists/*
 
@@ -48,16 +48,25 @@ COPY ./gzserver_entrypoint.sh /
 ENTRYPOINT ["/gzserver_entrypoint.sh"]
 CMD ["gzserver"]
 
-# Run Caffe dependencies
+# Start with Caffe dependencies
 FROM kaixhin/caffe-deps
+MAINTAINER Kai Arulkumaran <design@kaixhin.com>
 
 # Move into Caffe repo
-RUN cd /root/caffe \
-  mkdir build \
-	&& cd build \
+RUN cd /root/caffe && \
+# Make and move into build directory
+  mkdir build && cd build && \
+# CMake
   cmake .. && \
+# Make
   make -j"$(nproc)" all && \
   make install
+
+# Add to Python path
+ENV PYTHONPATH=/root/caffe/python:$PYTHONPATH
+
+# Set ~/caffe as working directory
+WORKDIR /root/caffe
 
 # Add to Python path
 ENV PYTHONPATH=/root/caffe/python:$PYTHONPATH
@@ -85,7 +94,7 @@ RUN pip2 install -r requirements.txt
 RUN /bin/bash -c echo " source /usr/local/etc/bash_completion.d/catkin_tools-completion.bash" >> ~/.bashrc \
 		/bin/bash -c "source ~/.bashrc"
 
-# RUN cd ~/catkin_ws/src && \
+# RUN cd /catkin_ws/src && \
 # 		catkin_init_workspace
 #
 # # Checkout all packages
