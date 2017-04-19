@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -q -y \
     && rm -rf /var/lib/apt/lists/*
 # setup environment
 EXPOSE 5000
+
+### couldn't get both the next two commands to run
 # setup entrypoint
 COPY ./gzserver_entrypoint.sh /
 
@@ -31,26 +33,26 @@ ENTRYPOINT ["/gzserver_entrypoint.sh"]
 CMD ["gzserver"]
 
 RUN apt-get update && apt-get install -y build-essential \
-    libgl1-mesa-dev-lts-utopic \
-    autoconf \
-    gcc \
-    g++ \
-    make \
-		python-catkin-tools \
-    python-pip  \
-		python-dev \
-		python3-pip \
-    protobuf-compiler \
-    libhdf5-dev \
-		libprotobuf-dev \
-		protobuf-compiler \
-		libboost-all-dev \
-		swig \
-		python-pygame \
-		git \
-		libgflags-dev \
-		libgoogle-glog-dev  \
-		liblmdb-dev \
+    && libgl1-mesa-dev-lts-utopic \
+    && autoconf \
+    && gcc \
+    && g++ \
+    && make \
+		&& python-catkin-tools \
+    && python-pip  \
+		&& python-dev \
+		&& python3-pip \
+    && protobuf-compiler \
+    && libhdf5-dev \
+		&& libprotobuf-dev \
+		&& protobuf-compiler \
+		&& libboost-all-dev \
+		&& swig \
+		&& python-pygame \
+		&& git \
+		&& libgflags-dev \
+		&& libgoogle-glog-dev  \
+		&& liblmdb-dev \
 
 RUN pip install protobuf && \
  		rosdep init && \
