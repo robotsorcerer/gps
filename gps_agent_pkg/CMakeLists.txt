@@ -13,11 +13,11 @@ set(pr2_controller_interface_DIR  ${ROS_DEFAULT_DIR}/pr2_controller_interface/cm
 set(pr2_controller_manager_DIR    ${ROS_DEFAULT_DIR}/pr2_controller_manager/cmake/)
 set(pr2_controllers_msgs_DIR      ${ROS_DEFAULT_DIR}/pr2_controllers_msgs/cmake)
 set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
-set(Caffe_DIR                     ${CAFFE_ROOT})
+set(Caffe_DIR                     $ENV{CAFFE_ROOT})
 
 OPTION(ENABLE_CXX11 "Enable C++11 support" ON)
-OPTION(USE_CAFFE "Enable Caffe support" ON)
-OPTION(USE_CAFFE_GPU "Enable Caffe GPU support" ON)
+OPTION(USE_CAFFE "Enable Caffe support" OFF)
+OPTION(USE_CAFFE_GPU "Enable Caffe GPU support" OFF)
 
 find_package(PkgConfig)
 pkg_search_module(Eigen3 REQUIRED eigen3)
@@ -66,7 +66,7 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
-   geometry_msgs   pr2_controllers_msgs   sensor_msgs   std_msgs  
+   geometry_msgs   pr2_controllers_msgs   sensor_msgs   std_msgs
  )
 
 ## DEPENDS: system dependencies of this project that dependent projects also need
@@ -110,7 +110,7 @@ endif (USE_CAFFE)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  $ENV{GPS_ROOT_DIR}/build/gps  
+  $ENV{GPS_ROOT_DIR}/build/gps
 )
 
 set(DDP_FILES src/robotplugin.cpp
@@ -142,5 +142,3 @@ endif (USE_CAFFE)
 target_link_libraries(gps_agent_lib pthread )
 
 add_dependencies(gps_agent_lib ${PROJECT_NAME}_gencpp)
-
-

@@ -7,10 +7,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install gazebo
-FROM gazebo:gzserver7
+FROM gazebo:gzserver6
 # install gazebo packages
 RUN apt-get update && apt-get install -q -y \
-    libgazebo7-dev=7.5.0* \
+    libgazebo6-dev=6.7.0* \
     && rm -rf /var/lib/apt/lists/*
 
 FROM ubuntu:trusty
@@ -23,11 +23,20 @@ RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_releas
 
 # install gazebo packages
 RUN apt-get update && apt-get install -q -y \
-    gazebo7=7.5.0* \
+    gazebo6=6.7.0* \
     && rm -rf /var/lib/apt/lists/*
 
 # setup environment
 EXPOSE 11345
+
+# setup entrypoint
+COPY ./gzserver_entrypoint.sh /
+
+ENTRYPOINT ["/gzserver_entrypoint.sh"]
+CMD ["gzserver"]
+
+# setup environment
+EXPOSE 5000
 
 # setup entrypoint
 COPY ./gzserver_entrypoint.sh /
@@ -51,19 +60,43 @@ RUN apt-get update && apt-get install -y build-essential \
 		libboost-all-dev \
 		swig \
 		python-pygame \
-		git
+		git \
+		libgflags-dev \
+		libgoogle-glog-dev  \
+		liblmdb-dev \
 
 RUN pip install protobuf && \
  		rosdep init && \
 		rosdep update && \
 		echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc && source ~/.bashrc
 
+# Run Caffe dependencies
+FROM kaixhin/caffe-deps
+
+# Move into Caffe repo
+RUN cd /root/caffe && \
+# Make and move into build directory
+  mkdir build && cd build && \
+# CMake
+  cmake .. && \
+# Make
+  make -j"$(nproc)" all && \
+  make install
+
+# Add to Python path
+ENV PYTHONPATH=/root/caffe/python:$PYTHONPATH
+ENV CAFFE_ROOT=/root/caffe
+# Set ~/caffe as working directory
+WORKDIR /root/caffe
+
+# Get list of pakcages
 RUN pip install -U catkin_tools && \
 		mkdir -p catkin_ws/src && \
 		cd catkin_ws/src && \
-		rosinstall_generator --deps ros_tutorials > .rosinstall  # Get list of pakcages
+		rosinstall_generator --deps ros_tutorials > .rosinstall
 
-RUN wstool update   && \             # Checkout all packages
+# Checkout all packages
+RUN wstool update   && \
  		cd ~/catkin_ws && \
 		catkin_init && \
 		mkdir -p src/gps
@@ -72,7 +105,7 @@ ADD . src/gps
 
 RUN cd src/gps && \
 		chmod +x compile_proto.sh && \
-		./compile_proto.sh && \
+		./compile_proto.sh \
 
 # Box setup
 RUN cd ~ && \
@@ -85,27 +118,11 @@ ENV PYTHONPATH=${PYTHONPATH:+:${PYTHONPATH}}:/home/$USER/catkin_ws/src/gps
 
 RUN source ~/.bashrc && \
 	  cd ~/catkin_ws && \
-		cb
+		catkin build && \
+		cd src/gps/gps_agent_pkg && \
+		rosdep install --from-paths -q -r -y  .
 
 # Run Pybox example
-RUN cd ~/catkin_ws/src/gps && \
-		python python/gps/gps_main.py box2d_pointmass_example 
+RUN cd ~/catkin_ws/src/gps
 
-# # Run Caffe dependencies
-# FROM kaixhin/caffe-deps
-#
-# # Move into Caffe repo
-# RUN cd /root/caffe && \
-# # Make and move into build directory
-#   mkdir build && cd build && \
-# # CMake
-#   cmake .. && \
-# # Make
-#   make -j"$(nproc)" all && \
-#   make install
-#
-# # Add to Python path
-# ENV PYTHONPATH=/root/caffe/python:$PYTHONPATH
-#
-# # Set ~/caffe as working directory
-# WORKDIR /root/caffe
+RUN python python/gps/gps_main.py box2d_pointmass_example
