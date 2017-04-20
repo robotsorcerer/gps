@@ -21,7 +21,7 @@ from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.algorithm.policy.policy_prior_gmm import PolicyPriorGMM
 from gps.algorithm.policy.policy_prior import PolicyPrior
 from gps.algorithm.policy_opt.policy_opt_tf import PolicyOptTf
-from gps.algorithm.policy_opt.tf_model_example import example_tf_network
+from gps.algorithm.policy_opt.tf_model_example import tf_network
 from gps.proto.gps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
         END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES, ACTION
 from gps.gui.config import generate_experiment_info
@@ -64,8 +64,8 @@ agent = {
     'substeps': 5,
     'conditions': common['conditions'],
     'pos_body_idx': np.array([1]),
-    'pos_body_offset': [np.array([0.1, 0.1, 0]), np.array([0.1, -0.1, 0]),
-                        np.array([-0.1, -0.1, 0]), np.array([-0.1, 0.1, 0])],
+    'pos_body_offset': [[np.array([0.1, 0.1, 0])], [np.array([0.1, -0.1, 0])],
+                        [np.array([-0.1, -0.1, 0])], [np.array([-0.1, 0.1, 0])]],
     'T': 100,
     'sensor_dims': SENSOR_DIMS,
     'state_include': [JOINT_ANGLES, JOINT_VELOCITIES, END_EFFECTOR_POINTS,
@@ -160,7 +160,7 @@ if ALGORITHM_NN_LIBRARY == "tf":
         },
         'weights_file_prefix': EXP_DIR + 'policy',
         'iterations': 3000,
-        'network_model': example_tf_network
+        'network_model': tf_network
     }
 elif ALGORITHM_NN_LIBRARY == "caffe":
     algorithm['policy_opt'] = {
