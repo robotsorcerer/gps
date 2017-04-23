@@ -64,7 +64,7 @@ RUN apt-get update && apt-get install -q --allow-unauthenticated -y \
 		&& rm -rf /var/lib/apt/lists/*
 
 #one line gazebo install
-RUN curl -ssL http://get.gazebosim.org | sh
+# RUN curl -ssL http://get.gazebosim.org | sh
 
 # Start with Caffe dependencies
 
