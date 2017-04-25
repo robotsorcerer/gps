@@ -115,7 +115,8 @@ EXPOSE 5000
 RUN /bin/bash -c echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc \
 		&& /bin/bash -c echo "export PYTHONPATH=${PYTHONPATH:+:${PYTHONPATH}}:/root/caffe/python:/root/catkin_ws/src/gps" >> ~/.bashrc \
 		&& /bin/bash -c echo " source /usr/local/etc/bash_completion.d/catkin_tools-completion.bash" >> ~/.bashrc \
-		&& /bin/bash -c "source /root/.bashrc"
+		&& /bin/bash -c "source /root/.bashrc" \
+    && /bin/bash -c echo "export CAFFE_ROOT=/root/caffe/build"
 
 
 RUN wget https://bootstrap.pypa.io/get-pip.py \
