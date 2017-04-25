@@ -25,49 +25,57 @@ RUN apt-get update && apt-get install --allow-unauthenticated  -y \
     ros-indigo-desktop-full=1.1.4-0* \
     && rm -rf /var/lib/apt/lists/*
 
-# setup entrypoint
+# # setup entrypoint
 # COPY ./ros_entrypoint.sh /
 
 # ENTRYPOINT ["/ros_entrypoint.sh"]
 # CMD ["bash"]
 
-# ros-indigo-ros-base
-RUN apt-get update && apt-get install -y --allow-unauthenticated \
-    ros-indigo-ros-base=1.1.4-0* \
-&& rm -rf /var/lib/apt/lists/*
-
-# moveit-indigo-ci
 ENV TERM xterm
 
-# install gazebo packages
-RUN apt-get update && apt-get install -q --allow-unauthenticated -y \
-		build-essential \
-		gcc \
-		g++ \
-		wget \
-		make \
-		nano \
-		curl \
-		protobuf-compiler \
-		libhdf5-dev \
-		libprotobuf-dev \
-		protobuf-compiler \
-		libboost-all-dev \
-		swig \
-		python-pygame \
-		python-pip \
-		python-dev \
-		git \
-		libgflags-dev \
-		libgoogle-glog-dev  \
-		liblmdb-dev \
-		&& rm -rf /var/lib/apt/lists/*
-
-#one line gazebo install
-# RUN curl -ssL http://get.gazebosim.org | sh
-
+# ros-indigo-ros-base
+RUN apt-get update && apt-get install -y --allow-unauthenticated \
+  ros-indigo-ros-base=1.1.4-0* \
+	build-essential \
+	gcc \
+	g++ \
+	wget \
+	make \
+	nano \
+	curl \
+	protobuf-compiler \
+	libhdf5-dev \
+	libprotobuf-dev \
+	protobuf-compiler \
+	swig \
+	python-pygame \
+	python-pip \
+	python-dev \
+	git \
+	libgflags-dev \
+	libgoogle-glog-dev  \
+	liblmdb-dev \
+	autoconf  \
+	automake \
+	libtool \
+	unzip \
+	libprotobuf-dev libleveldb-dev \
+	libsnappy-dev libopencv-dev \
+	libhdf5-serial-dev protobuf-compiler \
+	libatlas-base-dev \
+	libopenblas-dev \
+	&& rm -rf /var/lib/apt/lists/*
+#
+#
 # Start with Caffe dependencies
-
+RUN pip install --upgrade b2
+RUN wget https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz \
+    && tar -zvxf boost_1_61_0.tar.gz \
+    && cd boost_1_61_0 \
+    && ./bootstrap.sh --prefix=/usr/local --with-libraries=program_options atomic \
+		link=static runtime-link=shared threading=multi \
+    && ./b2 install
+#
 #protobuf-compiler
 ENV PROTOBUF=/root/protobuf
 RUN git clone https://github.com/google/protobuf.git \
@@ -76,18 +84,29 @@ RUN git clone https://github.com/google/protobuf.git \
 		&& ./configure \
 		&& make -j \
 		&& make install \
-		&& cd /root
+		&& ldconfig \
+		&& cd ../ \
+		&& rm -rf protobuf
 
 #clone caffe
 ENV CAFFE_ROOT=/root/caffe/
-RUN git clone https://github.com/BVLC/caffe.git \
-		&& cd $CAFFFE \
+RUN cd && rm -rf /root/caffe && git clone https://github.com/BVLC/caffe.git \
+		&& cd $CAFFE_ROOT #&& rm CMakeLists.txt
+
+COPY CMakeLists.txt $CAFFE_ROOT/CMakeLists.txt
+RUN wget https://ecs.utdallas.edu/~opo140030/docker_files/cudnn.tar.gz \
+		&& tar -zvxf cudnn.tar.gz \
+		&& cd cudnnv5.1 \
+		&& cp include/cudnn.h /usr/local/cuda/include \
+		&& cp include/cudnn.h /usr/local/cuda-8.0/include \
+		&& cp lib64/*.* /usr/local/cuda-8.0/lib64 \
+		&& cp lib64/*.* /usr/local/cuda/lib64
+
+RUN cd $CAFFE_ROOT \
 		&& mkdir build && cd build \
-		&& cmake -DUSE_CUDNN=ON .. \
+		&& cmake -DUSE_CUDNN=ON ..  \
 		&& make -j"$(nproc)" all \
-		&& make install \
-		&& make runtest \
-		&& cd /root
+		&& make install
 
 # setup environment
 EXPOSE 5000
@@ -99,27 +118,38 @@ RUN /bin/bash -c echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc \
 		&& /bin/bash -c "source /root/.bashrc"
 
 
+RUN wget https://bootstrap.pypa.io/get-pip.py \
+		&& python ./get-pip.py \
+		&& apt-get install python-pip
+
 #install catkin build
 RUN pip install -U catkin_tools
 
 ENV CATKIN_WS=/root/catkin_ws
 
-RUN mkdir -p $CATKIN_WS/src && cd $CATKIN_WS/src
-COPY . /catkin_ws/src/gps
-RUN cd gps \
-		&& pip2 install -r requirements.txt \
+RUN mkdir -p $CATKIN_WS/src && cd $CATKIN_WS/src \
+		&& mkdir gps
+
+COPY . $CATKIN_WS/src/gps
+
+RUN cd $CATKIN_WS/src/gps \
 		&& ./compile_proto.sh \
 		&& cd gps_agent_pkg \
-		&& rosdep install --from-paths -r -y -q . \
-		&& cd $CATKIN_WS/src \
-		&& catkin_build
+		&& echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list \
+		&& apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116 \
+		&& apt-get update \
+		&& rosdep install --from-paths -r -y . \
+ 		&& cd /root  \
+		&& git clone https://github.com/pybox2d/pybox2d  \
+		&& cd pybox2d  \
+		&& python setup.py build  \
+		&& python setup.py install
 
-# Box setup
-RUN cd /root && \
-		git clone https://github.com/pybox2d/pybox2d && \
-		cd pybox2d && \
-		python setup.py build && \
-		python setup.py install
+# something to put in readme file
+# RUN cd $CATKIN_WS \
+# 		&& /bin/bash -c "source /opt/ros/indigo/setup.bash" \
+# 		&& catkin build
 
-RUN /bin/bash source /root/.bashrc
-RUN python python/gps/gps_main.py box2d_pointmass_example
+# something to do in a readme file
+# RUN /bin/bash source /root/.bashrc
+# RUN python python/gps/gps_main.py box2d_pointmass_example
