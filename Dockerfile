@@ -144,13 +144,8 @@ RUN cd $CATKIN_WS/src/gps \
 		&& git clone https://github.com/pybox2d/pybox2d  \
 		&& cd pybox2d  \
 		&& python setup.py build  \
-		&& python setup.py install
+		&& python setup.py install \
+		&& cd $CATKIN_WS/src/gps \
+		&& bash env.sh
 
-# something to put in readme file
-# RUN cd $CATKIN_WS \
-# 		&& /bin/bash -c "source /opt/ros/indigo/setup.bash" \
-# 		&& catkin build
-
-# something to do in a readme file
-# RUN /bin/bash source /root/.bashrc
-# RUN python python/gps/gps_main.py box2d_pointmass_example
+RUN  /bin/bash -c printf "to run the point mass example, do \n\npython python/gps/gps_main.py box2d_pointmass_example \n from the gps root folder"
