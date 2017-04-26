@@ -33,8 +33,6 @@ COST_STATE = {
     },
 }
 
-<<<<<<< HEAD
-=======
 # CostBinaryRegion
 COST_BINARY_REGION = {
     'ramp_option': RAMP_CONSTANT,  # How target cost ramps over time.
@@ -52,7 +50,6 @@ COST_BINARY_REGION = {
     'outside_cost': 1.0,
     'inside_cost': 0.0,
 }
->>>>>>> 954386f82e94c874ef3f903ef6e677a2ff0dd3cb
 
 # CostSum
 COST_SUM = {
@@ -65,8 +62,6 @@ COST_SUM = {
 COST_ACTION = {
     'wu': np.array([]),  # Torque penalties, must be 1 x dU numpy array.
 }
-<<<<<<< HEAD
-=======
 
 
 # CostLinWP
@@ -79,4 +74,3 @@ COST_LIN_WP = {
     'logalpha': 1e-5,
     'log': 0.0,
 }
->>>>>>> 954386f82e94c874ef3f903ef6e677a2ff0dd3cb

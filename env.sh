@@ -27,7 +27,9 @@ catkin build
 source /root/catkin_ws/devel/setup.bash
 
 GPS_PATH=~/catkin_ws/src/gps
-cd $GPS_PATH
+PIP_INSTALL=$( install -r requirements.txt)
+cd $GPS_PATH;
+pip $PIP_INSTALL
 
 GPS_MAIN=python/gps/gps_main.py
 MAINEXEC=$(chmod +x $GPS_MAIN)

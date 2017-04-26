@@ -1,3 +1,4 @@
 packaging
 catkin_tools>=0.3.1
 protobuf
+scipy
