@@ -69,7 +69,8 @@ enum SampleType {
   IMAGE_FEAT = 16,
   END_EFFECTOR_POINTS_NO_TARGET = 17,
   END_EFFECTOR_POINT_VELOCITIES_NO_TARGET = 18,
-  TOTAL_DATA_TYPES = 19
+  NOISE = 19,
+  TOTAL_DATA_TYPES = 20
 };
 bool SampleType_IsValid(int value);
 const SampleType SampleType_MIN = ACTION;

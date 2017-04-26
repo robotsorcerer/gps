@@ -43,6 +43,8 @@ find_package(catkin REQUIRED COMPONENTS
   Caffe
 )
 
+include_directories($ENV{GPS_ROOT_DIR}/build/gps)
+
 ## System dependencies are found with CMake's conventions
  find_package(Boost REQUIRED COMPONENTS system)
 

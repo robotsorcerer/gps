@@ -17,11 +17,7 @@ CATKIN_PATH=/root/catkin_ws
 cd $CATKIN__SRC_PATH
 $(catkin init)
 
-cd $CATKIN_PATH
-catkin build
-
-# I have to run twice to build devel space properly for some reason
-cd $CATKIN_PATH
+cd $CATKIN_PATH;
 catkin build
 
 source /root/catkin_ws/devel/setup.bash
