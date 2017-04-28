@@ -21,9 +21,6 @@ RUN rosdep init \
 
 # install ros packages
 ENV ROS_DISTRO indigo
-RUN apt-get update && apt-get install --allow-unauthenticated  -y \
-    ros-indigo-desktop-full=1.1.4-0* \
-    && rm -rf /var/lib/apt/lists/*
 
 # # setup entrypoint
 # COPY ./ros_entrypoint.sh /
@@ -35,7 +32,7 @@ ENV TERM xterm
 
 # ros-indigo-ros-base
 RUN apt-get update && apt-get install -y --allow-unauthenticated \
-  ros-indigo-ros-base=1.1.4-0* \
+  ros-indigo-desktop-full=1.1.4-0* \
 	build-essential \
 	gcc \
 	g++ \
@@ -88,28 +85,29 @@ RUN git clone https://github.com/google/protobuf.git \
 		&& cd ../ \
 		&& rm -rf protobuf
 
-#clone caffe
-ENV CAFFE_ROOT=/root/caffe/
-RUN cd && rm -rf /root/caffe && git clone https://github.com/BVLC/caffe.git \
-		&& cd $CAFFE_ROOT #&& rm CMakeLists.txt
-
-COPY CMakeLists.txt $CAFFE_ROOT/CMakeLists.txt
-RUN wget https://ecs.utdallas.edu/~opo140030/docker_files/cudnn.tar.gz \
+RUN cd /root \
+    && wget https://ecs.utdallas.edu/~opo140030/docker_files/cudnn.tar.gz \
 		&& tar -zvxf cudnn.tar.gz \
 		&& cd cudnnv5.1 \
 		&& cp include/cudnn.h /usr/local/cuda/include \
 		&& cp include/cudnn.h /usr/local/cuda-8.0/include \
 		&& cp lib64/*.* /usr/local/cuda-8.0/lib64 \
-		&& cp lib64/*.* /usr/local/cuda/lib64
+		&& cp lib64/*.* /usr/local/cuda/lib64 \
+    && rm /root/cudnn* -rf
+
+#clone caffe
+ENV CAFFE_ROOT=/root/caffe/
+RUN cd ~ \
+    && git clone https://github.com/BVLC/caffe.git
+
+COPY CaffeCMake.txt $CAFFE_ROOT/CMakeLists.txt
 
 RUN cd $CAFFE_ROOT \
 		&& mkdir build && cd build \
 		&& cmake -DUSE_CUDNN=ON ..  \
 		&& make -j"$(nproc)" all \
-		&& make install
-
-# setup environment
-EXPOSE 5000
+		&& make install \
+    && rm -rf /root/caffe
 
 # Setup catkin workspace
 RUN /bin/bash -c echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc \
@@ -118,10 +116,10 @@ RUN /bin/bash -c echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc \
 		&& /bin/bash -c "source /root/.bashrc" \
     && /bin/bash -c echo "export CAFFE_ROOT=/root/caffe/build"
 
-
 RUN wget https://bootstrap.pypa.io/get-pip.py \
 		&& python ./get-pip.py \
-		&& apt-get install python-pip
+		&& apt-get install python-pip \
+    && rm get-pip.py
 
 #install catkin build
 RUN pip install -U catkin_tools
@@ -133,19 +131,23 @@ RUN mkdir -p $CATKIN_WS/src && cd $CATKIN_WS/src \
 
 COPY . $CATKIN_WS/src/gps
 
-RUN cd $CATKIN_WS/src/gps \
-		&& ./compile_proto.sh \
-		&& cd gps_agent_pkg \
-		&& echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list \
+RUN /bin/bash -c echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list \
 		&& apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116 \
 		&& apt-get update \
+		&& cd $CATKIN_WS/src/gps \
+		&& bash compile_proto.sh \
+		&& cd gps_agent_pkg \
 		&& rosdep install --from-paths -r -y . \
  		&& cd /root  \
 		&& git clone https://github.com/pybox2d/pybox2d  \
 		&& cd pybox2d  \
 		&& python setup.py build  \
 		&& python setup.py install \
+		&& rm -rf /root/pybox2d \
 		&& cd $CATKIN_WS/src/gps \
-		&& bash env.sh
+		&& chmod 777 *.sh \
+		&& cp *.sh $CATKIN_WS \
+		&& pip install -r requirements.txt \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN  /bin/bash -c printf "to run the point mass example, do \n\npython python/gps/gps_main.py box2d_pointmass_example \n from the gps root folder"

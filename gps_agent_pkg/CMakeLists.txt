@@ -5,7 +5,7 @@ project(gps_agent_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 
-set(ROS_DEFAULT_DIR /opt/ros/indigo/share/)
+set(ROS_DEFAULT_DIR /opt/ros/$ENV{ROS_DISTRO}/share/)
 
 set(orocos_kdl_DIR                ${ROS_DEFAULT_DIR}/orocos_kdl)
 set(pluginlib_DIR                 ${ROS_DEFAULT_DIR}/pluginlib/cmake)
