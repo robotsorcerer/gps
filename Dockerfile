@@ -1,6 +1,8 @@
 FROM nvidia/cuda:8.0-devel-ubuntu14.04
 LABEL maintainer "patlekano@gmail.com"
 
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
 # setup environment
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
@@ -131,12 +133,13 @@ RUN mkdir -p $CATKIN_WS/src && cd $CATKIN_WS/src \
 
 COPY . $CATKIN_WS/src/gps
 
-RUN /bin/bash -c echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list \
+RUN /bin/bash -c "source /opt/ros/indigo/setup.bash" \
+		&& cd $CATKIN_WS/src/gps \
+		&& ./compile_proto.sh \
+		&& cd gps_agent_pkg \
+		&& echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list \
 		&& apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116 \
 		&& apt-get update \
-		&& cd $CATKIN_WS/src/gps \
-		&& bash compile_proto.sh \
-		&& cd gps_agent_pkg \
 		&& rosdep install --from-paths -r -y . \
  		&& cd /root  \
 		&& git clone https://github.com/pybox2d/pybox2d  \
@@ -150,4 +153,6 @@ RUN /bin/bash -c echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc)
 		&& pip install -r requirements.txt \
     && rm -rf /var/lib/apt/lists/*
 
-RUN  /bin/bash -c printf "to run the point mass example, do \n\npython python/gps/gps_main.py box2d_pointmass_example \n from the gps root folder"
+RUN  echo   "======================================================\n" \
+		&& echo "                       Build Complete                   "  \
+		&& echo "======================================================  "
