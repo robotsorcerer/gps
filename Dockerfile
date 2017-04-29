@@ -67,13 +67,20 @@ RUN apt-get update && apt-get install -y --allow-unauthenticated \
 #
 #
 # Start with Caffe dependencies
+
+#We need this for boost
 RUN pip install --upgrade b2
-RUN wget https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz \
+
+ENV ROOT_DIR=/root
+
+RUN cd $ROOT_DIR \
+    && wget https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz \
     && tar -zvxf boost_1_61_0.tar.gz \
     && cd boost_1_61_0 \
     && ./bootstrap.sh --prefix=/usr/local --with-libraries=program_options atomic \
 		link=static runtime-link=shared threading=multi \
-    && ./b2 install
+    && ./b2 install \
+    && cd $ROOT_DIR && rm boost*.gz
 #
 #protobuf-compiler
 ENV PROTOBUF=/root/protobuf
@@ -108,8 +115,7 @@ RUN cd $CAFFE_ROOT \
 		&& mkdir build && cd build \
 		&& cmake -DUSE_CUDNN=ON ..  \
 		&& make -j"$(nproc)" all \
-		&& make install \
-    && rm -rf /root/caffe
+		&& make install
 
 # Setup catkin workspace
 RUN /bin/bash -c echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc \
@@ -135,6 +141,7 @@ COPY . $CATKIN_WS/src/gps
 
 RUN /bin/bash -c "source /opt/ros/indigo/setup.bash" \
 		&& cd $CATKIN_WS/src/gps \
+    && rm CaffeCMake.txt \
 		&& ./compile_proto.sh \
 		&& cd gps_agent_pkg \
 		&& echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list \
@@ -146,13 +153,23 @@ RUN /bin/bash -c "source /opt/ros/indigo/setup.bash" \
 		&& cd pybox2d  \
 		&& python setup.py build  \
 		&& python setup.py install \
-		&& rm -rf /root/pybox2d \
-		&& cd $CATKIN_WS/src/gps \
+		&& rm -rf /root/pybox2d
+
+# split this to help debugging during build process
+RUN cd $CATKIN_WS/src/gps \
 		&& chmod 777 *.sh \
 		&& cp *.sh $CATKIN_WS \
 		&& pip install -r requirements.txt \
     && rm -rf /var/lib/apt/lists/*
 
-RUN  echo   "======================================================\n" \
-		&& echo "                       Build Complete                   "  \
-		&& echo "======================================================  "
+#ADD setup.sh $ROOT_DIR
+# 
+# RUN cd $ROOT_DIR \
+#     && bash setup.sh \
+#     && cd $CATKIN_WS/src \
+#     && catkin init \
+#     && cd $CATKIN_WS \
+#     && export CAFFE_ROOT=/root/caffe/ \
+#     && catkin build
+
+RUN  echo   " ===========  Build Complete  =========   "

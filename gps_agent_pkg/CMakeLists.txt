@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(gps_agent_pkg)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-
 set(ROS_DEFAULT_DIR /opt/ros/$ENV{ROS_DISTRO}/share/)
 
 set(orocos_kdl_DIR                ${ROS_DEFAULT_DIR}/orocos_kdl)
