@@ -61,7 +61,7 @@ class PolicyOptTf(PolicyOpt):
             else:
                 self.x_idx = self.x_idx + list(range(i, i+dim))
             i += dim
-        init_op = tf.initialize_all_variables()
+        init_op = tf.global_variables_initializer()#tf.initialize_all_variables()
         self.sess.run(init_op)
 
     def init_network(self):
@@ -283,4 +283,3 @@ class PolicyOptTf(PolicyOpt):
             f.write(state['wts'])
             f.seek(0)
             self.restore_model(f.name)
-

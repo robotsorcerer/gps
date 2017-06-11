@@ -26,7 +26,7 @@ from gps.proto.gps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
         END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES, ACTION
 from gps.gui.config import generate_experiment_info
 
-ALGORITHM_NN_LIBRARY = "caffe"
+ALGORITHM_NN_LIBRARY = "tf"#tf
 
 SENSOR_DIMS = {
     JOINT_ANGLES: 7,

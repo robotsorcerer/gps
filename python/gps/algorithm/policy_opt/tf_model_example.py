@@ -4,22 +4,18 @@ import tensorflow as tf
 from gps.algorithm.policy_opt.tf_utils import TfMap
 import numpy as np
 
-
 def init_weights(shape, name=None):
     return tf.get_variable(name, initializer=tf.random_normal(shape, stddev=0.01))
-
 
 def init_bias(shape, name=None):
     return tf.get_variable(name, initializer=tf.zeros(shape, dtype='float'))
 
-
 def batched_matrix_vector_multiply(vector, matrix):
     """ computes x^T A in mini-batches. """
     vector_batch_as_matricies = tf.expand_dims(vector, [1])
-    mult_result = tf.batch_matmul(vector_batch_as_matricies, matrix)
+    mult_result = tf.matmul(vector_batch_as_matricies, matrix)
     squeezed_result = tf.squeeze(mult_result, [1])
     return squeezed_result
-
 
 def euclidean_loss_layer(a, b, precision, batch_size):
     """ Math:  out = (action - mlp_out)'*precision*(action-mlp_out)
@@ -28,7 +24,6 @@ def euclidean_loss_layer(a, b, precision, batch_size):
     uP = batched_matrix_vector_multiply(a-b, precision)
     uPu = tf.reduce_sum(uP*(a-b))  # this last dot product is then summed, so we just the sum all at once.
     return uPu/scale_factor
-
 
 def get_input_layer(dim_input, dim_output):
     """produce the placeholder inputs that are used to run ops forward and backwards.
@@ -39,7 +34,6 @@ def get_input_layer(dim_input, dim_output):
     action = tf.placeholder('float', [None, dim_output], name='action')
     precision = tf.placeholder('float', [None, dim_output, dim_output], name='precision')
     return net_input, action, precision
-
 
 def get_mlp_layers(mlp_input, number_layers, dimension_hidden):
     """compute MLP with specified number of layers.
@@ -284,5 +278,3 @@ def get_xavier_weights(filter_shape, poolsize=(2, 2)):
     low = -4*np.sqrt(6.0/(fan_in + fan_out)) # use 4 for sigmoid, 1 for tanh activation
     high = 4*np.sqrt(6.0/(fan_in + fan_out))
     return tf.Variable(tf.random_uniform(filter_shape, minval=low, maxval=high, dtype=tf.float32))
-
-

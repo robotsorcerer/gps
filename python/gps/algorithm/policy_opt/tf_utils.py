@@ -117,6 +117,7 @@ class TfSolver:
         else:
             raise NotImplementedError("Please select a valid optimizer.")
 
+
     def get_last_conv_values(self, sess, feed_dict, num_values, batch_size):
         i = 0
         values = []
@@ -156,4 +157,3 @@ class TfSolver:
             else:
                 loss = sess.run([self.loss_scalar, self.solver_op], feed_dict)
             return loss[0]
-

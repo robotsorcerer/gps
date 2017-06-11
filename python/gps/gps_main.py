@@ -45,6 +45,7 @@ class GPSMain(object):
         self._data_files_dir = config['common']['data_files_dir']
 
         self.agent = config['agent']['type'](config['agent'])
+
         self.data_logger = DataLogger()
         self.gui = GPSTrainingGUI(config['common']) if config['gui_on'] else None
 
@@ -78,6 +79,9 @@ class GPSMain(object):
                 self._take_iteration(itr, traj_sample_lists)
                 pol_sample_lists = self._take_policy_samples()
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
+            # 
+            # print('sleeping in ')
+            # time.sleep(10)
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
         finally:
@@ -211,6 +215,7 @@ class GPSMain(object):
             self.gui.set_status_text('Calculating.')
             self.gui.start_display_calculating()
         self.algorithm.iteration(sample_lists)
+
         if self.gui:
             self.gui.stop_display_calculating()
 
@@ -346,6 +351,7 @@ def main():
                  (exp_name, hyperparams_file))
 
     hyperparams = imp.load_source('hyperparams', hyperparams_file)
+
     if args.targetsetup:
         try:
             import matplotlib.pyplot as plt
@@ -365,6 +371,7 @@ def main():
         import matplotlib.pyplot as plt
 
         seed = hyperparams.config.get('random_seed', 0)
+
         random.seed(seed)
         np.random.seed(seed)
 

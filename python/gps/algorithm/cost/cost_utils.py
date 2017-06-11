@@ -15,7 +15,7 @@ def get_ramp_multiplier(ramp_option, T, wp_final_multiplier=1.0):
         A (T,) float vector containing weights for each time step.
     """
     if ramp_option == RAMP_CONSTANT:
-        wpm = np.ones(T)
+        wpm = np.ones(int(T))
     elif ramp_option == RAMP_LINEAR:
         wpm = (np.arange(T, dtype=np.float32) + 1) / T
     elif ramp_option == RAMP_QUADRATIC:

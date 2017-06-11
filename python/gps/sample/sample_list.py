@@ -67,7 +67,6 @@ class PickleSampleWriter(object):
         with open(self._data_file, 'wb') as data_file:
             cPickle.dump(data_file, samples)
 
-
 class SysOutWriter(object):
     """ Writes notifications to sysout on sample writes. """
     def __init__(self):

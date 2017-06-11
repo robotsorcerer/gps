@@ -11,13 +11,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/numpy/cmake ${CMAKE_MODUL
 # matches the source tree.
 
 # find required python packages
-find_package(PythonLibs 2.7 REQUIRED)
+#find_package(PythonLibs 2.7 REQUIRED)
 find_package(NumPy REQUIRED)
 
 # find boost
-# 
+#
 # set(Boost_USE_STATIC_LIBS ON)
-# set(Boost_USE_MULTITHREADED ON) 
+# set(Boost_USE_MULTITHREADED ON)
 # set(Boost_USE_STATIC_RUNTIME ON)
 FIND_PACKAGE(Boost COMPONENTS python REQUIRED)
 
@@ -47,7 +47,7 @@ if(BUILD_DOCS)
     RESULT_VARIABLE SPHINX_PROCESS
     OUTPUT_VARIABLE SPHINX_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-  
+
   set(HAVE_SPHINX 0)
   if(SPHINX_PROCESS EQUAL 0)
     FIND_PROGRAM(SPHINX_BUILD sphinx-build)
@@ -60,7 +60,7 @@ if(BUILD_DOCS)
       MESSAGE(SEND_ERROR "must be able to find sphinx-build when BUILD_DOCS is enabled")
     endif()
   endif()
-  
+
   # find pdflatex, which is only required for doc-pdf
   FIND_PACKAGE(LATEX)
   if (PDFLATEX_COMPILER)
@@ -86,7 +86,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${PYTHON_INCLUDE_DIRS}
   ${NUMPY_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS} 
+  ${Boost_INCLUDE_DIRS}
   )
 
 # install headers
@@ -105,5 +105,3 @@ ADD_SUBDIRECTORY(libs/numpy/src)
 if (BUILD_DOCS)
   ADD_SUBDIRECTORY(libs/numpy/doc)
 endif()
-
-

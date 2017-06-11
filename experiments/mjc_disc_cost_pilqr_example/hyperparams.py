@@ -1,4 +1,7 @@
-""" Hyperparameters for MJC 2D navigation with discontinous target region. """
+"""
+    Hyperparameters for MJC 2D navigation with discontinous target region.
+"""
+
 from __future__ import division
 
 from datetime import datetime
@@ -128,7 +131,7 @@ algorithm['policy_opt'] = {}
 
 config = {
     'iterations': algorithm['iterations'],
-    'num_samples': 20,
+    'num_samples': 10, #20
     'verbose_trials': 1,
     'common': common,
     'agent': agent,

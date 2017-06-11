@@ -1,0 +1,20 @@
+MuJoCo Pro Personal license activation key, number 23267, type 6.
+
+Issued to Olalekan Ogunmolu <olalekan.ogunmolu@utdallas.edu>.
+
+Expires June 4, 2018.
+
+This file activates MuJoCo Pro on a single computer with id:
+LINUX_1LP0WE1050MLS56_7260TJ01E067
+
+Do not modify this file. Its entire content, including the
+plain text section, is used by the activation manager.
+
+a1efdced56361875bb564be27abcd48e880d39ba2ff929b48b21787cade49f1e
+a42985a71babb8c3c4f754885b7f3b24fedab3567186e5ed1f61a5bb5eb725c8
+8ef160856894baf4eddba75f02bd8c002606c4f9a71e67cde7df11df93044183
+ab715356e039fe99877085dbb750704a0c644093366fb1f78eac868235961acd
+1f31b82ce2f8cc8409a502948a34d2a5b8de249cc31383e4b87b03dea9126268
+3e412bd25989972bf213f1abf7f19e16cdee35b7b8519edb8b6c95577a87f2ed
+e45a1fd1957989c9460be0ddfd79dc618a4d5f1472f0ba4011aaddb7f60134e0
+9c9ecf8f30b89db9e05ece1fd4782d74bfa6eb04b6f620694ff0b0e847a00901

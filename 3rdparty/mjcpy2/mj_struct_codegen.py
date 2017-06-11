@@ -2,7 +2,7 @@ import re
 import os.path as osp
 
 # fname = "../mjpro/mjmodel.h"
-fname = "../mjpro/mjdata.h"
+fname = "../mjpro150/include/mjdata.h"
 with open(fname,"r") as fh:
     all_lines = fh.readlines()
 
@@ -36,7 +36,7 @@ def ismacro(s):
     return s.lower() != s and s != "nM"
 def add_model_to_fields(s):
     md = re.match("^\w+$",s)
-    if md: 
+    if md:
         if "*" in s: asdf
         if ismacro(s) or isint(s):
             return s
@@ -49,7 +49,7 @@ def add_model_to_fields(s):
     else:
         raise Exception
 
-    
+
 
 def process(in_lines,structname):
     get_lines = []
@@ -59,8 +59,8 @@ def process(in_lines,structname):
         md = scalar_re.match(line)
         if md:
             dtype,name = md.group(1),md.group(2)
-            get_lines.append('    out["%(name)s"] = %(structname)s->%(name)s;'%dict(structname=structname,dtype=dtype,name=name))            
-            set_lines.append('    _csdihk(d, "%(name)s", %(structname)s->%(name)s);'%dict(structname=structname,name=name))            
+            get_lines.append('    out["%(name)s"] = %(structname)s->%(name)s;'%dict(structname=structname,dtype=dtype,name=name))
+            set_lines.append('    _csdihk(d, "%(name)s", %(structname)s->%(name)s);'%dict(structname=structname,name=name))
             continue
         md = ptr_re.match(line)
         if md:
@@ -70,14 +70,14 @@ def process(in_lines,structname):
                 continue
             size0 = add_model_to_fields(size0)
             size1 = add_model_to_fields(size1)
-            get_lines.append('    out["%(name)s"] = toNdarray2<%(dtype)s>(%(structname)s->%(name)s, %(size0)s, %(size1)s);'%dict(structname=structname,name=name,dtype=dtype,size0=size0,size1=size1))            
-            set_lines.append('    _cadihk(d, "%(name)s", %(structname)s->%(name)s);'%dict(structname=structname,name=name))            
+            get_lines.append('    out["%(name)s"] = toNdarray2<%(dtype)s>(%(structname)s->%(name)s, %(size0)s, %(size1)s);'%dict(structname=structname,name=name,dtype=dtype,size0=size0,size1=size1))
+            set_lines.append('    _cadihk(d, "%(name)s", %(structname)s->%(name)s);'%dict(structname=structname,name=name))
             continue
         md = arr_re.match(line)
         if md:
             dtype,name,size = md.group(1),md.group(2),md.group(3)
-            get_lines.append('    out["%(name)s"] = toNdarray1<%(dtype)s>(%(structname)s->%(name)s, %(size)s);'%dict(structname=structname,name=name,dtype=dtype,size=size))            
-            set_lines.append('    _cadihk(d, "%(name)s", %(structname)s->%(name)s);'%dict(structname=structname,name=name))            
+            get_lines.append('    out["%(name)s"] = toNdarray1<%(dtype)s>(%(structname)s->%(name)s, %(size)s);'%dict(structname=structname,name=name,dtype=dtype,size=size))
+            set_lines.append('    _cadihk(d, "%(name)s", %(structname)s->%(name)s);'%dict(structname=structname,name=name))
             continue
         print "ignore line:",line,
     return get_lines,set_lines
