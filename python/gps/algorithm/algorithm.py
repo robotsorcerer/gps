@@ -20,15 +20,15 @@ class Algorithm(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, hyperparams):
-        config = copy.deepcopy(ALG)
-        config.update(hyperparams)
+        config = copy.deepcopy(ALG) #cost is none here
+        config.update(hyperparams)  #cost becomes a dict
         self._hyperparams = config
 
         if 'train_conditions' in hyperparams:
-            self._cond_idx = hyperparams['train_conditions']
+            self._cond_idx = hyperparams['train_conditions']  #Non existent for mjc_mdgps
             self.M = len(self._cond_idx)
         else:
-            self.M = hyperparams['conditions']
+            self.M = hyperparams['conditions']  #will be 4
             self._cond_idx = range(self.M)
             self._hyperparams['train_conditions'] = self._cond_idx
             self._hyperparams['test_conditions'] = self._cond_idx
@@ -37,9 +37,9 @@ class Algorithm(object):
         # Grab a few values from the agent.
         agent = self._hyperparams['agent']
         self.T = self._hyperparams['T'] = agent.T
-        self.dU = self._hyperparams['dU'] = agent.dU
-        self.dX = self._hyperparams['dX'] = agent.dX
-        self.dO = self._hyperparams['dO'] = agent.dO
+        self.dU = self._hyperparams['dU'] = agent.dU #not found
+        self.dX = self._hyperparams['dX'] = agent.dX #not found
+        self.dO = self._hyperparams['dO'] = agent.dO #not found
 
         init_traj_distr = config['init_traj_distr']
         init_traj_distr['x0'] = agent.x0
@@ -66,9 +66,9 @@ class Algorithm(object):
         self.traj_opt = hyperparams['traj_opt']['type'](
             hyperparams['traj_opt']
         )
-        if type(hyperparams['cost']) == list:
+        if type(hyperparams['cost']) == list: #see config.py
             self.cost = [
-                hyperparams['cost'][i]['type'](hyperparams['cost'][i])
+                hyperparams['cost'][i]['type'](hyperparams['cost'][i])  #cost is a list of CostSum
                 for i in range(self.M)
             ]
         else:
@@ -134,16 +134,16 @@ class Algorithm(object):
         """
         # Constants.
         T, dX, dU = self.T, self.dX, self.dU
-        N = len(self.cur[cond].sample_list)
+        N = len(self.cur[cond].sample_list)  # cur is every var in iteration data
 
         # Compute cost.
-        cs = np.zeros((N, T))
-        cc = np.zeros((N, T))
-        cv = np.zeros((N, T, dX+dU))
-        Cm = np.zeros((N, T, dX+dU, dX+dU))
+        cs = np.zeros((N, T))  # see algorithm_utils.py
+        cc = np.zeros((N, T))   # Cost estimate constant term.
+        cv = np.zeros((N, T, dX+dU))    # Cost estimate vector term.
+        Cm = np.zeros((N, T, dX+dU, dX+dU)) # Cost estimate matrix term.
         for n in range(N):
-            sample = self.cur[cond].sample_list[n]
-            # Get costs.
+            sample = self.cur[cond].sample_list[n] # cur is every var in iteration data
+            # Get costs.  Self.cost will be a CostSum object see mdgps/antag/hyperparams#L128
             l, lx, lu, lxx, luu, lux = self.cost[cond].eval(sample)
             cc[n, :] = l
             cs[n, :] = l

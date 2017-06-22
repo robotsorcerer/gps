@@ -1,7 +1,8 @@
 """ Default configuration and hyperparameter values for costs. """
 import numpy as np
 
-from gps.algorithm.cost.cost_utils import RAMP_CONSTANT, evallogl2term
+from gps.algorithm.cost.cost_utils import RAMP_CONSTANT, evallogl2term, \
+     evallogl2term_ant
 
 
 # CostFK
@@ -14,7 +15,8 @@ COST_FK = {
     'l2': 1.0,
     'alpha': 1e-5,
     'target_end_effector': None,  # Target end-effector position.
-    'evalnorm': evallogl2term,
+    # 'evalnorm': evallogl2term,
+    'evalnorm': evallogl2term_ant,
 }
 
 

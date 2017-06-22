@@ -41,9 +41,9 @@ class AlgorithmMDGPS(Algorithm):
             sample_lists: List of SampleList objects for each condition.
         """
         # Store the samples and evaluate the costs.
-        for m in range(self.M):
-            self.cur[m].sample_list = sample_lists[m]
-            self._eval_cost(m)
+        for m in range(self.M):  #self.M is the # of the condition number
+            self.cur[m].sample_list = sample_lists[m] #cur is every var in iteration data
+            self._eval_cost(m)  #_eval_cost is defined in algorithm.py line 129
 
         # Update dynamics linearizations.
         self._update_dynamics()

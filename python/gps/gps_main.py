@@ -43,8 +43,9 @@ class GPSMain(object):
             self._test_idx = self._train_idx
 
         self._data_files_dir = config['common']['data_files_dir']
+        self._data_files_dir_robust = config['common']['data_files_dir_robust']
 
-        self.agent = config['agent']['type'](config['agent'])
+        self.agent = config['agent']['type'](config['agent']) #will be AgentMujoCo object
 
         self.data_logger = DataLogger()
         self.gui = GPSTrainingGUI(config['common']) if config['gui_on'] else None
@@ -68,6 +69,7 @@ class GPSMain(object):
                     for i in range(self._hyperparams['num_samples']):
                         self._take_sample(itr, cond, i)
 
+
                 traj_sample_lists = [
                     self.agent.get_samples(cond, -self._hyperparams['num_samples'])
                     for cond in self._train_idx
@@ -76,12 +78,84 @@ class GPSMain(object):
                 # Clear agent samples.
                 self.agent.clear_samples()
 
-                self._take_iteration(itr, traj_sample_lists)
+                self._take_iteration(itr, traj_sample_lists)  #see impl in alg_mdgps.py#L36
                 pol_sample_lists = self._take_policy_samples()
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
-            # 
-            # print('sleeping in ')
-            # time.sleep(10)
+
+        except Exception as e:
+            traceback.print_exception(*sys.exc_info())
+        finally:
+            self._end()
+
+    def run_cl(self, itr_load=None):
+        """
+        Run training by iteratively sampling and taking an iteration.
+        Args:
+            itr_load: If specified, loads algorithm state from that
+                iteration, and resumes training at the next iteration.
+        Returns: None
+        """
+        try:
+            itr_start = self._initialize(itr_load)
+            #-------------------------------------------------------------------------#
+            #            Formulate closed loop environment from pretrained policy     #
+            #-------------------------------------------------------------------------#
+            """
+            Take N policy samples of the algorithm state at iteration itr,
+            for trained policy.
+            Args:
+                itr: the iteration from which to take policy samples
+                N: the number of policy samples to take
+            Returns: None
+            """
+            itr, N = 40, 2000
+            algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
+            self.algorithm = self.data_logger.unpickle(algorithm_file)
+            if self.algorithm is None:
+                print("Error: cannot find '%s.'" % algorithm_file)
+                os._exit(1) # called instead of sys.exit(), since t
+            protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
+                ('traj_sample_itr_%02d.pkl' % itr))
+
+            protag_pol_sample_lists = self._take_policy_samples(N)
+            self.data_logger.pickle(
+                self._data_files_dir + ('pol_sample_itr_%02d.pkl' % itr),
+                copy.copy(protag_pol_sample_lists)
+            )
+
+            if self.gui:
+                self.gui.update(itr, self.algorithm, self.agent,
+                    traj_sample_lists, protag_pol_sample_lists)
+                self.gui.set_status_text(('Took %d policy sample(s) from ' +
+                    'algorithm state at iteration %d.\n' +
+                    'Saved to: data_files/pol_sample_itr_%02d.pkl.\n') % (N, itr, itr))
+            #--------------------------------------------------------------------------#
+            for itr in range(itr_start, self._hyperparams['iterations']):
+                for cond in self._train_idx:
+                    for i in range(self._hyperparams['num_samples']):
+                        self._take_sample(itr, cond, i)
+
+
+                antag_traj_sample_lists = [
+                    self.agent.get_samples(cond, -self._hyperparams['num_samples']) #num_samples = 5
+                    for cond in self._train_idx  # get_samples is finally implemented in sample/sample_list.py
+                ]
+
+                #add the trajectories of the protagonist to the antagonist
+                traj_sample_lists = antag_traj_sample_lists
+
+                # Clear agent samples.
+                self.agent.clear_samples()
+
+                # each iteration below consists of
+                # see Line 282
+                self._take_iteration(itr, traj_sample_lists)
+                antag_pol_sample_lists = self._take_policy_samples()
+                #update total policy sample lists
+                pol_sample_lists = protag_pol_sample_lists + antag_pol_sample_lists
+                #log all robust pol_sample and traj_sample lists
+                self._log_data(itr, traj_sample_lists, pol_sample_lists)
+
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
         finally:
@@ -162,9 +236,9 @@ class GPSMain(object):
         """
         if self.algorithm._hyperparams['sample_on_policy'] \
                 and self.algorithm.iteration_count > 0:
-            pol = self.algorithm.policy_opt.policy
+            pol = self.algorithm.policy_opt.policy  # calling alg_mdgps.py.policy_opt
         else:
-            pol = self.algorithm.cur[cond].traj_distr
+            pol = self.algorithm.cur[cond].traj_distr # cur is every var in iteration data
         if self.gui:
             self.gui.set_image_overlays(cond)   # Must call for each new cond.
             redo = True
@@ -214,6 +288,14 @@ class GPSMain(object):
         if self.gui:
             self.gui.set_status_text('Calculating.')
             self.gui.start_display_calculating()
+        #see corresponding alg being used e.g. algorithm_mdgps
+
+        # 1. Sampling and cost evaluation
+        # 2. Updating dynamics
+        # 3. Updating policy linearizations
+        # 4. C-Step -> Update trajectory
+        # 5. S-Step -> Update policy
+        # 6. advance_iteration variable
         self.algorithm.iteration(sample_lists)
 
         if self.gui:
@@ -241,6 +323,38 @@ class GPSMain(object):
                 self.algorithm.policy_opt.policy, self._test_idx[cond],
                 verbose=verbose, save=False, noisy=False)
         return [SampleList(samples) for samples in pol_samples]
+
+    def _log_data_robust(self, itr, traj_sample_lists, pol_sample_lists=None):
+        """
+        Log data and algorithm for robust policy, and update the GUI.
+        Args:
+            itr: Iteration number.
+            traj_sample_lists: trajectory samples as SampleList object
+            pol_sample_lists: policy samples as SampleList object
+        Returns: None
+        """
+        if self.gui:
+            self.gui.set_status_text('Logging robust data and updating GUI.')
+            self.gui.update(itr, self.algorithm, self.agent,
+                traj_sample_lists, pol_sample_lists)
+            self.gui.save_figure(
+                self._data_files_dir_robust + ('figure_itr_%02d.png' % itr)
+            )
+        if 'no_sample_logging' in self._hyperparams['common']:
+            return
+        self.data_logger.pickle(
+            self._data_files_dir_robust + ('algorithm_itr_%02d.pkl' % itr),
+            copy.copy(self.algorithm)
+        )
+        self.data_logger.pickle(
+            self._data_files_dir_robust + ('traj_sample_itr_%02d.pkl' % itr),
+            copy.copy(traj_sample_lists)
+        )
+        if pol_sample_lists:
+            self.data_logger.pickle(
+                self._data_files_dir_robust + ('pol_sample_itr_%02d.pkl' % itr),
+                copy.copy(pol_sample_lists)
+            )
 
     def _log_data(self, itr, traj_sample_lists, pol_sample_lists=None):
         """
@@ -296,6 +410,8 @@ def main():
                         help='resume training from iter N')
     parser.add_argument('-p', '--policy', metavar='N', type=int,
                         help='take N policy samples (for BADMM/MDGPS only)')
+    parser.add_argument('-c', '--closedloop', action='store_true',
+                        help='run target setup')  #to train the antagonist and protagonist
     parser.add_argument('-s', '--silent', action='store_true',
                         help='silent debug print outs')
     parser.add_argument('-q', '--quit', action='store_true',
@@ -305,6 +421,7 @@ def main():
     exp_name = args.experiment
     resume_training_itr = args.resume
     test_policy_N = args.policy
+    run_cl_policy = args.closedloop
 
     from gps import __file__ as gps_filepath
     gps_filepath = os.path.abspath(gps_filepath)
@@ -394,6 +511,25 @@ def main():
             plt.show()
         else:
             gps.test_policy(itr=current_itr, N=test_policy_N)
+    elif run_cl_policy:
+        import random
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        seed = hyperparams.config.get('random_seed', 0)
+        random.seed(seed)
+        np.random.seed(seed)
+
+        gps = GPSMain(hyperparams.config, args.quit)
+        if hyperparams.config['gui_on']:
+            run_gps = threading.Thread(
+                target=lambda: gps.run_cl(itr_load=resume_training_itr)
+            )
+            run_gps.daemon = True
+            run_gps.start()
+
+            plt.ioff()
+            plt.show()
     else:
         import random
         import numpy as np
@@ -415,7 +551,6 @@ def main():
             plt.show()
         else:
             gps.run(itr_load=resume_training_itr)
-
 
 if __name__ == "__main__":
     main()

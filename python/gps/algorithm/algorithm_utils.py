@@ -20,7 +20,6 @@ class IterationData(BundleType):
         }
         BundleType.__init__(self, variables)
 
-
 class TrajectoryInfo(BundleType):
     """ Collection of trajectory-related variables. """
     def __init__(self):
@@ -34,7 +33,6 @@ class TrajectoryInfo(BundleType):
             'last_kl_step': float('inf'),  # KL step of the previous iteration.
         }
         BundleType.__init__(self, variables)
-
 
 class PolicyInfo(BundleType):
     """ Collection of policy-related variables. """
@@ -88,7 +86,7 @@ def estimate_moments(X, mu, covar):
             em[n, t, :, :] = np.outer(Xmu[n, t, :], Xmu[n, t, :]) + covar_pad
     return ev, em
 
-
+# computes the normal inverse Wishart prior as described in A.3
 def gauss_fit_joint_prior(pts, mu0, Phi, m, n0, dwts, dX, dU, sig_reg):
     """ Perform Gaussian fit to data with a prior. """
     # Build weights matrix.

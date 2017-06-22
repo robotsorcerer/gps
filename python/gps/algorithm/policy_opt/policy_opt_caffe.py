@@ -62,7 +62,7 @@ class PolicyOptCaffe(PolicyOpt):
             network_arch_params['dim_output'] = self._dU
 
             network_arch_params['batch_size'] = self.batch_size
-            network_arch_params['phase'] = TRAIN
+            network_arch_params['phase'] = TRAIN #deploy on real robot. See policy_opt_utils:59#TRAIN
             solver_param.train_net_param.CopyFrom(
                 self._hyperparams['network_model'](**network_arch_params)
             )
