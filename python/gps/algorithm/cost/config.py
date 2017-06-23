@@ -63,6 +63,8 @@ COST_SUM = {
 # CostAction
 COST_ACTION = {
     'wu': np.array([]),  # Torque penalties, must be 1 x dU numpy array.
+    'gamma': 10000,
+    'mode': 'antagonist' # could be antagonist or protagonist
 }
 
 

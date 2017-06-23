@@ -168,12 +168,12 @@ def evallogl2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
     dscls = d * (wp ** 2)
 
     # Compute total cost.
-    l = 0.5 * np.sum(dsclsq ** 2, axis=1) * l2 #+ \
+    l = 0.5 * np.sum(dsclsq ** 2, axis=1) * l2 #+ gamma + \
             #0.5 * np.log(alpha + np.sum(dscl ** 2, axis=1)) * l1
     # First order derivative terms.
-    d1 = dscl * l2 #+ (
-        #dscls / (alpha + np.sum(dscl ** 2, axis=1, keepdims=True)) * l1
-    #)
+    d1 = dscl * l2 + (
+        dscls / (alpha + np.sum(dscl ** 2, axis=1, keepdims=True)) * l1
+    )
     lx = np.sum(Jd * np.expand_dims(d1, axis=2), axis=1)
 
     # Second order terms.
