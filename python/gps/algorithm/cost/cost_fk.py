@@ -1,5 +1,5 @@
 """ This file defines the forward kinematics cost function. """
-import copy
+import copy, os
 
 import numpy as np
 
@@ -68,4 +68,9 @@ class CostFK(Cost):
         sample.agent.pack_data_x(lxx, lss,
                                  data_types=[JOINT_ANGLES, JOINT_ANGLES])
 
-        return l, lx, lu, lxx, luu, lux
+        if self._hyperparams['mode'] == 'protagonist':
+            return l, lx, lu, lxx, luu, lux
+        elif self._hyperparams['mode'] == 'antagonist':
+            return l, lx, lu, lxx, luu, lux
+        else:
+            os._exit("invalid mode entered for cost params")

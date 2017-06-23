@@ -43,7 +43,7 @@ class GPSMain(object):
             self._test_idx = self._train_idx
 
         self._data_files_dir = config['common']['data_files_dir']
-        self._data_files_dir_robust = config['common']['data_files_dir_robust']
+        # self._data_files_dir_robust = config['common']['data_files_dir_robust']
 
         self.agent = config['agent']['type'](config['agent']) #will be AgentMujoCo object
 
@@ -153,6 +153,7 @@ class GPSMain(object):
                 antag_pol_sample_lists = self._take_policy_samples()
                 #update total policy sample lists
                 pol_sample_lists = protag_pol_sample_lists + antag_pol_sample_lists
+                print("\n\nprotag policy sample list: \n\n", protag_pol_sample_lists)
                 #log all robust pol_sample and traj_sample lists
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
 
@@ -324,37 +325,37 @@ class GPSMain(object):
                 verbose=verbose, save=False, noisy=False)
         return [SampleList(samples) for samples in pol_samples]
 
-    def _log_data_robust(self, itr, traj_sample_lists, pol_sample_lists=None):
-        """
-        Log data and algorithm for robust policy, and update the GUI.
-        Args:
-            itr: Iteration number.
-            traj_sample_lists: trajectory samples as SampleList object
-            pol_sample_lists: policy samples as SampleList object
-        Returns: None
-        """
-        if self.gui:
-            self.gui.set_status_text('Logging robust data and updating GUI.')
-            self.gui.update(itr, self.algorithm, self.agent,
-                traj_sample_lists, pol_sample_lists)
-            self.gui.save_figure(
-                self._data_files_dir_robust + ('figure_itr_%02d.png' % itr)
-            )
-        if 'no_sample_logging' in self._hyperparams['common']:
-            return
-        self.data_logger.pickle(
-            self._data_files_dir_robust + ('algorithm_itr_%02d.pkl' % itr),
-            copy.copy(self.algorithm)
-        )
-        self.data_logger.pickle(
-            self._data_files_dir_robust + ('traj_sample_itr_%02d.pkl' % itr),
-            copy.copy(traj_sample_lists)
-        )
-        if pol_sample_lists:
-            self.data_logger.pickle(
-                self._data_files_dir_robust + ('pol_sample_itr_%02d.pkl' % itr),
-                copy.copy(pol_sample_lists)
-            )
+    # def _log_data_robust(self, itr, traj_sample_lists, pol_sample_lists=None):
+    #     """
+    #     Log data and algorithm for robust policy, and update the GUI.
+    #     Args:
+    #         itr: Iteration number.
+    #         traj_sample_lists: trajectory samples as SampleList object
+    #         pol_sample_lists: policy samples as SampleList object
+    #     Returns: None
+    #     """
+    #     if self.gui:
+    #         self.gui.set_status_text('Logging robust data and updating GUI.')
+    #         self.gui.update(itr, self.algorithm, self.agent,
+    #             traj_sample_lists, pol_sample_lists)
+    #         self.gui.save_figure(
+    #             self._data_files_dir_robust + ('figure_itr_%02d.png' % itr)
+    #         )
+    #     if 'no_sample_logging' in self._hyperparams['common']:
+    #         return
+    #     self.data_logger.pickle(
+    #         self._data_files_dir_robust + ('algorithm_itr_%02d.pkl' % itr),
+    #         copy.copy(self.algorithm)
+    #     )
+    #     self.data_logger.pickle(
+    #         self._data_files_dir_robust + ('traj_sample_itr_%02d.pkl' % itr),
+    #         copy.copy(traj_sample_lists)
+    #     )
+    #     if pol_sample_lists:
+    #         self.data_logger.pickle(
+    #             self._data_files_dir_robust + ('pol_sample_itr_%02d.pkl' % itr),
+    #             copy.copy(pol_sample_lists)
+    #         )
 
     def _log_data(self, itr, traj_sample_lists, pol_sample_lists=None):
         """

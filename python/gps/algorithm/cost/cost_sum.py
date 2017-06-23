@@ -1,5 +1,5 @@
 """ This file defines a cost sum of arbitrary other costs. """
-import copy
+import copy, os
 
 from gps.algorithm.cost.config import COST_SUM
 from gps.algorithm.cost.cost import Cost
@@ -15,6 +15,7 @@ class CostSum(Cost):
         self._costs = []
         self._weights = self._hyperparams['weights']
 
+        #[torque_cost, fk_cost, final_cost] = [Cost_Action, Cost_FK, Cost_FK]
         for cost in self._hyperparams['costs']:
             self._costs.append(cost['type'](cost))
 
@@ -24,7 +25,7 @@ class CostSum(Cost):
         Args:
             sample:  A single sample
         """
-        l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample)
+        l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample) #we are optimizing cost action
 
         # Compute weighted sum of each cost value and derivatives.
         weight = self._weights[0]
@@ -43,4 +44,9 @@ class CostSum(Cost):
             lxx = lxx + plxx * weight
             luu = luu + pluu * weight
             lux = lux + plux * weight
-        return l, lx, lu, lxx, luu, lux
+        if self._hyperparams['mode'] == 'protagonist':
+            return l, lx, lu, lxx, luu, lux
+        elif self._hyperparams['mode'] == 'antagonist':
+            return l, lx, lu, lxx, -luu, -lux
+        else:
+            os._exit("invalid mode entered for cost params")
