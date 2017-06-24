@@ -71,6 +71,6 @@ class CostFK(Cost):
         if self._hyperparams['mode'] == 'protagonist':
             return l, lx, lu, lxx, luu, lux
         elif self._hyperparams['mode'] == 'antagonist':
-            return l, lx, lu, lxx, luu, lux
+            return -l, -lx, -lu, -lxx, -luu, -lux
         else:
             os._exit("invalid mode entered for cost params")

@@ -15,7 +15,7 @@ COST_FK = {
     'l2': 1.0,
     'alpha': 1e-5,
     'target_end_effector': None,  # Target end-effector position.
-    'evalnorm': evallogl2term, #evallogl2term_ant, #could also be evallogl2term
+    'evalnorm': evallogl2term_ant, #evallogl2term_ant, #could also be evallogl2term
     'mode': 'antagonist' # could be antagonist or protagonist
 }
 
@@ -64,7 +64,7 @@ COST_SUM = {
 # CostAction
 COST_ACTION = {
     'wu': np.array([]),  # Torque penalties, must be 1 x dU numpy array.
-    'gamma': 1e4,
+    'gamma': 0,
     'mode': 'antagonist' # could be antagonist or protagonist
 }
 

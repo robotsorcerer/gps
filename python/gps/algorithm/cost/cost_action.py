@@ -45,6 +45,6 @@ class CostAction(Cost):
             lxx = np.zeros((T, Dx, Dx))
             lux = np.zeros((T, Du, Dx))
 
-            return l, lx, lu, lxx, luu, lux
+            return -l, -lx, -lu, -lxx, -luu, -lux
         else:
             os._exit("unknown mode. Cost Action Mode should either be protagonist or antagonist ")
