@@ -44,9 +44,10 @@ class CostSum(Cost):
             lxx = lxx + plxx * weight
             luu = luu + pluu * weight
             lux = lux + plux * weight
-        if self._hyperparams['mode'] == 'protagonist':
-            return l, lx, lu, lxx, luu, lux
-        elif self._hyperparams['mode'] == 'antagonist':
-            return l, lx, lu, lxx, -luu, -lux
-        else:
-            os._exit("invalid mode entered for cost params")
+        # if self._hyperparams['mode'] == 'protagonist':
+        return l, lx, lu, lxx, luu, lux
+        # No need for below since cost eval is already negated
+        # elif self._hyperparams['mode'] == 'antagonist':
+        #     return l, lx, lu, lxx, -luu, -lux
+        # else:
+        #     os._exit("invalid mode entered for cost params")

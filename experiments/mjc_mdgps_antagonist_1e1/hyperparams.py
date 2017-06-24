@@ -126,7 +126,7 @@ final_cost = {
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [torque_cost, fk_cost, final_cost],
-    'weights': [0.8, 0.8, 0.8], #[1.0, 1.0, 1.0],
+    'weights': [1.0, 1.0, 1.0],
 }
 
 algorithm['dynamics'] = {

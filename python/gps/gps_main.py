@@ -137,7 +137,7 @@ class GPSMain(object):
 
 
                 antag_traj_sample_lists = [
-                    self.agent.get_samples(cond, -self._hyperparams['num_samples']) #num_samples = 5
+                    self.agent.get_samples(cond, self._hyperparams['num_samples']) #num_samples = 5
                     for cond in self._train_idx  # get_samples is finally implemented in sample/sample_list.py
                 ]
 
@@ -154,6 +154,9 @@ class GPSMain(object):
                 #update total policy sample lists
                 pol_sample_lists = protag_pol_sample_lists + antag_pol_sample_lists
                 print("\n\nprotag policy sample list: \n\n", protag_pol_sample_lists)
+                print("\n\nantag policy sample list: \n\n", antag_pol_sample_lists)
+                print("\n\npolicy sample list: \n\n", antag_pol_sample_lists)
+                time.sleep(50)
                 #log all robust pol_sample and traj_sample lists
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
 
@@ -289,7 +292,7 @@ class GPSMain(object):
         if self.gui:
             self.gui.set_status_text('Calculating.')
             self.gui.start_display_calculating()
-        #see corresponding alg being used e.g. algorithm_mdgps
+        # see corresponding alg being used e.g. algorithm_mdgps
 
         # 1. Sampling and cost evaluation
         # 2. Updating dynamics
