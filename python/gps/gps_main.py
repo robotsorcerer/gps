@@ -14,6 +14,8 @@ import threading
 import time
 import traceback
 
+from random import shuffle
+
 # Add gps/python to path so that imports work.
 sys.path.append('/'.join(str.split(__file__, '/')[:-2]))
 from gps.gui.gps_training_gui import GPSTrainingGUI
@@ -43,7 +45,6 @@ class GPSMain(object):
             self._test_idx = self._train_idx
 
         self._data_files_dir = config['common']['data_files_dir']
-        # self._data_files_dir_robust = config['common']['data_files_dir_robust']
 
         self.agent = config['agent']['type'](config['agent']) #will be AgentMujoCo object
 
@@ -114,35 +115,24 @@ class GPSMain(object):
             if self.algorithm is None:
                 print("Error: cannot find '%s.'" % algorithm_file)
                 os._exit(1) # called instead of sys.exit(), since t
-            protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
-                ('traj_sample_itr_%02d.pkl' % itr))
+            # protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
+            #     ('traj_sample_itr_%02d.pkl' % itr))
 
             protag_pol_sample_lists = self._take_policy_samples(N)
             self.data_logger.pickle(
                 self._data_files_dir + ('pol_sample_itr_%02d.pkl' % itr),
                 copy.copy(protag_pol_sample_lists)
             )
-
-            if self.gui:
-                self.gui.update(itr, self.algorithm, self.agent,
-                    traj_sample_lists, protag_pol_sample_lists)
-                self.gui.set_status_text(('Took %d policy sample(s) from ' +
-                    'algorithm state at iteration %d.\n' +
-                    'Saved to: data_files/pol_sample_itr_%02d.pkl.\n') % (N, itr, itr))
             #--------------------------------------------------------------------------#
             for itr in range(itr_start, self._hyperparams['iterations']):
                 for cond in self._train_idx:
                     for i in range(self._hyperparams['num_samples']):
                         self._take_sample(itr, cond, i)
 
-
-                antag_traj_sample_lists = [
-                    self.agent.get_samples(cond, self._hyperparams['num_samples']) #num_samples = 5
+                traj_sample_lists = [
+                    self.agent.get_samples(cond, -self._hyperparams['num_samples']) #num_samples = 5
                     for cond in self._train_idx  # get_samples is finally implemented in sample/sample_list.py
                 ]
-
-                #add the trajectories of the protagonist to the antagonist
-                traj_sample_lists = antag_traj_sample_lists
 
                 # Clear agent samples.
                 self.agent.clear_samples()
@@ -153,12 +143,36 @@ class GPSMain(object):
                 antag_pol_sample_lists = self._take_policy_samples()
                 #update total policy sample lists
                 pol_sample_lists = protag_pol_sample_lists + antag_pol_sample_lists
-                print("\n\nprotag policy sample list: \n\n", protag_pol_sample_lists)
-                print("\n\nantag policy sample list: \n\n", antag_pol_sample_lists)
-                print("\n\npolicy sample list: \n\n", antag_pol_sample_lists)
-                time.sleep(50)
+
+                #shufffle the new policy lists
+                shuffle(pol_sample_lists)
+
+                """
+                Combined policy sample list looks something like this:
+
+                ('protag policy: ', [<gps.sample.sample_list.SampleList object at 0x7f1350a1e510>,
+                    <gps.sample.sample_list.SampleList object at 0x7f1350a1e490>, <gps.sample.sample_list.SampleList object at 0x7f1350a1e450>,
+                    <gps.sample.sample_list.SampleList object at 0x7f1350a1e410>])
+                ('antag policy: ', [<gps.sample.sample_list.SampleList object at 0x7f135128cc90>,
+                    <gps.sample.sample_list.SampleList object at 0x7f135128c790>, <gps.sample.sample_list.SampleList object at 0x7f135128c0d0>,
+                    <gps.sample.sample_list.SampleList object at 0x7f135128c550>])
+
+                ('all pol sample: ', [<gps.sample.sample_list.SampleList object at 0x7f1350a1e510>,
+                    <gps.sample.sample_list.SampleList object at 0x7f1350a1e490>, <gps.sample.sample_list.SampleList object at 0x7f1350a1e450>,
+                    <gps.sample.sample_list.SampleList object at 0x7f1350a1e410>, <gps.sample.sample_list.SampleList object at 0x7f135128cc90>,
+                    <gps.sample.sample_list.SampleList object at 0x7f135128c790>, <gps.sample.sample_list.SampleList object at 0x7f135128c0d0>,
+                    <gps.sample.sample_list.SampleList object at 0x7f135128c550>])
+                """
+
                 #log all robust pol_sample and traj_sample lists
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
+
+                if self.gui:
+                    self.gui.update(itr, self.algorithm, self.agent,
+                        traj_sample_lists, pol_sample_lists)
+                    self.gui.set_status_text(('Took %d policy sample(s) from ' +
+                        'algorithm state at iteration %d.\n' +
+                        'Saved to: data_files/pol_sample_itr_%02d.pkl.\n') % (N, itr, itr))
 
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
@@ -292,7 +306,7 @@ class GPSMain(object):
         if self.gui:
             self.gui.set_status_text('Calculating.')
             self.gui.start_display_calculating()
-        # see corresponding alg being used e.g. algorithm_mdgps
+        #see corresponding alg being used e.g. algorithm_mdgps
 
         # 1. Sampling and cost evaluation
         # 2. Updating dynamics
@@ -327,38 +341,6 @@ class GPSMain(object):
                 self.algorithm.policy_opt.policy, self._test_idx[cond],
                 verbose=verbose, save=False, noisy=False)
         return [SampleList(samples) for samples in pol_samples]
-
-    # def _log_data_robust(self, itr, traj_sample_lists, pol_sample_lists=None):
-    #     """
-    #     Log data and algorithm for robust policy, and update the GUI.
-    #     Args:
-    #         itr: Iteration number.
-    #         traj_sample_lists: trajectory samples as SampleList object
-    #         pol_sample_lists: policy samples as SampleList object
-    #     Returns: None
-    #     """
-    #     if self.gui:
-    #         self.gui.set_status_text('Logging robust data and updating GUI.')
-    #         self.gui.update(itr, self.algorithm, self.agent,
-    #             traj_sample_lists, pol_sample_lists)
-    #         self.gui.save_figure(
-    #             self._data_files_dir_robust + ('figure_itr_%02d.png' % itr)
-    #         )
-    #     if 'no_sample_logging' in self._hyperparams['common']:
-    #         return
-    #     self.data_logger.pickle(
-    #         self._data_files_dir_robust + ('algorithm_itr_%02d.pkl' % itr),
-    #         copy.copy(self.algorithm)
-    #     )
-    #     self.data_logger.pickle(
-    #         self._data_files_dir_robust + ('traj_sample_itr_%02d.pkl' % itr),
-    #         copy.copy(traj_sample_lists)
-    #     )
-    #     if pol_sample_lists:
-    #         self.data_logger.pickle(
-    #             self._data_files_dir_robust + ('pol_sample_itr_%02d.pkl' % itr),
-    #             copy.copy(pol_sample_lists)
-    #         )
 
     def _log_data(self, itr, traj_sample_lists, pol_sample_lists=None):
         """
@@ -414,7 +396,7 @@ def main():
                         help='resume training from iter N')
     parser.add_argument('-p', '--policy', metavar='N', type=int,
                         help='take N policy samples (for BADMM/MDGPS only)')
-    parser.add_argument('-c', '--closedloop', action='store_true',
+    parser.add_argument('-c', '--closeloop', type=bool, default='False',
                         help='run target setup')  #to train the antagonist and protagonist
     parser.add_argument('-s', '--silent', action='store_true',
                         help='silent debug print outs')
@@ -425,7 +407,7 @@ def main():
     exp_name = args.experiment
     resume_training_itr = args.resume
     test_policy_N = args.policy
-    run_cl_policy = args.closedloop
+    run_cl_policy = args.closeloop
 
     from gps import __file__ as gps_filepath
     gps_filepath = os.path.abspath(gps_filepath)

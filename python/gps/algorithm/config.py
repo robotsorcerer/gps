@@ -28,7 +28,8 @@ ALG = {
     # Whether or not to sample with neural net policy (only for badmm/mdgps).
     'sample_on_policy': False,
     # Inidicates if the algorithm requires fitting of the dynamics.
-    'fit_dynamics': True,    
+    'fit_dynamics': True,
+    'mode': 'antagonist'
 }
 
 
@@ -67,9 +68,9 @@ ALG_PI2 = {
 
 
 # AlgorithmPIGPS
-ALG_PIGPS = {    
+ALG_PIGPS = {
     'init_pol_wt': 0.01,
-    'policy_sample_mode': 'add',    
+    'policy_sample_mode': 'add',
     # Dynamics fitting is not required for PIGPS.
     'fit_dynamics': False,
 }

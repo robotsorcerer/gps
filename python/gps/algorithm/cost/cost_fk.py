@@ -29,6 +29,8 @@ class CostFK(Cost):
         Args:
             sample: A single sample.
         """
+        gamma, mode = 0, 'antagonist' #could also be protagonist
+
         T = sample.T
         dX = sample.dX
         dU = sample.dU
@@ -68,9 +70,9 @@ class CostFK(Cost):
         sample.agent.pack_data_x(lxx, lss,
                                  data_types=[JOINT_ANGLES, JOINT_ANGLES])
 
-        if self._hyperparams['mode'] == 'protagonist':
+        if mode == 'protagonist':
             return l, lx, lu, lxx, luu, lux
-        elif self._hyperparams['mode'] == 'antagonist':
+        elif mode == 'antagonist':
             return -l, -lx, -lu, -lxx, -luu, -lux
         else:
             os._exit("invalid mode entered for cost params")

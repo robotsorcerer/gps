@@ -13,6 +13,7 @@ class CostAction(Cost):
         config = copy.deepcopy(COST_ACTION)
         config.update(hyperparams)
         Cost.__init__(self, config)
+        # self._hyperparams ='antagonist' #could also be protagonist
 
     def eval(self, sample):
         """
@@ -20,12 +21,13 @@ class CostAction(Cost):
         Args:
             sample: A single sample
         """
+        gamma, mode = 0, 'antagonist' #could also be protagonist
         sample_u = sample.get_U()
         T = sample.T
         Du = sample.dU
         Dx = sample.dX
 
-        if self._hyperparams['mode'] == 'protagonist':
+        if mode == 'protagonist':
             l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_u ** 2), axis=1)
             lu = self._hyperparams['wu'] * sample_u
             lx = np.zeros((T, Dx))
@@ -34,14 +36,14 @@ class CostAction(Cost):
             lux = np.zeros((T, Du, Dx))
 
             return l, lx, lu, lxx, luu, lux
-        elif self._hyperparams['mode'] == 'antagonist':
+        elif mode == 'antagonist':
             l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_u ** 2), axis=1) + \
-                self._hyperparams['gamma'] * np.linalg.norm(sample_u ** 2, ord=2) #* np.linalg.norm(sample_u ** 2, ord=2)
+                gamma * np.linalg.norm(sample_u ** 2, ord=2) #* np.linalg.norm(sample_u ** 2, ord=2)
             lu = self._hyperparams['wu'] * sample_u - \
-                 2 * self._hyperparams['gamma'] * sample_u
+                 2 * gamma * sample_u
             lx = np.zeros((T, Dx))
             luu = np.tile(np.diag(self._hyperparams['wu']), [T, 1, 1]) - \
-                  2 *  self._hyperparams['gamma']
+                  2 *  gamma
             lxx = np.zeros((T, Dx, Dx))
             lux = np.zeros((T, Du, Dx))
 
