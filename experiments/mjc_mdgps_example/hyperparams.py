@@ -74,7 +74,7 @@ agent = {
 algorithm = {
     'type': AlgorithmMDGPS,
     'conditions': common['conditions'],
-    'iterations': 12,
+    'iterations': 12,  #was 12
     'kl_step': 1.0,
     'min_step_mult': 0.5,
     'max_step_mult': 3.0,
@@ -122,7 +122,7 @@ final_cost = {
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [torque_cost, fk_cost, final_cost],
-    'weights': [1.0, 1.0, 1.0],
+    'weights': [0.8, 0.8, 0.8], #[1.0, 1.0, 1.0],
 }
 
 algorithm['dynamics'] = {
@@ -162,6 +162,8 @@ config = {
     'common': common,
     'agent': agent,
     'algorithm': algorithm,
+    'gamma': 1e1,
+    'mode': 'antagonist', #could also be protagonist
 }
 
 common['info'] = generate_experiment_info(config)

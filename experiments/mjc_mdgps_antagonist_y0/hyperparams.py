@@ -36,14 +36,13 @@ SENSOR_DIMS = {
 PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist/'
+EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist_y0/'
 
 common = {
     'experiment_name': 'my_experiment' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
-    'data_files_dir_robust': EXP_DIR + '../' + 'mjc_mdgps_antagonist/data_files/',
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
     'conditions': 4,
@@ -51,9 +50,6 @@ common = {
 
 if not os.path.exists(common['data_files_dir']):
     os.makedirs(common['data_files_dir'])
-
-if not os.path.exists(common['data_files_dir_robust']):
-    os.makedirs(common['data_files_dir_robust'])
 
 agent = {
     'type': AgentMuJoCo,
@@ -100,6 +96,8 @@ algorithm['init_traj_distr'] = {
 torque_cost = {
     'type': CostAction,
     'wu': 1e-3 / PR2_GAINS,
+    'gamma': 0,
+    'mode': 'antagonist', #could also be protagonist
 }
 
 fk_cost = {
@@ -126,7 +124,7 @@ final_cost = {
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [torque_cost, fk_cost, final_cost],
-    'weights': [1.0, 1.0, 1.0],
+    'weights': [0.8, 0.8, 0.8], #[1.0, 1.0, 1.0],
 }
 
 algorithm['dynamics'] = {

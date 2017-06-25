@@ -29,7 +29,6 @@ ALG = {
     'sample_on_policy': False,
     # Inidicates if the algorithm requires fitting of the dynamics.
     'fit_dynamics': True,
-    'mode': 'antagonist'
 }
 
 

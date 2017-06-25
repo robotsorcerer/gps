@@ -5,7 +5,7 @@ import numpy as np
 
 from gps.algorithm.cost.config import COST_STATE
 from gps.algorithm.cost.cost import Cost
-from gps.algorithm.cost.cost_utils import evall1l2term, get_ramp_multiplier
+from gps.algorithm.cost.cost_utils import evall1l2term, evallogl2term_ant, get_ramp_multiplier
 
 
 class CostState(Cost):
@@ -21,6 +21,8 @@ class CostState(Cost):
         Args:
             sample:  A single sample
         """
+        self.gamma = 1e1
+        self.mode = 'antagonist'
         T = sample.T
         Du = sample.dU
         Dx = sample.dX
@@ -31,6 +33,8 @@ class CostState(Cost):
         final_luu = np.zeros((T, Du, Du))
         final_lxx = np.zeros((T, Dx, Dx))
         final_lux = np.zeros((T, Du, Dx))
+
+        l1l2term = evall1l2term if self.mode == 'protagonist' else l1l2term = evallogl2term_ant
 
         for data_type in self._hyperparams['data_types']:
             config = self._hyperparams['data_types'][data_type]
@@ -48,7 +52,7 @@ class CostState(Cost):
             dist = x - tgt
 
             # Evaluate penalty term.
-            l, ls, lss = evall1l2term(
+            l, ls, lss = l1l2term(
                 wp, dist, np.tile(np.eye(dim_sensor), [T, 1, 1]),
                 np.zeros((T, dim_sensor, dim_sensor, dim_sensor)),
                 self._hyperparams['l1'], self._hyperparams['l2'],
@@ -60,4 +64,5 @@ class CostState(Cost):
             sample.agent.pack_data_x(final_lx, ls, data_types=[data_type])
             sample.agent.pack_data_x(final_lxx, lss,
                                      data_types=[data_type, data_type])
-        return final_l, final_lx, final_lu, final_lxx, final_luu, final_lux
+            #No need to call mode here since evall1l2 term does the check
+            return final_l, final_lx, final_lu, final_lxx, final_luu, final_lux

@@ -396,7 +396,7 @@ def main():
                         help='resume training from iter N')
     parser.add_argument('-p', '--policy', metavar='N', type=int,
                         help='take N policy samples (for BADMM/MDGPS only)')
-    parser.add_argument('-c', '--closeloop', type=bool, default='False',
+    parser.add_argument('-c', '--closeloop', type=bool, default='True',
                         help='run target setup')  #to train the antagonist and protagonist
     parser.add_argument('-s', '--silent', action='store_true',
                         help='silent debug print outs')

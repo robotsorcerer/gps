@@ -74,7 +74,7 @@ agent = {
 algorithm = {
     'type': AlgorithmMDGPS,
     'conditions': common['conditions'],
-    'iterations': 20,  #was 12
+    'iterations': 12,  #was 12
     'kl_step': 1.0,
     'min_step_mult': 0.5,
     'max_step_mult': 3.0,
@@ -96,8 +96,6 @@ algorithm['init_traj_distr'] = {
 torque_cost = {
     'type': CostAction,
     'wu': 1e-3 / PR2_GAINS,
-    'gamma': 0,
-    'mode': 'antagonist', #could also be protagonist
 }
 
 fk_cost = {
@@ -164,6 +162,8 @@ config = {
     'common': common,
     'agent': agent,
     'algorithm': algorithm,
+    'gamma': 1e1,
+    'mode': 'antagonist', #could also be protagonist
 }
 
 common['info'] = generate_experiment_info(config)

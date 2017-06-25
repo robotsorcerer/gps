@@ -36,14 +36,13 @@ SENSOR_DIMS = {
 PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist/'
+EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_example/'
 
 common = {
     'experiment_name': 'my_experiment' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
-    'data_files_dir_robust': EXP_DIR + '../' + 'mjc_mdgps_antagonist/data_files/',
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
     'conditions': 4,
@@ -51,9 +50,6 @@ common = {
 
 if not os.path.exists(common['data_files_dir']):
     os.makedirs(common['data_files_dir'])
-
-if not os.path.exists(common['data_files_dir_robust']):
-    os.makedirs(common['data_files_dir_robust'])
 
 agent = {
     'type': AgentMuJoCo,
@@ -78,7 +74,7 @@ agent = {
 algorithm = {
     'type': AlgorithmMDGPS,
     'conditions': common['conditions'],
-    'iterations': 12,
+    'iterations': 12,  #was 12
     'kl_step': 1.0,
     'min_step_mult': 0.5,
     'max_step_mult': 3.0,
@@ -126,7 +122,7 @@ final_cost = {
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [torque_cost, fk_cost, final_cost],
-    'weights': [1.0, 1.0, 1.0],
+    'weights': [0.8, 0.8, 0.8], #[1.0, 1.0, 1.0],
 }
 
 algorithm['dynamics'] = {
@@ -166,6 +162,8 @@ config = {
     'common': common,
     'agent': agent,
     'algorithm': algorithm,
+    'gamma': 1e1,
+    'mode': 'antagonist', #could also be protagonist
 }
 
 common['info'] = generate_experiment_info(config)

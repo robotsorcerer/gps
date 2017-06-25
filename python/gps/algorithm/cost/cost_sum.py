@@ -10,6 +10,8 @@ class CostSum(Cost):
     def __init__(self, hyperparams):
         config = copy.deepcopy(COST_SUM)
         config.update(hyperparams)
+        self.gamma = config['gamma']
+        self.mode = config['mode']
         Cost.__init__(self, config)
 
         self._costs = []
@@ -25,6 +27,8 @@ class CostSum(Cost):
         Args:
             sample:  A single sample
         """
+        self.gamma = 1e1
+        self.mode = 'antagonist'
         l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample) #we are optimizing cost action
 
         # Compute weighted sum of each cost value and derivatives.
