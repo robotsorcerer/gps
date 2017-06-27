@@ -15,11 +15,10 @@ COST_FK = {
     'l2': 1.0,
     'alpha': 1e-5,
     'target_end_effector': None,  # Target end-effector position.
-    'evalnorm': evallogl2term_ant, #evallogl2term_ant, #could also be evallogl2term
-    'gamma': 1e1,
-    'mode': 'antagonist', #could also be protagonist
+    'evalnorm': evallogl2term_ant, #could also be evallogl2term
+    'gamma': 200,
+    'mode': 'antagonist',
 }
-
 
 # CostState
 COST_STATE = {
@@ -34,8 +33,8 @@ COST_STATE = {
             'wp': None,  # State weights - must be set.
         },
     },
-    'gamma': 1e1,
-    'mode': 'antagonist', #could also be protagonist
+    'gamma': 1e2,
+    'mode': 'antagonist',
 }
 
 # CostBinaryRegion
@@ -60,16 +59,16 @@ COST_BINARY_REGION = {
 COST_SUM = {
     'costs': [],  # A list of hyperparam dictionaries for each cost.
     'weights': [],  # Weight multipliers for each cost.
-    'gamma': 1e1,
-    'mode': 'antagonist', #could also be protagonist
+    'gamma': 120,
+    'mode': 'antagonist',
 }
 
 
 # CostAction
 COST_ACTION = {
     'wu': np.array([]),  # Torque penalties, must be 1 x dU numpy array.
-    'gamma': 1e1,
-    'mode': 'antagonist', #could also be protagonist
+    'gamma': 120,
+    'mode': 'antagonist',
 }
 
 

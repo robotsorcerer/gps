@@ -46,8 +46,8 @@ class DynamicsPriorGMM(object):
         Phi = np.diag(np.var(self.X[:, 0, :], axis=0))
 
         # Factor in multiplier.
-        n0 = self.X.shape[2] * self._strength
-        m = self.X.shape[2] * self._strength
+        n0 = self.X.shape[2] * self._strength  #number of data points in data set
+        m = self.X.shape[2] * self._strength    #number of data points in data set
 
         # Multiply Phi by m (since it was normalized before).
         Phi = Phi * m

@@ -103,7 +103,7 @@ class AgentMuJoCo(Agent):
         Runs a trial and constructs a new sample containing information
         about the trial.
         Args:
-            policy: Policy to to used in the trial.
+            policy: Policy to be used in the trial.
             condition: Which condition setup to run.
             verbose: Whether or not to plot the trial.
             save: Whether or not to store the trial into the samples.
@@ -133,7 +133,7 @@ class AgentMuJoCo(Agent):
                         var * np.random.randn(1, 3)
         # Take the sample.
         for t in range(self.T):
-            X_t = new_sample.get_X(t=t)
+            X_t = new_sample.get_X(t=t) #see sample.py
             obs_t = new_sample.get_obs(t=t)
             mj_U = policy.act(X_t, obs_t, t, noise[t, :])
             U[t, :] = mj_U

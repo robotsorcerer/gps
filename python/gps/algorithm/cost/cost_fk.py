@@ -29,7 +29,6 @@ class CostFK(Cost):
         Args:
             sample: A single sample.
         """
-        self.gamma = 1e1
         self.mode = 'antagonist'
         # gamma, mode = 0, 'antagonist' #could also be protagonist
 

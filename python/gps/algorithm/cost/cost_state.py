@@ -21,7 +21,7 @@ class CostState(Cost):
         Args:
             sample:  A single sample
         """
-        self.gamma = 1e1
+        self.gamma = 5
         self.mode = 'antagonist'
         T = sample.T
         Du = sample.dU

@@ -54,19 +54,17 @@ def evall1l2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
     nut = np.random.normal(0, 1, )
 
     # Compute total cost.
-    l = -0.5 * np.sum(dsclsq ** 2, axis=1) * l2 #+ \
-            #np.sqrt(alpha + np.sum(dscl ** 2, axis=1)) * l1
-    noise = np.random.normal(0, 1, l.shape)
-    noise = np.linalg.norm(noise, ord=2, axis=0, keepdims=True) #take the l2 norm
-    l -= noise ** 2 #maximize norm
+    l = 0.5 * np.sum(dsclsq ** 2, axis=1) * l2 + \
+            np.sqrt(alpha + np.sum(dscl ** 2, axis=1)) * l1
+
+    noise = np.random.rand(l.shape[0])
+    noise = np.linalg.norm(noise**2, ord=2, axis=0, keepdims=True) #take the l2 norm
+    l -=  self.gamma * noise
 
     # First order derivative terms.
-    d1 = - dscl * l2
-    lx = np.sum(Jd * np.expand_dims(d1, axis=2), axis=1)
-
     d1 = dscl * l2 + (
         dscls / np.sqrt(alpha + np.sum(dscl ** 2, axis=1, keepdims=True)) * l1
-    )
+    ) - self.gamma * noise
     lx = np.sum(Jd * np.expand_dims(d1, axis=2), axis=1)
 
     # Second order terms.
@@ -74,9 +72,9 @@ def evall1l2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
         np.sqrt(alpha + np.sum(dscl ** 2, axis=1, keepdims=True)), axis=1
     )
 
-    d2 = -l2 * (
+    d2 = l2 * (
         np.expand_dims(wp, axis=2) * np.tile(np.eye(wp.shape[1]), [T, 1, 1])
-    )
+    ) - self.gamma * noise
 
     d1_expand = np.expand_dims(np.expand_dims(d1, axis=-1), axis=-1)
     sec = np.sum(d1_expand * Jdd, axis=1)
@@ -88,7 +86,7 @@ def evall1l2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
 
     lxx += 0.5 * sec + 0.5 * np.transpose(sec, [0, 2, 1])
 
-    return l, lx, lxx
+    return -l, -lx, -lxx
 
 def evall1l2term(wp, d, Jd, Jdd, l1, l2, alpha):
     """
@@ -148,6 +146,7 @@ def evall1l2term(wp, d, Jd, Jdd, l1, l2, alpha):
     lxx += 0.5 * sec + 0.5 * np.transpose(sec, [0, 2, 1])
 
     return l, lx, lxx
+
 # this one is for the pr2 robot and MJC example. See MDGPS paper sec 3.1 and ETETDVP App B.1
 def evallogl2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
     """
@@ -173,29 +172,37 @@ def evallogl2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
     dscls = d * (wp ** 2)
 
     # Compute total cost.
-    l = 0.5 * np.sum(dsclsq ** 2, axis=1) * l2 #+  \
-        #0.5 * np.log(alpha + np.sum(dscl ** 2, axis=1)) * l1
+    l = 0.5 * np.sum(dsclsq ** 2, axis=1) * l2 +  \
+        0.5 * np.log(alpha + np.sum(dscl ** 2, axis=1)) * l1
+
+    noise = np.random.rand(l.shape[0])
+    noise = np.linalg.norm(noise**2, ord=2, axis=0, keepdims=True) #take the l2 norm
+    l -=  self.gamma #* noise
     # First order derivative terms.
-    d1 = dscl * l2 #+ (
-        #dscls / (alpha + np.sum(dscl ** 2, axis=1, keepdims=True)) * l1
-    #)
+    d1 = dscl * l2 + (
+        dscls / (alpha + np.sum(dscl ** 2, axis=1, keepdims=True)) * l1 - \
+        2 * self.gamma #* noise
+    )
     lx = np.sum(Jd * np.expand_dims(d1, axis=2), axis=1)
 
     # Second order terms.
-    # psq = np.expand_dims(
-    #     alpha + np.sum(dscl ** 2, axis=1, keepdims=True), axis=1
-    # )
+    psq = np.expand_dims(
+        alpha + np.sum(dscl ** 2, axis=1, keepdims=True), axis=1
+    )
     #TODO: Need * 2.0 somewhere in following line, or * 0.0 which is
     #      wrong but better.
-    # d2 = l1 * (
-    #     (np.expand_dims(np.eye(wp.shape[1]), axis=0) *
-    #      (np.expand_dims(wp ** 2, axis=1) / psq)) -
-    #     ((np.expand_dims(dscls, axis=1) *
-    #       np.expand_dims(dscls, axis=2)) / psq ** 2)
-    # )
-    d2 = l2 * (
-        np.expand_dims(wp, axis=2) * np.tile(np.eye(wp.shape[1]), [T, 1, 1])
+    d2 = l1 * (
+        (np.expand_dims(np.eye(wp.shape[1]), axis=0) *  # not sure about these first two terms
+         (np.expand_dims(wp ** 2, axis=1) / psq)) -     # not sure about these first two terms
+        ((np.expand_dims(dscls, axis=1) *
+          np.expand_dims(dscls, axis=2)) / psq ** 2)
     )
+
+    d2 = d2  + l2 * (
+        np.expand_dims(wp, axis=2) * np.tile(np.eye(wp.shape[1]), [T, 1, 1])
+    ) - 2 * self. gamma #* noise
+
+
 
     d1_expand = np.expand_dims(np.expand_dims(d1, axis=-1), axis=-1)
     sec = np.sum(d1_expand * Jdd, axis=1)

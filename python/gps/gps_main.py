@@ -1,5 +1,3 @@
-""" This file defines the main object that runs experiments. """
-
 import matplotlib as mpl
 mpl.use('Qt4Agg')
 
@@ -88,7 +86,7 @@ class GPSMain(object):
         finally:
             self._end()
 
-    def run_cl(self, itr_load=None):
+    def run_cl(self, itr, itr_load=None):
         """
         Run training by iteratively sampling and taking an iteration.
         Args:
@@ -109,20 +107,20 @@ class GPSMain(object):
                 N: the number of policy samples to take
             Returns: None
             """
-            itr, N = 40, 2000
+            N = 2000
             algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
             self.algorithm = self.data_logger.unpickle(algorithm_file)
             if self.algorithm is None:
                 print("Error: cannot find '%s.'" % algorithm_file)
                 os._exit(1) # called instead of sys.exit(), since t
-            # protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
-            #     ('traj_sample_itr_%02d.pkl' % itr))
+            protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
+                ('traj_sample_itr_%02d.pkl' % itr))
 
             protag_pol_sample_lists = self._take_policy_samples(N)
-            self.data_logger.pickle(
-                self._data_files_dir + ('pol_sample_itr_%02d.pkl' % itr),
-                copy.copy(protag_pol_sample_lists)
-            )
+            # self.data_logger.pickle(
+            #     self._data_files_dir + ('pol_sample_itr_%02d.pkl' % itr),
+            #     copy.copy(protag_pol_sample_lists)
+            # )
             #--------------------------------------------------------------------------#
             for itr in range(itr_start, self._hyperparams['iterations']):
                 for cond in self._train_idx:
@@ -149,14 +147,12 @@ class GPSMain(object):
 
                 """
                 Combined policy sample list looks something like this:
-
                 ('protag policy: ', [<gps.sample.sample_list.SampleList object at 0x7f1350a1e510>,
                     <gps.sample.sample_list.SampleList object at 0x7f1350a1e490>, <gps.sample.sample_list.SampleList object at 0x7f1350a1e450>,
                     <gps.sample.sample_list.SampleList object at 0x7f1350a1e410>])
                 ('antag policy: ', [<gps.sample.sample_list.SampleList object at 0x7f135128cc90>,
                     <gps.sample.sample_list.SampleList object at 0x7f135128c790>, <gps.sample.sample_list.SampleList object at 0x7f135128c0d0>,
                     <gps.sample.sample_list.SampleList object at 0x7f135128c550>])
-
                 ('all pol sample: ', [<gps.sample.sample_list.SampleList object at 0x7f1350a1e510>,
                     <gps.sample.sample_list.SampleList object at 0x7f1350a1e490>, <gps.sample.sample_list.SampleList object at 0x7f1350a1e450>,
                     <gps.sample.sample_list.SampleList object at 0x7f1350a1e410>, <gps.sample.sample_list.SampleList object at 0x7f135128cc90>,
@@ -396,8 +392,8 @@ def main():
                         help='resume training from iter N')
     parser.add_argument('-p', '--policy', metavar='N', type=int,
                         help='take N policy samples (for BADMM/MDGPS only)')
-    parser.add_argument('-c', '--closeloop', type=bool, default='True',
-                        help='run target setup')  #to train the antagonist and protagonist
+    parser.add_argument('-c', '--closeloop', action='store_true',
+                        help='run in close loo[]')  #to train the antagonist and protagonist
     parser.add_argument('-s', '--silent', action='store_true',
                         help='silent debug print outs')
     parser.add_argument('-q', '--quit', action='store_true',
@@ -506,10 +502,17 @@ def main():
         random.seed(seed)
         np.random.seed(seed)
 
+        data_files_dir = exp_dir + 'data_files/'
+        data_filenames = os.listdir(data_files_dir)
+        algorithm_prefix = 'algorithm_itr_'
+        algorithm_filenames = [f for f in data_filenames if f.startswith(algorithm_prefix)]
+        current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
+        current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
+
         gps = GPSMain(hyperparams.config, args.quit)
         if hyperparams.config['gui_on']:
             run_gps = threading.Thread(
-                target=lambda: gps.run_cl(itr_load=resume_training_itr)
+                target=lambda: gps.run_cl(itr=current_itr, itr_load=resume_training_itr)
             )
             run_gps.daemon = True
             run_gps.start()

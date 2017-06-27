@@ -36,10 +36,10 @@ SENSOR_DIMS = {
 PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist_y0/'
+EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist_y10000/'
 
 common = {
-    'experiment_name': 'my_experiment' + '_' + \
+    'experiment_name': 'mjc_mdgps_antagonist_y10000' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
@@ -74,7 +74,7 @@ agent = {
 algorithm = {
     'type': AlgorithmMDGPS,
     'conditions': common['conditions'],
-    'iterations': 20,  #was 12
+    'iterations': 12,  #was 12
     'kl_step': 1.0,
     'min_step_mult': 0.5,
     'max_step_mult': 3.0,
@@ -96,8 +96,6 @@ algorithm['init_traj_distr'] = {
 torque_cost = {
     'type': CostAction,
     'wu': 1e-3 / PR2_GAINS,
-    'gamma': 0,
-    'mode': 'antagonist', #could also be protagonist
 }
 
 fk_cost = {
@@ -124,7 +122,7 @@ final_cost = {
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [torque_cost, fk_cost, final_cost],
-    'weights': [0.8, 0.8, 0.8], #[1.0, 1.0, 1.0],
+    'weights': [1.0, 1.0, 1.0],
 }
 
 algorithm['dynamics'] = {
@@ -164,6 +162,8 @@ config = {
     'common': common,
     'agent': agent,
     'algorithm': algorithm,
+    'gamma': 1e1,
+    'mode': 'antagonist', #could also be protagonist
 }
 
 common['info'] = generate_experiment_info(config)
