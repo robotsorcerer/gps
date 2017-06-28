@@ -141,6 +141,7 @@ class PolicyOptCaffe(PolicyOpt):
             # first batch of samples
             self.policy.scale = np.diag(1.0 / np.maximum(np.std(obs, axis=0),
                                                          1e-3))
+            # self.policy.scale = np.diag(1.0 / np.std(obs, axis=0))
             self.policy.bias = -np.mean(obs.dot(self.policy.scale), axis=0)
         obs = obs.dot(self.policy.scale) + self.policy.bias
 

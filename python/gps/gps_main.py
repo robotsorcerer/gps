@@ -118,10 +118,11 @@ class GPSMain(object):
 
             print('taking_policy samples')
             protag_pol_sample_lists = self._take_policy_samples(N)
-            # for x in protag_pol_sample_lists:
-            # pro_add = protag_pol_sample_lists[0].get_noise() + protag_pol_sample_lists[1].get_noise()
-            # print('noise term:', pro_add.shape, type(pro_add) )
-            # time.sleep(10)
+            # test = []
+            # for x in range(len(protag_pol_sample_lists)):
+            #     # pro_add = protag_pol_sample_lists[0].get_noise() + protag_pol_sample_lists[1].get_noise()
+            #     test.append(protag_pol_sample_lists[x] + protag_pol_sample_lists[x])
+            #     print('noise term:', pro_add.shape, type(pro_add) )
             #--------------------------------------------------------------------------#
             itr_start = 1 #reset for policy samples we want
             for itr in range(itr_start, self._hyperparams['iterations']):
@@ -140,31 +141,23 @@ class GPSMain(object):
                 # traj_sample_lists += protag_traj_sample_lists #fails with/without protag samples
 
                 # Clear agent samples.
-                print('clearing agent samples')
+                # print('clearing agent samples')
                 self.agent.clear_samples() #see agent.py#L8
 
                 # each iteration below consists of
                 # see Line 282
                 print('taking new traj iterations')
-                self._take_iteration(itr, traj_sample_lists)
+                self._take_iteration(itr, traj_sample_lists)  #dynamics blowing up here
 
-                antag_pol_sample_lists = self._take_policy_samples()
-
-                #update total policy sample lists
-                # for item in len(protag_pol_sample_lists):
-                #     # assert len(antag_pol_sample_lists), len(protag_pol_sample_lists)
-                #     antag_pol_sample_lists[item].get_U() += protag_pol_sample_lists[item].get_U()
-                #     antag_pol_sample_lists[item].get_X() += protag_pol_sample_lists[item].get_X()
-                # i = 0
-                for i in range(len(protag_pol_sample_lists)):
-                    print('antag local controls: ', antag_pol_sample_lists[i].get_U(), antag_pol_sample_lists[i].get_U().shape)
-                    # antag_pol_sample_lists[i].get_U() = protag_pol_sample_lists[i].get_U() + antag_pol_sample_lists[i].get_U()
-                    # antag_pol_sample_lists[i].get_X() = protag_pol_sample_lists[i].get_X() + antag_pol_sample_lists[i].get_X()
-                    # antag_pol_sample_lists[i].get_noise() = protag_pol_sample_lists[i].get_noise() + antag_pol_sample_lists[i].get_noise()
-                    # antag_pol_sample_lists[i].get_obs() = protag_pol_sample_lists[i].get_obs() + antag_pol_sample_lists[i].get_obs()
-                # for prot, ant in zip(protag_pol_sample_lists, antag_pol_sample_lists):
-                #     # antag_pol_sample_lists[i].get_U() = prot.get_U() + ant.get_U()
-                #     pass
+                pol_sample_lists = self._take_policy_samples()
+                for pol in pol_sample_lists:
+                    print('local actions: ', pol.get_U())
+                    print('pol states: ', pol.get_X())
+                pol_sample_lists += protag_pol_sample_lists
+                for pol in pol_sample_lists:
+                    print('new cl local actions: ', pol.get_U())
+                    print('new pol states: ', pol.get_X())
+                shuffle(pol_sample_lists)
 
                 """
                 Combined policy sample list looks something like this:
@@ -190,7 +183,7 @@ class GPSMain(object):
                     self.gui.set_status_text(('Took %d policy sample(s) from ' +
                         'algorithm state at iteration %d.\n' +
                         'Saved to: data_files/pol_sample_itr_%02d.pkl.\n') % (N, itr, itr))
-            
+
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
         finally:

@@ -158,7 +158,7 @@ config = {
     'iterations': algorithm['iterations'],
     'num_samples': 5,
     'verbose_trials': 1,
-    'verbose_policy_trials': 1,
+    'verbose_policy_trials': 0,  #was 1
     'common': common,
     'agent': agent,
     'algorithm': algorithm,

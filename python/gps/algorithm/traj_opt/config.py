@@ -14,8 +14,8 @@ TRAJ_OPT_LQR = {
 }
 
 # TrajOptPI2
-TRAJ_OPT_PI2 = {  
-    'kl_threshold': 1.0,    
+TRAJ_OPT_PI2 = {
+    'kl_threshold': 1.0,
     'covariance_damping': 2.0,
     'min_temperature': 0.001,
     'use_sumexp': False,
