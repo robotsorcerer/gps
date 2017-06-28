@@ -12,10 +12,10 @@ class BundleType(object):
             object.__setattr__(self, var, val)
 
     # Freeze fields so new ones cannot be set.
-    def __setattr__(self, key, value):
-        if not hasattr(self, key):
-            raise AttributeError("%r has no attribute %s" % (self, key))
-        object.__setattr__(self, key, value)
+    # def __setattr__(self, key, value):
+    #     if not hasattr(self, key):
+    #         raise AttributeError("%r has no attribute %s" % (self, key))
+    #     object.__setattr__(self, key, value)
 
 
 def check_shape(value, expected_shape, name=''):

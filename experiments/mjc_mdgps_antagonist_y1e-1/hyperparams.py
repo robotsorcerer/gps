@@ -36,16 +36,16 @@ SENSOR_DIMS = {
 PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_protagonist/'
+EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist_y1e-1/'
 
 common = {
-    'experiment_name': 'protagonist_2' + '_' + \
+    'experiment_name': 'mjc_mdgps_antagonist_y1e-1' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
-    'conditions': 4,
+    'conditions': 4
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -122,7 +122,7 @@ final_cost = {
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [torque_cost, fk_cost, final_cost],
-    'weights': [0.8, 0.8, 0.8], #[1.0, 1.0, 1.0],
+    'weights': [1.0, 1.0, 1.0],
 }
 
 algorithm['dynamics'] = {

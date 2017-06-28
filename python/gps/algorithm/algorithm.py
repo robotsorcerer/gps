@@ -37,8 +37,8 @@ class Algorithm(object):
         # Grab a few values from the agent.
         agent = self._hyperparams['agent']
         self.T = self._hyperparams['T'] = agent.T
-        self.dU = self._hyperparams['dU'] = agent.dU #not found
-        self.dX = self._hyperparams['dX'] = agent.dX #not found
+        self.dU = self._hyperparams['dU'] = agent.dU # agent.py#L25. will be 7
+        self.dX = self._hyperparams['dX'] = agent.dX # agent.py#L40
         self.dO = self._hyperparams['dO'] = agent.dO #not found
 
         init_traj_distr = config['init_traj_distr']
@@ -48,21 +48,21 @@ class Algorithm(object):
         del self._hyperparams['agent']  # Don't want to pickle this.
 
         # IterationData objects for each condition.
-        self.cur = [IterationData() for _ in range(self.M)]
-        self.prev = [IterationData() for _ in range(self.M)]
+        self.cur = [IterationData() for _ in range(self.M)] #see algorithm_utils#L8
+        self.prev = [IterationData() for _ in range(self.M)] #see algorithm_utils#L8
 
         if self._hyperparams['fit_dynamics']:
-            dynamics = self._hyperparams['dynamics']
+            dynamics = self._hyperparams['dynamics']  #is a True bool from algorithm/config.py
 
         for m in range(self.M):
-            self.cur[m].traj_info = TrajectoryInfo()
-            if self._hyperparams['fit_dynamics']:
-                self.cur[m].traj_info.dynamics = dynamics['type'](dynamics)
-            init_traj_distr = extract_condition(
-                self._hyperparams['init_traj_distr'], self._cond_idx[m]
+            self.cur[m].traj_info = TrajectoryInfo() # Line 23
+            if self._hyperparams['fit_dynamics']: # True
+                self.cur[m].traj_info.dynamics = dynamics['type'](dynamics) #Hyperparams: DynamicsLRPrior
+            init_traj_distr = extract_condition( #L28 general_utils.py
+                self._hyperparams['init_traj_distr'], self._cond_idx[m] #L84 hyperparams
             )
-            self.cur[m].traj_distr = init_traj_distr['type'](init_traj_distr)
-
+            self.cur[m].traj_distr = init_traj_distr['type'](init_traj_distr) #will be init_lqr
+            #init_lqr is defined in algorithm/policy/lin_gauss_init
         self.traj_opt = hyperparams['traj_opt']['type'](
             hyperparams['traj_opt']
         )

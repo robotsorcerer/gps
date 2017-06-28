@@ -23,14 +23,14 @@ class AlgorithmMDGPS(Algorithm):
         config.update(hyperparams)
         Algorithm.__init__(self, config)
 
-        policy_prior = self._hyperparams['policy_prior']
-        for m in range(self.M):
-            self.cur[m].pol_info = PolicyInfo(self._hyperparams)
+        policy_prior = self._hyperparams['policy_prior'] #self._hyperparams is from algorithm.py
+        for m in range(self.M):  #self.M= # conditions
+            self.cur[m].pol_info = PolicyInfo(self._hyperparams) # from algorithm_utils.py
             self.cur[m].pol_info.policy_prior = \
-                    policy_prior['type'](policy_prior)
+                    policy_prior['type'](policy_prior) # in hyperparams = PolicyPriorGMM
 
-        self.policy_opt = self._hyperparams['policy_opt']['type'](
-            self._hyperparams['policy_opt'], self.dO, self.dU
+        self.policy_opt = self._hyperparams['policy_opt']['type']( #will be PolicyOptCaffe
+            self._hyperparams['policy_opt'], self.dO, self.dU #dO and dX are from hyperparams
         )
 
     def iteration(self, sample_lists):
@@ -51,7 +51,7 @@ class AlgorithmMDGPS(Algorithm):
         # On the first iteration, need to catch policy up to init_traj_distr.
         if self.iteration_count == 0:
             self.new_traj_distr = [
-                self.cur[cond].traj_distr for cond in range(self.M)
+                self.cur[cond].traj_distr for cond in range(self.M) # defined in algorithm_utils#L13: None
             ]
             self._update_policy()
 
@@ -80,7 +80,7 @@ class AlgorithmMDGPS(Algorithm):
             samples = self.cur[m].sample_list
             X = samples.get_X()
             N = len(samples)
-            traj, pol_info = self.new_traj_distr[m], self.cur[m].pol_info
+            traj, pol_info = self.new_traj_distr[m], self.cur[m].pol_info #from algorithm_utils.py#L15
             mu = np.zeros((N, T, dU))
             prc = np.zeros((N, T, dU, dU))
             wt = np.zeros((N, T))

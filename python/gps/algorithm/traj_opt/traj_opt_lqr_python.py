@@ -118,7 +118,6 @@ class TrajOptLQRPython(TrajOpt):
                     new_eta = min(geom, 10.0*min_eta)
                     LOGGER.debug("KL: %f / %f, eta too small, new eta: %f",
                                  kl_div, kl_step, new_eta)
-
                 # Logarithmic mean: log_mean(x,y) = (y - x)/(log(y) - log(x))
                 eta = new_eta
             else:
@@ -322,7 +321,7 @@ class TrajOptLQRPython(TrajOpt):
                 new_pS = np.zeros((T, dU, dU))
                 new_ipS, new_cpS = np.zeros((T, dU, dU)), np.zeros((T, dU, dU))
 
-            fCm, fcv = algorithm.compute_costs(
+            fCm, fcv = algorithm.compute_costs(  #from algorithm_mdgps.py#L204
                     m, eta, augment=(not self.cons_per_step)
             )
 

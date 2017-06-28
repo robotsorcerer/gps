@@ -16,7 +16,7 @@ def init_lqr(hyperparams):
     config = copy.deepcopy(INIT_LG_LQR)
     config.update(hyperparams)
 
-    x0, dX, dU = config['x0'], config['dX'], config['dU']
+    x0, dX, dU = config['x0'], config['dX'], config['dU'] # will be 7,26,7
     dt, T = config['dt'], config['T']
 
     #TODO: Use packing instead of assuming which indices are the joint

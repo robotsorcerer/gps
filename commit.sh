@@ -13,7 +13,7 @@ echo "Hello "$USER". Please enter the name of the upstream remote followed by [E
 
 read remote
 
-if [[$remote == "" ]]; then
+if [$remote == "" ]; then
    remote=master
 fi
 

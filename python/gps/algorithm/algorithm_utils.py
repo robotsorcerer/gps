@@ -37,7 +37,16 @@ class TrajectoryInfo(BundleType):
 class PolicyInfo(BundleType):
     """ Collection of policy-related variables. """
     def __init__(self, hyperparams):
-        T, dU, dX = hyperparams['T'], hyperparams['dU'], hyperparams['dX']
+        self.mode = 'antagonist' #could also be antagonist
+
+        if self.mode == 'antagonist':
+            T, dU, dX = hyperparams['T'], hyperparams['dU'], hyperparams['dX']
+        elif self.mode == 'protagonist':
+            T, dU, dX = hyperparams['T'], hyperparams['dU'], hyperparams['dX']
+        else:
+            print("you have entered an invalid mode in PolicyInfo class" +
+                  "in algorithm_utils.py file")
+
         variables = {
             'lambda_k': np.zeros((T, dU)),  # Dual variables.
             'lambda_K': np.zeros((T, dU, dX)),  # Dual variables.

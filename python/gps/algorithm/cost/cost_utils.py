@@ -51,7 +51,6 @@ def evall1l2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
     dsclsq = d * sqrtwp
     dscl = d * wp
     dscls = d * (wp ** 2)
-    nut = np.random.normal(0, 1, )
 
     # Compute total cost.
     l = 0.5 * np.sum(dsclsq ** 2, axis=1) * l2 + \
