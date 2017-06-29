@@ -328,9 +328,13 @@ class TrajOptLQRPython(TrajOpt):
             # Compute state-action-state function at each time step.
             for t in range(T - 1, -1, -1):
                 # Add in the cost.
-                # print('fCm: ', fCm[t, :, :])
                 Qtt[t] = fCm[t, :, :]   # (X+U) x (X+U)
+                # Qtt[t] += eta * np.eye(Qtt.shape[-1])
                 Qt[t]  = fcv[t, :]      # (X+U) x 1
+                # Qt[t] += eta * np.eye(Qt.shape[0])
+                # print(Qtt[t].shape)
+                # Qtt[t] = np.eye(dX+dU)
+                # Qt[t] = np.eye(dX+dU)
 
                 # Add in the value function from the next time step.
                 if t < T - 1:
@@ -353,27 +357,11 @@ class TrajOptLQRPython(TrajOpt):
 
                 if not self.cons_per_step:
                     inv_term = Qtt[t, idx_u, idx_u]  # will be 7X7
-                    inv_term += 1e-2 * np.eye(inv_term.shape[-1])
-                    # print('Qtt: ', Qtt[t, idx_u, idx_u], Qtt[t, idx_u, idx_u].shape)
-                    # print('inv_term: ', inv_term, inv_term.shape)
-
-                    # with open('Q.log', 'wb') as f:
-                    #     f.write('log', Qtt[t, idx_u, idx_u])
-                    # #check if eig value is -ve or zero
-                    # w, _ = np.linalg.eig(inv_term)
-                    # # print('inv_term shape: ', inv_term.shape)
-                    # for val in w:
-                    #     if val <= 0:
-                    #         inv_term = np.eye(inv_term.shape[0])
                     k_term = Qt[t, idx_u]
                     K_term = Qtt[t, idx_u, idx_x]
                 else:
                     inv_term = (1.0 / eta[t]) * Qtt[t, idx_u, idx_u] + \
                             prev_traj_distr.inv_pol_covar[t]
-                    # w, _ = np.linalg.eig(inv_term)
-                    # for val in w:
-                    #     if val <= 0:
-                    #         inv_term = np.eye(inv_term.shape[0])  # Fix Q function
                     k_term = (1.0 / eta[t]) * Qt[t, idx_u] - \
                             prev_traj_distr.inv_pol_covar[t].dot(prev_traj_distr.k[t])
                     K_term = (1.0 / eta[t]) * Qtt[t, idx_u, idx_x] - \
@@ -383,8 +371,6 @@ class TrajOptLQRPython(TrajOpt):
                 try:
                     U = sp.linalg.cholesky(inv_term)
                     L = U.T
-                    print('U: ', U)
-                    print('L: ', L)
                 except LinAlgError as e:
                     # Error thrown when Qtt[idx_u, idx_u] is not
                     # symmetric positive definite.

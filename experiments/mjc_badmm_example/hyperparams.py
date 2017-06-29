@@ -43,7 +43,7 @@ EXP_DIR = BASE_DIR + '/../experiments/mjc_badmm_example/'
 
 
 common = {
-    'experiment_name': 'my_experiment' + '_' + \
+    'experiment_name': 'mjc_badmm_example' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',

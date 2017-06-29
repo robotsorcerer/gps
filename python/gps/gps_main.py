@@ -23,7 +23,7 @@ from gps.sample.sample_list import SampleList
 
 class GPSMain(object):
     """ Main class to run algorithms and experiments. """
-    def __init__(self, config, quit_on_end=False):
+    def __init__(self, config, closeloop, quit_on_end=False):
         """
         Initialize GPSMain
         Args:
@@ -31,14 +31,15 @@ class GPSMain(object):
             quit_on_end: When true, quit automatically on completion
         """
         self._quit_on_end = quit_on_end
+        self.closeloop = closeloop
         self._hyperparams = config
-        self._conditions = config['common']['conditions']
+        self._conditions = config['common']['conditions'] # will be 4
         if 'train_conditions' in config['common']:
             self._train_idx = config['common']['train_conditions']
             self._test_idx = config['common']['test_conditions']
         else:
             self._train_idx = range(self._conditions)
-            config['common']['train_conditions'] = config['common']['conditions']
+            config['common']['train_conditions'] = config['common']['conditions'] # is 4
             self._hyperparams=config
             self._test_idx = self._train_idx
 
@@ -87,102 +88,40 @@ class GPSMain(object):
             self._end()
 
     def run_cl(self, itr, itr_load=None):
-        """
-        Run training by iteratively sampling and taking an iteration.
-        Args:
-            itr_load: If specified, loads algorithm state from that
-                iteration, and resumes training at the next iteration.
-        Returns: None
-        """
-        try:
-            itr_start = self._initialize(itr_load)
-            #-------------------------------------------------------------------------#
-            #            Formulate closed loop environment from pretrained policy     #
-            #-------------------------------------------------------------------------#
-            """
-            Take N policy samples of the algorithm state at iteration itr,
-            for trained policy.
-            Args:
-                itr: the iteration from which to take policy samples
-                N: the number of policy samples to take
-            Returns: None
-            """
-            N = 2000
-            algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
-            self.algorithm = self.data_logger.unpickle(algorithm_file)
-            if self.algorithm is None:
-                print("Error: cannot find '%s.'" % algorithm_file)
-                os._exit(1) # called instead of sys.exit(), since t
-            protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
-                ('traj_sample_itr_%02d.pkl' % itr))
 
-            print('taking_policy samples')
-            protag_pol_sample_lists = self._take_policy_samples(N)
-            # test = []
-            # for x in range(len(protag_pol_sample_lists)):
-            #     # pro_add = protag_pol_sample_lists[0].get_noise() + protag_pol_sample_lists[1].get_noise()
-            #     test.append(protag_pol_sample_lists[x] + protag_pol_sample_lists[x])
-            #     print('noise term:', pro_add.shape, type(pro_add) )
-            #--------------------------------------------------------------------------#
-            itr_start = 1 #reset for policy samples we want
+        protag_algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
+        self.protag_algorithm = self.data_logger.unpickle(protag_algorithm_file)
+
+        if self.protag_algorithm is None:
+            print("Error: cannot find '%s.'" % protag_algorithm_file)
+            os._exit(1)
+
+        try:
+            itr_start = 1 #self._initialize(itr_load)
+
             for itr in range(itr_start, self._hyperparams['iterations']):
                 for cond in self._train_idx:
                     for i in range(self._hyperparams['num_samples']):
+                        #take protagonist and antagonist policy samples
                         self._take_sample(itr, cond, i)
-                #---dynamics ok up until here ---#
 
-                # print("getting new trajectory lists from agent")
                 traj_sample_lists = [
-                    self.agent.get_samples(cond, -self._hyperparams['num_samples']) #num_samples = 5
-                    for cond in self._train_idx  # get_samples is finally implemented in sample/sample_list.py
+                    self.agent.get_samples(cond, -self._hyperparams['num_samples'])
+                    for cond in self._train_idx
                 ]
-                #--- ok up until here but I think agent should now change --#
-
-                # traj_sample_lists += protag_traj_sample_lists #fails with/without protag samples
+                # protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
+                #     ('traj_sample_itr_%02d.pkl' % itr)) # we don't need this.
 
                 # Clear agent samples.
-                # print('clearing agent samples')
-                self.agent.clear_samples() #see agent.py#L8
+                self.agent.clear_samples()
 
-                # each iteration below consists of
-                # see Line 282
-                print('taking new traj iterations')
-                self._take_iteration(itr, traj_sample_lists)  #dynamics blowing up here
+                #take protagonist and antagonist iterations
+                print("Taking RL and Supervised Learning iterations")
+                self._take_iteration(itr, traj_sample_lists)  # see impl in alg_mdgps.py# L36
 
+                print("Taking pro/antagonist policy samples")
                 pol_sample_lists = self._take_policy_samples()
-                for pol in pol_sample_lists:
-                    print('local actions: ', pol.get_U())
-                    print('pol states: ', pol.get_X())
-                pol_sample_lists += protag_pol_sample_lists
-                for pol in pol_sample_lists:
-                    print('new cl local actions: ', pol.get_U())
-                    print('new pol states: ', pol.get_X())
-                shuffle(pol_sample_lists)
-
-                """
-                Combined policy sample list looks something like this:
-                ('protag policy: ', [<gps.sample.sample_list.SampleList object at 0x7f1350a1e510>,
-                    <gps.sample.sample_list.SampleList object at 0x7f1350a1e490>, <gps.sample.sample_list.SampleList object at 0x7f1350a1e450>,
-                    <gps.sample.sample_list.SampleList object at 0x7f1350a1e410>])
-                ('antag policy: ', [<gps.sample.sample_list.SampleList object at 0x7f135128cc90>,
-                    <gps.sample.sample_list.SampleList object at 0x7f135128c790>, <gps.sample.sample_list.SampleList object at 0x7f135128c0d0>,
-                    <gps.sample.sample_list.SampleList object at 0x7f135128c550>])
-                ('all pol sample: ', [<gps.sample.sample_list.SampleList object at 0x7f1350a1e510>,
-                    <gps.sample.sample_list.SampleList object at 0x7f1350a1e490>, <gps.sample.sample_list.SampleList object at 0x7f1350a1e450>,
-                    <gps.sample.sample_list.SampleList object at 0x7f1350a1e410>, <gps.sample.sample_list.SampleList object at 0x7f135128cc90>,
-                    <gps.sample.sample_list.SampleList object at 0x7f135128c790>, <gps.sample.sample_list.SampleList object at 0x7f135128c0d0>,
-                    <gps.sample.sample_list.SampleList object at 0x7f135128c550>])
-                """
-
-                #log all robust pol_sample and traj_sample lists
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
-
-                if self.gui:
-                    self.gui.update(itr, self.algorithm, self.agent,
-                        traj_sample_lists, pol_sample_lists)
-                    self.gui.set_status_text(('Took %d policy sample(s) from ' +
-                        'algorithm state at iteration %d.\n' +
-                        'Saved to: data_files/pol_sample_itr_%02d.pkl.\n') % (N, itr, itr))
 
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
@@ -265,8 +204,12 @@ class GPSMain(object):
         if self.algorithm._hyperparams['sample_on_policy'] \
                 and self.algorithm.iteration_count > 0:
             pol = self.algorithm.policy_opt.policy  # calling alg_mdgps.py.policy_opt
+            if self.closeloop:
+                protag_pol = self.protag_algorithm.policy_opt.policy
         else:
             pol = self.algorithm.cur[cond].traj_distr # cur is every var in iteration data
+            if self.closeloop:
+                protag_pol = self.protag_algorithm.cur[cond].traj_distr
         if self.gui:
             self.gui.set_image_overlays(cond)   # Must call for each new cond.
             redo = True
@@ -293,6 +236,12 @@ class GPSMain(object):
                     pol, cond,
                     verbose=(i < self._hyperparams['verbose_trials'])
                 )
+                #take adversary samples if we are in close loop
+                if self.closeloop:
+                    self.agent.sample(
+                        protag_pol, cond,
+                        verbose=(i < self._hyperparams['verbose_trials'])
+                    )
 
                 if self.gui.mode == 'request' and self.gui.request == 'fail':
                     redo = True
@@ -305,6 +254,11 @@ class GPSMain(object):
                 pol, cond,
                 verbose=(i < self._hyperparams['verbose_trials'])
             )
+            if self.closeloop:
+                self.agent.sample(
+                    protag_pol, cond,
+                    verbose=(i < self._hyperparams['verbose_trials'])
+                )
 
     def _take_iteration(self, itr, sample_lists):
         """
@@ -326,6 +280,9 @@ class GPSMain(object):
         # 6. advance_iteration variable
         self.algorithm.iteration(sample_lists)
 
+        if self.closeloop:
+            self.protag_algorithm.iteration(sample_lists)
+
         if self.gui:
             self.gui.stop_display_calculating()
 
@@ -343,6 +300,9 @@ class GPSMain(object):
         if self.gui:
             self.gui.set_status_text('Taking policy samples.')
         pol_samples = [[None] for _ in range(len(self._test_idx))]
+        protag_pol_samples = pol_samples if self.closeloop else None
+        # take 2000 policy samples for protagonist
+        # protag_pol_samples = [[2000] for _ in range(len(self._test_idx))] if self.closeloop else None
         # Since this isn't noisy, just take one sample.
         # TODO: Make this noisy? Add hyperparam?
         # TODO: Take at all conditions for GUI?
@@ -350,6 +310,12 @@ class GPSMain(object):
             pol_samples[cond][0] = self.agent.sample(
                 self.algorithm.policy_opt.policy, self._test_idx[cond],
                 verbose=verbose, save=False, noisy=False)
+        if self.closeloop:
+            for cond in range(len(self._test_idx)):
+                protag_pol_samples[cond][0] = self.agent.sample(
+                    self.protag_algorithm.policy_opt.policy, self._test_idx[cond],
+                    verbose=verbose, save=False, noisy=False)
+            pol_samples += protag_pol_samples
         return [SampleList(samples) for samples in pol_samples]
 
     def _log_data(self, itr, traj_sample_lists, pol_sample_lists=None):
@@ -495,7 +461,7 @@ def main():
         current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
         current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
 
-        gps = GPSMain(hyperparams.config)
+        gps = GPSMain(hyperparams.config, args.closeloop)
         if hyperparams.config['gui_on']:
             test_policy = threading.Thread(
                 target=lambda: gps.test_policy(itr=current_itr, N=test_policy_N)
@@ -523,7 +489,7 @@ def main():
         current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
         current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
 
-        gps = GPSMain(hyperparams.config, args.quit)
+        gps = GPSMain(hyperparams.config, args.quit, args.closeloop)
         if hyperparams.config['gui_on']:
             run_gps = threading.Thread(
                 target=lambda: gps.run_cl(itr=current_itr, itr_load=resume_training_itr)

@@ -2,12 +2,10 @@
 import numpy as np
 import time
 
-
 RAMP_CONSTANT = 1
 RAMP_LINEAR = 2
 RAMP_QUADRATIC = 3
 RAMP_FINAL_ONLY = 4
-
 
 def get_ramp_multiplier(ramp_option, T, wp_final_multiplier=1.0):
     """
@@ -58,12 +56,12 @@ def evall1l2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
 
     noise = np.random.rand(l.shape[0])
     noise = np.linalg.norm(noise**2, ord=2, axis=0, keepdims=True) #take the l2 norm
-    l -=  self.gamma * noise
+    l -=  gamma * noise
 
     # First order derivative terms.
     d1 = dscl * l2 + (
         dscls / np.sqrt(alpha + np.sum(dscl ** 2, axis=1, keepdims=True)) * l1
-    ) - self.gamma * noise
+    ) - gamma * noise
     lx = np.sum(Jd * np.expand_dims(d1, axis=2), axis=1)
 
     # Second order terms.
@@ -73,7 +71,7 @@ def evall1l2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
 
     d2 = l2 * (
         np.expand_dims(wp, axis=2) * np.tile(np.eye(wp.shape[1]), [T, 1, 1])
-    ) - self.gamma * noise
+    ) - gamma * noise
 
     d1_expand = np.expand_dims(np.expand_dims(d1, axis=-1), axis=-1)
     sec = np.sum(d1_expand * Jdd, axis=1)
@@ -161,6 +159,7 @@ def evallogl2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
         l2: l2 loss weight.
         alpha: Constant added in square root.
     """
+    gamma = 1e-1
     # Get trajectory length.
     T, _ = d.shape
 
@@ -176,11 +175,11 @@ def evallogl2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
 
     noise = np.random.rand(l.shape[0])
     noise = np.linalg.norm(noise**2, ord=2, axis=0, keepdims=True) #take the l2 norm
-    l -=  self.gamma #* noise
+    l -=  gamma #* noise
     # First order derivative terms.
     d1 = dscl * l2 + (
         dscls / (alpha + np.sum(dscl ** 2, axis=1, keepdims=True)) * l1 - \
-        2 * self.gamma #* noise
+        2 * gamma #* noise
     )
     lx = np.sum(Jd * np.expand_dims(d1, axis=2), axis=1)
 
@@ -199,7 +198,7 @@ def evallogl2term_ant(wp, d, Jd, Jdd, l1, l2, alpha):
 
     d2 = d2  + l2 * (
         np.expand_dims(wp, axis=2) * np.tile(np.eye(wp.shape[1]), [T, 1, 1])
-    ) - 2 * self. gamma #* noise
+    ) - 2 *  gamma #* noise
 
 
 

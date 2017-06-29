@@ -38,7 +38,7 @@ EXP_DIR = BASE_DIR + '/../experiments/mjc_gripper_pusher_pilqr/'
 
 
 common = {
-    'experiment_name': 'my_experiment' + '_' + \
+    'experiment_name': 'gripper_pusher_pilqr' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',

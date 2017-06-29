@@ -13,7 +13,8 @@ class CostAction(Cost):
         config = copy.deepcopy(COST_ACTION)
         config.update(hyperparams)
         Cost.__init__(self, config)
-        # self._hyperparams ='antagonist' #could also be protagonist
+
+        self._config = config
 
     def eval(self, sample):
         """
@@ -21,8 +22,9 @@ class CostAction(Cost):
         Args:
             sample: A single sample
         """
-        self.gamma = 1e-1
-        self.mode = 'antagonist'
+
+        self.gamma = self._config['gamma']
+        self.mode = self._config['mode']
         sample_u = sample.get_U()
         T = sample.T
         Du = sample.dU

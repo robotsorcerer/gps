@@ -20,6 +20,8 @@ class CostFK(Cost):
         config.update(hyperparams)
         Cost.__init__(self, config)
 
+        self._config = config
+
     def eval(self, sample):
         """
         Evaluate forward kinematics (end-effector penalties) cost.
@@ -29,8 +31,9 @@ class CostFK(Cost):
         Args:
             sample: A single sample.
         """
-        self.mode = 'antagonist'
-        # gamma, mode = 0, 'antagonist' #could also be protagonist
+
+        self.gamma = self._config['gamma']
+        self.mode = self._config['mode']
 
         T = sample.T
         dX = sample.dX
