@@ -40,8 +40,8 @@ class CostAction(Cost):
 
             return l, lx, lu, lxx, luu, lux
         elif self.mode == 'antagonist':
-            l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_u ** 2), axis=1) + \
-                self.gamma * np.linalg.norm(sample_u ** 2, ord=2) 
+            l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_u ** 2), axis=1) - \
+                self.gamma * np.linalg.norm(sample_u ** 2, ord=2)
             lu = self._hyperparams['wu'] * sample_u - \
                  2 * self.gamma * sample_u
             lx = np.zeros((T, Dx))

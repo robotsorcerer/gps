@@ -109,8 +109,8 @@ class GPSMain(object):
                     self.agent.get_samples(cond, -self._hyperparams['num_samples'])
                     for cond in self._train_idx
                 ]
-                # protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
-                #     ('traj_sample_itr_%02d.pkl' % itr)) # we don't need this.
+                self.protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
+                    ('traj_sample_itr_%02d.pkl' % itr)) # we don't need this.
 
                 # Clear agent samples.
                 self.agent.clear_samples()
@@ -281,7 +281,7 @@ class GPSMain(object):
         self.algorithm.iteration(sample_lists)
 
         if self.closeloop:
-            self.protag_algorithm.iteration(sample_lists)
+            self.protag_algorithm.iteration(self.protag_traj_sample_lists)
 
         if self.gui:
             self.gui.stop_display_calculating()

@@ -40,6 +40,7 @@ class GPSTrainingGUI(object):
     def __init__(self, hyperparams):
         self._hyperparams = hyperparams
         self._log_filename = self._hyperparams['log_filename']
+        self._costs_filename = self._hyperparams['costs_filename']
         if 'target_filename' in self._hyperparams:
             self._target_filename = self._hyperparams['target_filename']
         else:
@@ -273,6 +274,9 @@ class GPSTrainingGUI(object):
             self._first_update = False
 
         costs = [np.mean(np.sum(algorithm.prev[m].cs, axis=1)) for m in range(algorithm.M)]
+
+        with open(self._costs_filename, 'a') as f:
+            f.write("%s\n" % costs)
         self._update_iteration_data(itr, algorithm, costs, pol_sample_lists)
         self._cost_plotter.update(costs, t=itr)
         if END_EFFECTOR_POINTS in agent.x_data_types:
@@ -352,7 +356,7 @@ class GPSTrainingGUI(object):
             self._traj_visualizer.clear(m)
             self._traj_visualizer.set_lim(i=m, xlim=xlim, ylim=ylim, zlim=zlim)
             if algorithm._hyperparams['fit_dynamics']:
-                self._update_linear_gaussian_controller_plots(algorithm, agent, m)                                
+                self._update_linear_gaussian_controller_plots(algorithm, agent, m)
             self._update_samples_plots(traj_sample_lists, m, 'green', 'Trajectory Samples')
             if pol_sample_lists:
                 self._update_samples_plots(pol_sample_lists,  m, 'blue',  'Policy Samples')

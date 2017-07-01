@@ -35,10 +35,10 @@ SENSOR_DIMS = {
 PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist_y1e6/'
+EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist_y1e-1/'
 
 common = {
-    'experiment_name': 'mjc_mdgps_antagonist_y1e6' + '_' + \
+    'experiment_name': 'mjc_mdgps_antagonist_y1e-1' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
@@ -97,7 +97,7 @@ algorithm['init_traj_distr'] = {
 torque_cost = {
     'type': CostAction,
     'wu': 1e-3 / PR2_GAINS,
-    'gamma': 1e6,
+    'gamma': 1e3,
     'mode': 'antagonist', #could also be protagonist
 }
 
@@ -108,7 +108,7 @@ fk_cost = {
     'l1': 0.1,
     'l2': 10.0,
     'alpha': 1e-5,
-    'gamma': 1e6,
+    'gamma': 1e3,
     'mode': 'antagonist', #could also be protagonist
 }
 

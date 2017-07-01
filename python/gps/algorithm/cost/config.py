@@ -1,8 +1,7 @@
 """ Default configuration and hyperparameter values for costs. """
 import numpy as np
 
-from gps.algorithm.cost.cost_utils import RAMP_CONSTANT, evallogl2term, \
-     evallogl2term_ant
+from gps.algorithm.cost.cost_utils import RAMP_CONSTANT, evallogl2term
 
 
 # CostFK
@@ -15,8 +14,8 @@ COST_FK = {
     'l2': 1.0,
     'alpha': 1e-5,
     'target_end_effector': None,  # Target end-effector position.
-    'evalnorm': evallogl2term_ant, #could also be evallogl2term
-    'gamma': 1e6,
+    'evalnorm': evallogl2term, #could also be evallogl2term
+    'gamma': 1e10,
     'mode': 'antagonist',
 }
 
@@ -58,7 +57,7 @@ COST_SUM = {
     'costs': [],  # A list of hyperparam dictionaries for each cost.
     'weights': [],  # Weight multipliers for each cost.
     'evalnorm': evallogl2term, #could also be evallogl2term
-    'gamma': 1e6,
+    'gamma': 1e10,
     'mode': 'antagonist',
 }
 
@@ -66,8 +65,8 @@ COST_SUM = {
 # CostAction
 COST_ACTION = {
     'wu': np.array([]),  # Torque penalties, must be 1 x dU numpy array.
-    'evalnorm': evallogl2term_ant, #could also be evallogl2term
-    'gamma': 1e6,
+    'evalnorm': evallogl2term, #could also be evallogl2term
+    'gamma': 1e10,
     'mode': 'antagonist',
 }
 
