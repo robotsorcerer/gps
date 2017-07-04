@@ -83,6 +83,11 @@ class Algorithm(object):
         """ Run iteration of the algorithm. """
         raise NotImplementedError("Must be implemented in subclass")
 
+    @abc.abstractmethod
+    def iteration_cl(self, sample_lists_prot, sample_list):
+        """ Run iteration of the algorithm. """
+        raise NotImplementedError("Must be implemented in subclass")
+
     def _update_dynamics(self):
         """
         Instantiate dynamics objects and update prior. Fit dynamics to
@@ -92,6 +97,45 @@ class Algorithm(object):
             cur_data = self.cur[m].sample_list
             X = cur_data.get_X()
             U = cur_data.get_U()
+
+            # Update prior and fit dynamics.
+            self.cur[m].traj_info.dynamics.update_prior(cur_data)
+            self.cur[m].traj_info.dynamics.fit(X, U)
+
+            # Fit x0mu/x0sigma.
+            x0 = X[:, 0, :]
+            x0mu = np.mean(x0, axis=0)
+            self.cur[m].traj_info.x0mu = x0mu
+            self.cur[m].traj_info.x0sigma = np.diag(
+                np.maximum(np.var(x0, axis=0),
+                           self._hyperparams['initial_state_var'])
+            )
+
+            prior = self.cur[m].traj_info.dynamics.get_prior()
+            if prior:
+                mu0, Phi, priorm, n0 = prior.initial_state()
+                N = len(cur_data)
+                self.cur[m].traj_info.x0sigma += \
+                        Phi + (N*priorm) / (N+priorm) * \
+                        np.outer(x0mu-mu0, x0mu-mu0) / (N+n0)
+
+    def _update_dynamics_cl(self, sample_lists_prot):
+        """
+        Instantiate dynamics objects and update prior. Fit dynamics to
+        current samples.
+        """
+
+        for m in range(self.M):
+            cur_data = self.cur[m].sample_list
+            sample_prot = sample_lists_prot[m]
+
+            X = cur_data.get_X()
+            U = cur_data.get_U()
+
+            # index last time step and sqeeze along first singleton dimesion
+            U_adv = np.squeeze(sample_prot.get_U()[-1:,:,:], axis=(0,))
+            # then add U
+            # U += U_adv
 
             # Update prior and fit dynamics.
             self.cur[m].traj_info.dynamics.update_prior(cur_data)
@@ -158,6 +202,68 @@ class Algorithm(object):
             # Adjust for expanding cost around a sample.
             X = sample.get_X()
             U = sample.get_U()
+            yhat = np.c_[X, U]
+            rdiff = -yhat
+            rdiff_expand = np.expand_dims(rdiff, axis=2)
+            cv_update = np.sum(Cm[n, :, :, :] * rdiff_expand, axis=1)
+            cc[n, :] += np.sum(rdiff * cv[n, :, :], axis=1) + 0.5 * \
+                    np.sum(rdiff * cv_update, axis=1)
+            cv[n, :, :] += cv_update
+
+        # Fill in cost estimate.
+        self.cur[cond].traj_info.cc = np.mean(cc, 0)  # Constant term (scalar).
+        self.cur[cond].traj_info.cv = np.mean(cv, 0)  # Linear term (vector).
+        self.cur[cond].traj_info.Cm = np.mean(Cm, 0)  # Quadratic term (matrix).
+
+        self.cur[cond].cs = cs  # True value of cost.
+
+    def _eval_cost_cl(self, cond, sample_lists_prot=None):
+        """
+        Evaluate costs for all samples for a condition.
+        Args:
+            cond: Condition to evaluate cost on.
+            sample_lists = # 5
+            sample_lists_prot is the list of the protagonist policies: 8 in #
+        """
+        # Constants.
+        T, dX, dU = self.T, self.dX, self.dU
+        N = len(self.cur[cond].sample_list)  # cur is every var in iteration data
+        # Compute cost.
+        cs = np.zeros((N, T))  # see algorithm_utils.py
+        cc = np.zeros((N, T))   # Cost estimate constant term.
+        cv = np.zeros((N, T, dX+dU))    # Cost estimate vector term.
+        Cm = np.zeros((N, T, dX+dU, dX+dU)) # Cost estimate matrix term.
+        for n in range(N):
+            sample = self.cur[cond].sample_list[n] # == 1 Sample object
+            sample_prot = sample_lists_prot[n]
+            # Get costs.  Self.cost will be a CostSum object see mdgps/antag/hyperparams#L128
+            l, lx, lu, lxx, luu, lux = self.cost[cond].eval(sample, sample_prot=sample_prot)
+            cc[n, :] = l
+            cs[n, :] = l
+
+            # Assemble matrix and vector.
+            cv[n, :, :] = np.c_[lx, lu]
+            Cm[n, :, :, :] = np.concatenate(
+                (np.c_[lxx, np.transpose(lux, [0, 2, 1])], np.c_[lux, luu]),
+                axis=1
+            )
+
+            # Adjust for expanding cost around a sample.
+            X = sample.get_X()
+            U = sample.get_U()
+
+            #retrieve state and action for adversary
+            #index last time step and sqeeze along first singleton dimesion
+            # X_adv = np.squeeze(sample_prot.get_X()[-1:,:,:], axis=(0,))
+            # U_adv = np.squeeze(sample_prot.get_U()[-1:,:,:], axis=(0,))
+
+            X_adv = np.mean(sample_prot.get_X(), axis=0)
+            U_adv = np.mean(sample_prot.get_U(), axis=0)
+
+            # new state space dynamics will be the effect of the adv and protag
+            # X += X_adv
+            U += U_adv
+
             yhat = np.c_[X, U]
             rdiff = -yhat
             rdiff_expand = np.expand_dims(rdiff, axis=2)

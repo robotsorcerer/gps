@@ -16,7 +16,7 @@ class CostAction(Cost):
 
         self._config = config
 
-    def eval(self, sample):
+    def eval(self, sample, **kwargs):
         """
         Evaluate cost function and derivatives on a sample.
         Args:
@@ -40,16 +40,37 @@ class CostAction(Cost):
 
             return l, lx, lu, lxx, luu, lux
         elif self.mode == 'antagonist':
-            l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_u ** 2), axis=1) - \
-                self.gamma * np.linalg.norm(sample_u ** 2, ord=2)
-            lu = self._hyperparams['wu'] * sample_u - \
-                 2 * self.gamma * sample_u
-            lx = np.zeros((T, Dx))
-            luu = np.tile(np.diag(self._hyperparams['wu']), [T, 1, 1]) - \
-                  2 *  self.gamma
-            lxx = np.zeros((T, Dx, Dx))
-            lux = np.zeros((T, Du, Dx))
+            """
+                sample_u is now adversary's local u
+                sample_prot_u was the protagonist local u
+                we are maximizing with respect to v as in the IROS abstract
+            """
+            sample_prot = kwargs['sample_prot']
+            sample_prot_u = sample_prot.get_U()
 
-            return -l, -lx, -lu, -lxx, -luu, -lux
+            # print('sample_prot_u: ', sample_prot_u.shape)
+            l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) - \
+                self.gamma * np.sum( self._hyperparams['wu'] * (sample_u ** 2), axis=1)  # shape 7
+            lv = 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) - \
+                 2 * self.gamma * self._hyperparams['wu'] * sample_u # shape 7 x 7 due to 2nd term
+            lx = np.zeros((T, Dx))
+            lvv_temp = 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) #shape 7
+            lvv = np.tile(np.diag(lvv_temp - 2 * self.gamma * self._hyperparams['wu']), [T, 1, 1]) # shape 100, 7, 7
+            lxx = np.zeros((T, Dx, Dx))
+            lvx = np.zeros((T, Du, Dx))
+
+            return -l, -lx, -lv, -lxx, -lvv, -lvx
+            # l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_u ** 2), axis=1) - \
+            #     self.gamma * np.linalg.norm(sample_u ** 2, ord=2)
+            # lu = self._hyperparams['wu'] * sample_u - \
+            #      2 * self.gamma * sample_u
+            # lx = np.zeros((T, Dx))
+            # luu = np.tile(np.diag(self._hyperparams['wu']), [T, 1, 1]) - \
+            #       2 *  self.gamma
+            # lxx = np.zeros((T, Dx, Dx))
+            # lux = np.zeros((T, Du, Dx))
+            #
+            # return -l, -lx, -lu, -lxx, -luu, -lux
+
         else:
             os._exit("unknown mode. Cost Action Mode should either be protagonist or antagonist ")

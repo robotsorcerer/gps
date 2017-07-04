@@ -97,9 +97,15 @@ class GPSMain(object):
             os._exit(1)
 
         try:
-            itr_start = 1 #self._initialize(itr_load)
+            # itr_start = 1 #self._initialize(itr_load)
+            itr_start, itr_load = 1, 40
+            self._initialize(itr_load)
+
+            self.protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
+                ('traj_sample_itr_%02d.pkl' % itr)) # we don't need this.
 
             for itr in range(itr_start, self._hyperparams['iterations']):
+                self.closeloop = True
                 for cond in self._train_idx:
                     for i in range(self._hyperparams['num_samples']):
                         #take protagonist and antagonist policy samples
@@ -109,15 +115,13 @@ class GPSMain(object):
                     self.agent.get_samples(cond, -self._hyperparams['num_samples'])
                     for cond in self._train_idx
                 ]
-                self.protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
-                    ('traj_sample_itr_%02d.pkl' % itr)) # we don't need this.
 
                 # Clear agent samples.
                 self.agent.clear_samples()
 
                 #take protagonist and antagonist iterations
                 print("Taking RL and Supervised Learning iterations")
-                self._take_iteration(itr, traj_sample_lists)  # see impl in alg_mdgps.py# L36
+                self._take_iteration_cl(itr, traj_sample_lists)  # see impl in alg_mdgps.py# L36
 
                 print("Taking pro/antagonist policy samples")
                 pol_sample_lists = self._take_policy_samples()
@@ -280,8 +284,22 @@ class GPSMain(object):
         # 6. advance_iteration variable
         self.algorithm.iteration(sample_lists)
 
-        if self.closeloop:
-            self.protag_algorithm.iteration(self.protag_traj_sample_lists)
+        if self.gui:
+            self.gui.stop_display_calculating()
+
+    def _take_iteration_cl(self, itr, sample_lists):
+        """
+        Take an iteration of the algorithm.
+        Args:
+            itr: Iteration number.
+        Returns: None
+        """
+
+        if self.gui:
+            self.gui.set_status_text('Calculating.')
+            self.gui.start_display_calculating()
+
+        self.algorithm.iteration_cl(self.protag_traj_sample_lists, sample_lists)
 
         if self.gui:
             self.gui.stop_display_calculating()

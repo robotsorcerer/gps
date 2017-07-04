@@ -21,14 +21,18 @@ class CostSum(Cost):
         for cost in self._hyperparams['costs']:
             self._costs.append(cost['type'](cost))
 
-    def eval(self, sample):
+    def eval(self, sample, **kwargs):
         """
         Evaluate cost function and derivatives.
         Args:
             sample:  A single sample
         """
         self.mode = 'antagonist'
-        l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample) #we are optimizing cost action
+        if 'sample_prot' in kwargs:
+            sample_prot = kwargs['sample_prot']
+            l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample, sample_prot=sample_prot)
+        else:
+            l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample) #we are optimizing cost action
 
         # Compute weighted sum of each cost value and derivatives.
         weight = self._weights[0]
