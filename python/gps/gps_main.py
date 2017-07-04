@@ -99,7 +99,7 @@ class GPSMain(object):
         try:
             # itr_start = 1 #self._initialize(itr_load)
             itr_start, itr_load = 1, 40
-            self._initialize(itr_load)
+            # self._initialize(itr_load)
 
             self.protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
                 ('traj_sample_itr_%02d.pkl' % itr)) # we don't need this.
@@ -122,9 +122,11 @@ class GPSMain(object):
                 #take protagonist and antagonist iterations
                 print("Taking RL and Supervised Learning iterations")
                 self._take_iteration_cl(itr, traj_sample_lists)  # see impl in alg_mdgps.py# L36
+                # self._take_iteration(itr, traj_sample_lists)
 
                 print("Taking pro/antagonist policy samples")
                 pol_sample_lists = self._take_policy_samples()
+                protag_pol_sample_lists = self.protag_pol_samples
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
 
         except Exception as e:
@@ -275,14 +277,10 @@ class GPSMain(object):
             self.gui.set_status_text('Calculating.')
             self.gui.start_display_calculating()
         # see corresponding alg being used e.g. algorithm_mdgps
-
-        # 1. Sampling and cost evaluation
-        # 2. Updating dynamics
-        # 3. Updating policy linearizations
-        # 4. C-Step -> Update trajectory
-        # 5. S-Step -> Update policy
-        # 6. advance_iteration variable
         self.algorithm.iteration(sample_lists)
+
+        if self.closeloop:
+            self.protag_algorithm.iteration(sample_lists)
 
         if self.gui:
             self.gui.stop_display_calculating()
@@ -300,6 +298,7 @@ class GPSMain(object):
             self.gui.start_display_calculating()
 
         self.algorithm.iteration_cl(self.protag_traj_sample_lists, sample_lists)
+        # self.protag_algorithm.iteration_cl(self.protag_traj_sample_lists, sample_lists)
 
         if self.gui:
             self.gui.stop_display_calculating()
@@ -319,8 +318,6 @@ class GPSMain(object):
             self.gui.set_status_text('Taking policy samples.')
         pol_samples = [[None] for _ in range(len(self._test_idx))]
         protag_pol_samples = pol_samples if self.closeloop else None
-        # take 2000 policy samples for protagonist
-        # protag_pol_samples = [[2000] for _ in range(len(self._test_idx))] if self.closeloop else None
         # Since this isn't noisy, just take one sample.
         # TODO: Make this noisy? Add hyperparam?
         # TODO: Take at all conditions for GUI?
@@ -333,7 +330,8 @@ class GPSMain(object):
                 protag_pol_samples[cond][0] = self.agent.sample(
                     self.protag_algorithm.policy_opt.policy, self._test_idx[cond],
                     verbose=verbose, save=False, noisy=False)
-            # pol_samples += protag_pol_samples
+            self.protag_pol_samples = [SampleList(samples) for samples in protag_pol_samples]
+
         return [SampleList(samples) for samples in pol_samples]
 
     def _log_data(self, itr, traj_sample_lists, pol_sample_lists=None):

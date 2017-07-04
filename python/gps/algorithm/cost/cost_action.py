@@ -48,29 +48,30 @@ class CostAction(Cost):
             sample_prot = kwargs['sample_prot']
             sample_prot_u = sample_prot.get_U()
 
-            # print('sample_prot_u: ', sample_prot_u.shape)
-            l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) - \
-                self.gamma * np.sum( self._hyperparams['wu'] * (sample_u ** 2), axis=1)  # shape 7
-            lv = 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) - \
-                 2 * self.gamma * self._hyperparams['wu'] * sample_u # shape 7 x 7 due to 2nd term
-            lx = np.zeros((T, Dx))
-            lvv_temp = 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) #shape 7
-            lvv = np.tile(np.diag(lvv_temp - 2 * self.gamma * self._hyperparams['wu']), [T, 1, 1]) # shape 100, 7, 7
-            lxx = np.zeros((T, Dx, Dx))
-            lvx = np.zeros((T, Du, Dx))
-
-            return -l, -lx, -lv, -lxx, -lvv, -lvx
-            # l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_u ** 2), axis=1) - \
-            #     self.gamma * np.linalg.norm(sample_u ** 2, ord=2)
-            # lu = self._hyperparams['wu'] * sample_u - \
-            #      2 * self.gamma * sample_u
+            # print('sample_prot_u: ', sample_prot_u.shape, ' | sample_u: ', sample_u.shape)
+            # l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) - \
+            #     self.gamma * np.sum( self._hyperparams['wu'] * (sample_u ** 2), axis=1)  # shape 100
+            # lv = 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) - \
+            #      (2 * self.gamma * np.sum(self._hyperparams['wu'] * sample_u, axis=1)) # 1st term shape (100,) 2nd term shape shape 7 x 7 due to 2nd term
             # lx = np.zeros((T, Dx))
-            # luu = np.tile(np.diag(self._hyperparams['wu']), [T, 1, 1]) - \
-            #       2 *  self.gamma
+            # lvv_temp = 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) #shape (100,)
+            # print('l shape: {}, lvv_temp: {}'.format(l.shape, lvv_temp.shape))
+            # lvv = np.tile(np.diag(self._hyperparams['wu'] - 2 * self.gamma * self._hyperparams['wu']), [T, 1, 1]) # shape 100, 7, 7
             # lxx = np.zeros((T, Dx, Dx))
-            # lux = np.zeros((T, Du, Dx))
+            # lvx = np.zeros((T, Du, Dx))
             #
-            # return -l, -lx, -lu, -lxx, -luu, -lux
+            # return -l, -lx, -lv, -lxx, -lvv, -lvx
+            l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_u ** 2), axis=1) - \
+                self.gamma * np.linalg.norm(sample_u ** 2, ord=2)
+            lu = self._hyperparams['wu'] * sample_u - \
+                 2 * self.gamma * sample_u
+            lx = np.zeros((T, Dx))
+            luu = np.tile(np.diag(self._hyperparams['wu']), [T, 1, 1]) - \
+                  2 *  self.gamma
+            lxx = np.zeros((T, Dx, Dx))
+            lux = np.zeros((T, Du, Dx))
+
+            return -l, -lx, -lu, -lxx, -luu, -lux
 
         else:
             os._exit("unknown mode. Cost Action Mode should either be protagonist or antagonist ")

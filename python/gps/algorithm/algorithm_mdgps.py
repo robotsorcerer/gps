@@ -74,11 +74,11 @@ class AlgorithmMDGPS(Algorithm):
         # Store the samples and evaluate the costs.
         for m in range(self.M):  # self.M is the # of the condition number
             self.cur[m].sample_list = sample_lists[m] # cur is every var in iteration data
-            # sample_prot = sample_lists_prot[m]
-            self._eval_cost_cl(m, sample_lists_prot=sample_lists_prot)  # _eval_cost is defined in algorithm.py line 220
+            sample_prot = sample_lists_prot[m]
+            self._eval_cost_cl(m, sample_lists_prot=sample_prot)  # _eval_cost is defined in algorithm.py line 220
 
         # Update dynamics linearizations.
-        self._update_dynamics_cl(sample_lists_prot=sample_lists_prot)
+        self._update_dynamics_cl(sample_lists_prot=sample_prot)
         # self._update_dynamics()
 
         # On the first iteration, need to catch policy up to init_traj_distr.

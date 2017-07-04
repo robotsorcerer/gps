@@ -51,4 +51,4 @@ class CostSum(Cost):
             lxx = lxx + plxx * weight
             luu = luu + pluu * weight
             lux = lux + plux * weight
-        return l, lx, lu, lxx, luu, lux
+        return l, lx, lu, lxx, luu, lux #don't negate here cause torque and fk costs are already negated
