@@ -77,6 +77,6 @@ class CostFK(Cost):
         if self.mode == 'protagonist':
             return l, lx, lu, lxx, luu, lux
         elif self.mode == 'antagonist':
-            return -l, -lx, -lu, -lxx, -luu, -lux
+            return l, lx, lu, lxx, luu, lux
         else:
             os._exit("invalid mode entered for cost params")
