@@ -133,7 +133,7 @@ class Algorithm(object):
             U = cur_data.get_U()
 
             # index last time step and sqeeze along first singleton dimesion
-            U_adv = np.squeeze(sample_prot.get_U()[-1:,:,:], axis=(0,))
+            U_adv = np.mean(sample_prot.get_U(), axis=0)
             # then add U
             # U += U_adv
 

@@ -97,7 +97,7 @@ algorithm['init_traj_distr'] = {
 torque_cost = {
     'type': CostAction,
     'wu': 1e-3 / PR2_GAINS,
-    'gamma': 1e6,
+    'gamma': 1e8,
     'mode': 'antagonist', #could also be protagonist
 }
 
