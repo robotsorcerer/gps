@@ -345,8 +345,12 @@ class GPSMain(object):
         """
         if self.gui:
             self.gui.set_status_text('Logging data and updating GUI.')
-            self.gui.update(itr, self.algorithm, self.agent,
-                traj_sample_lists, pol_sample_lists)
+            if self.closeloop:
+                self.gui.update(itr, self.algorithm, self.agent,
+                    traj_sample_lists, pol_sample_lists, protag_pol_samples=self.protag_pol_samples)
+            else:
+                self.gui.update(itr, self.algorithm, self.agent,
+                    traj_sample_lists, pol_sample_lists)
             self.gui.save_figure(
                 self._data_files_dir + ('figure_itr_%02d.png' % itr)
             )

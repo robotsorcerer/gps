@@ -41,6 +41,7 @@ class GPSTrainingGUI(object):
         self._hyperparams = hyperparams
         self._log_filename = self._hyperparams['log_filename']
         self._costs_filename = self._hyperparams['costs_filename']
+        self.mode = self._hyperparams['mode']
         if 'target_filename' in self._hyperparams:
             self._target_filename = self._hyperparams['target_filename']
         else:
@@ -264,7 +265,7 @@ class GPSTrainingGUI(object):
                 alpha=config['image_overlay_alpha'])
 
     # Iteration update functions
-    def update(self, itr, algorithm, agent, traj_sample_lists, pol_sample_lists):
+    def update(self, itr, algorithm, agent, traj_sample_lists, pol_sample_lists, protag_pol_samples=None):
         """
         After each iteration, update the iteration data output, the cost plot,
         and the 3D trajectory visualizations (if end effector points exist).
@@ -277,7 +278,7 @@ class GPSTrainingGUI(object):
 
         with open(self._costs_filename, 'a') as f:
             f.write("%s\n" % costs)
-        self._update_iteration_data(itr, algorithm, costs, pol_sample_lists)
+        self._update_iteration_data(itr, algorithm, costs, pol_sample_lists, protag_pol_samples=protag_pol_samples)
         self._cost_plotter.update(costs, t=itr)
         if END_EFFECTOR_POINTS in agent.x_data_types:
             self._update_trajectory_visualizations(algorithm, agent,
@@ -311,7 +312,7 @@ class GPSTrainingGUI(object):
         self.append_output_text(condition_titles)
         self.append_output_text(itr_data_fields)
 
-    def _update_iteration_data(self, itr, algorithm, costs, pol_sample_lists):
+    def _update_iteration_data(self, itr, algorithm, costs, pol_sample_lists, protag_pol_samples):
         """
         Update iteration data information: iteration, average cost, and for
         each condition the mean cost over samples, step size, linear Guassian
@@ -322,8 +323,13 @@ class GPSTrainingGUI(object):
             test_idx = algorithm._hyperparams['test_conditions']
             # pol_sample_lists is a list of singletons
             samples = [sl[0] for sl in pol_sample_lists]
-            pol_costs = [np.sum(algorithm.cost[idx].eval(s)[0])
-                    for s, idx in zip(samples, test_idx)]
+            if protag_pol_samples is not None:
+                samples_prot = [sl[0] for sl in protag_pol_samples]
+                for s, idx in zip(samples, test_idx):
+                    pol_costs = np.sum(algorithm.cost[idx].eval(s, sample_prot=samples_prot[idx])[0])
+            else:
+                pol_costs = [np.sum(algorithm.cost[idx].eval(s, sample_prot=None)[0])
+                        for s, idx in zip(samples, test_idx)]
             itr_data = '%3d | %8.2f %12.2f' % (itr, avg_cost, np.mean(pol_costs))
         else:
             itr_data = '%3d | %8.2f' % (itr, avg_cost)
@@ -340,7 +346,12 @@ class GPSTrainingGUI(object):
             elif isinstance(algorithm, AlgorithmMDGPS):
                 # TODO: Change for test/train better.
                 if test_idx == algorithm._hyperparams['train_conditions']:
-                    itr_data += ' %8.2f' % (pol_costs[m])
+                    print 'itr_data: , pol_costs[m]: ', itr_data, pol_costs
+                    if not self.mode=='antagonist':
+                        itr_data += ' %8.2f' % (pol_costs)
+                        pass
+                    else:
+                        itr_data +=  ' %8.2f' % (pol_costs)
                 else:
                     itr_data += ' %8s' % ("N/A")
         self.append_output_text(itr_data)

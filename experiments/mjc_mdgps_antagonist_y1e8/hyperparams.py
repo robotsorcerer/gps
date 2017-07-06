@@ -46,6 +46,8 @@ common = {
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.txt',
     'conditions': 4,
+    'gamma': 1e8,
+    'mode': 'antagonist'
 }
 
 if not os.path.exists(common['data_files_dir']):
