@@ -15,6 +15,12 @@ class CostAction(Cost):
         Cost.__init__(self, config)
 
         self._config = config
+        self.hyperparams = hyperparams
+        with open('hyperparams.txt', 'a') as f:
+            f.write("%s\n" % self._config )
+            f.write("%s\n" % self.hyperparams )
+        print('config: ', self._config)
+        print('hyperparams: ', hyperparams)
 
     def eval(self, sample, **kwargs):
         """
@@ -22,6 +28,11 @@ class CostAction(Cost):
         Args:
             sample: A single sample
         """
+        # with open('hyperparams.txt', 'w') as f:
+        #     f.write("%s\n" % self._config )
+        #     f.write("%s\n" % self.hyperparams )
+        # print('config: ', self._config)
+        # print('hyperparams: ', self.hyperparams)
 
         self.gamma = self._config['gamma']
         self.mode = self._config['mode']

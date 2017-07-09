@@ -1,0 +1,80 @@
+{'evalnorm': <function evallogl2term at 0x7f976731eaa0>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f976731eaa0>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f976731eaa0>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f976731eaa0>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f15ebe4baa0>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f15ebe4baa0>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f15ebe4baa0>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f15ebe4baa0>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7fc958760b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7fc958760b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7fc958760b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7fc958760b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f071d563b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f071d563b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f071d563b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f071d563b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f663d5c6b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f663d5c6b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f663d5c6b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}
+{'evalnorm': <function evallogl2term at 0x7f663d5c6b18>, 'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'mode': 'antagonist', 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>, 'gamma': 0.01}
+{'wu': array([ 0.00032362,  0.00092593,  0.00254453,  0.00148368,  0.00900901,
+        0.00657895,  0.01020408]), 'type': <class 'gps.algorithm.cost.cost_action.CostAction'>}

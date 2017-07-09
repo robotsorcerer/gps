@@ -326,7 +326,7 @@ class GPSMain(object):
         if self.gui:
             self.gui.set_status_text('Taking policy samples.')
         pol_samples = [[None] for _ in range(len(self._test_idx))]
-        protag_pol_samples = pol_samples if self.closeloop else None
+        protag_pol_samples = pol_samples if self.closeloop or self.test_policy else None
         # Since this isn't noisy, just take one sample.
         # TODO: Make this noisy? Add hyperparam?
         # TODO: Take at all conditions for GUI?
@@ -334,13 +334,12 @@ class GPSMain(object):
             pol_samples[cond][0] = self.agent.sample(
                 self.algorithm.policy_opt.policy, self._test_idx[cond],
                 verbose=verbose, save=False, noisy=False)
-        if self.closeloop: #or self.test_policy:
-            print 'self.protag_algorithm: ', self.protag_algorithm.policy_opt.policy
+        if self.closeloop or self.test_policy:
+            # print 'self.protag_algorithm: ', self.agent.sample(self.protag_algorithm.policy_opt.policy, self._test_idx[0],verbose=verbose, save=False, noisy=False)
             for cond in range(len(self._test_idx)):
                 protag_pol_samples[cond][0] = self.agent.sample(
                     self.protag_algorithm.policy_opt.policy, self._test_idx[cond],
                     verbose=verbose, save=False, noisy=False)
-            # print 'self.protag_algorithm: ', self.protag_algorithm
             self.protag_pol_samples = [SampleList(samples) for samples in protag_pol_samples]
 
         return [SampleList(samples) for samples in pol_samples]

@@ -45,7 +45,9 @@ common = {
     'data_files_dir': EXP_DIR + 'data_files/',
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
+    'costs_filename': EXP_DIR + 'costs.txt',
     'conditions': 4,
+    'mode': 'protagonist'
 }
 
 if not os.path.exists(common['data_files_dir']):
