@@ -35,10 +35,10 @@ SENSOR_DIMS = {
 PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist_y1e8/'
+EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist_y1e-4/'
 
 common = {
-    'experiment_name': 'mjc_mdgps_antagonist_y1e8' + '_' + \
+    'experiment_name': 'mjc_mdgps_antagonist_y1e-4' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
@@ -46,7 +46,7 @@ common = {
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.txt',
     'conditions': 4,
-    'gamma': 1e-6,
+    'gamma': 1e-4,
     'mode': 'antagonist'
 }
 

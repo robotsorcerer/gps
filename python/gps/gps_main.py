@@ -126,7 +126,7 @@ class GPSMain(object):
 
                 print("Taking pro/antagonist policy samples")
                 pol_sample_lists = self._take_policy_samples()
-                protag_pol_sample_lists = self.protag_pol_samples
+                # protag_pol_sample_lists = self.protag_pol_samples
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
 
         except Exception as e:
@@ -144,6 +144,15 @@ class GPSMain(object):
             N: the number of policy samples to take
         Returns: None
         """
+        # print('itr: ', itr) # is 41
+        self.test_policy = True
+        protag_algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
+        self.protag_algorithm = self.data_logger.unpickle(protag_algorithm_file)
+
+        if self.protag_algorithm is None:
+            print("Error: cannot find '%s.'" % protag_algorithm_file)
+            os._exit(1)
+
         algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
         self.algorithm = self.data_logger.unpickle(algorithm_file)
         if self.algorithm is None:
@@ -160,7 +169,7 @@ class GPSMain(object):
 
         if self.gui:
             self.gui.update(itr, self.algorithm, self.agent,
-                traj_sample_lists, pol_sample_lists)
+                traj_sample_lists, pol_sample_lists, protag_pol_samples=self.protag_pol_samples)
             self.gui.set_status_text(('Took %d policy sample(s) from ' +
                 'algorithm state at iteration %d.\n' +
                 'Saved to: data_files/pol_sample_itr_%02d.pkl.\n') % (N, itr, itr))
@@ -325,11 +334,13 @@ class GPSMain(object):
             pol_samples[cond][0] = self.agent.sample(
                 self.algorithm.policy_opt.policy, self._test_idx[cond],
                 verbose=verbose, save=False, noisy=False)
-        if self.closeloop:
+        if self.closeloop: #or self.test_policy:
+            print 'self.protag_algorithm: ', self.protag_algorithm.policy_opt.policy
             for cond in range(len(self._test_idx)):
                 protag_pol_samples[cond][0] = self.agent.sample(
                     self.protag_algorithm.policy_opt.policy, self._test_idx[cond],
                     verbose=verbose, save=False, noisy=False)
+            # print 'self.protag_algorithm: ', self.protag_algorithm
             self.protag_pol_samples = [SampleList(samples) for samples in protag_pol_samples]
 
         return [SampleList(samples) for samples in pol_samples]

@@ -48,6 +48,7 @@ class CostAction(Cost):
                 lvv = 0.5 * sum(wu * u^2) - 2 * gamma * wu
             """
             sample_prot = kwargs['sample_prot']
+            # if sample_prot is not None:
             sample_prot_u = sample_prot.get_U()
 
             # print('sample_prot_u: ', sample_prot_u.shape, ' | sample_u: ', sample_u.shape) #('sample_prot_u: ', (100, 7), ' | sample_u: ', (100, 7))

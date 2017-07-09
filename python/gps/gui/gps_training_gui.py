@@ -346,7 +346,7 @@ class GPSTrainingGUI(object):
             elif isinstance(algorithm, AlgorithmMDGPS):
                 # TODO: Change for test/train better.
                 if test_idx == algorithm._hyperparams['train_conditions']:
-                    print 'itr_data: , pol_costs[m]: ', itr_data, pol_costs
+                    # print 'itr_data: , pol_costs[m]: ', itr_data, pol_costs
                     if not self.mode=='antagonist':
                         itr_data += ' %8.2f' % (pol_costs)
                         pass

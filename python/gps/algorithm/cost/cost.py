@@ -8,6 +8,7 @@ class Cost(object):
 
     def __init__(self, hyperparams):
         self._hyperparams = hyperparams
+        print('cost hyperparams: ', self._hyperparams)
 
     @abc.abstractmethod
     def eval(self, sample):

@@ -15,7 +15,7 @@ COST_FK = {
     'alpha': 1e-5,
     'target_end_effector': None,  # Target end-effector position.
     'evalnorm': evallogl2term, #could also be evallogl2term
-    'gamma': 1e8,
+    'gamma': 1e-2,
     'mode': 'antagonist',
 }
 
@@ -57,7 +57,7 @@ COST_SUM = {
     'costs': [],  # A list of hyperparam dictionaries for each cost.
     'weights': [],  # Weight multipliers for each cost.
     'evalnorm': evallogl2term, #could also be evallogl2term
-    'gamma': 1e8,
+    'gamma': 1e-2,
     'mode': 'antagonist',
 }
 
@@ -66,7 +66,7 @@ COST_SUM = {
 COST_ACTION = {
     'wu': np.array([]),  # Torque penalties, must be 1 x dU numpy array.
     'evalnorm': evallogl2term, #could also be evallogl2term
-    'gamma': 1e8,
+    'gamma': 1e-2,
     'mode': 'antagonist',
 }
 
