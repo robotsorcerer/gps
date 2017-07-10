@@ -20,8 +20,6 @@ class CostFK(Cost):
         config.update(hyperparams)
         Cost.__init__(self, config)
 
-        self._config = config
-
     def eval(self, sample):
         """
         Evaluate forward kinematics (end-effector penalties) cost.
@@ -31,9 +29,6 @@ class CostFK(Cost):
         Args:
             sample: A single sample.
         """
-
-        self.gamma = self._hyperparams['gamma']
-        self.mode = self._hyperparams['mode']
 
         T = sample.T
         dX = sample.dX
@@ -74,9 +69,4 @@ class CostFK(Cost):
         sample.agent.pack_data_x(lxx, lss,
                                  data_types=[JOINT_ANGLES, JOINT_ANGLES])
 
-        if self.mode == 'protagonist':
-            return l, lx, lu, lxx, luu, lux
-        elif self.mode == 'antagonist':
-            return l, lx, lu, lxx, luu, lux
-        else:
-            os._exit("invalid mode entered for cost params")
+        return l, lx, lu, lxx, luu, lux
