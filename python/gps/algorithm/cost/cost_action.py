@@ -15,12 +15,6 @@ class CostAction(Cost):
         Cost.__init__(self, config)
 
         self._config = config
-        self.hyperparams = hyperparams
-        with open('hyperparams.txt', 'a') as f:
-            f.write("%s\n" % self._config )
-            f.write("%s\n" % self.hyperparams )
-        print('config: ', self._config)
-        print('hyperparams: ', hyperparams)
 
     def eval(self, sample, **kwargs):
         """
@@ -28,14 +22,9 @@ class CostAction(Cost):
         Args:
             sample: A single sample
         """
-        # with open('hyperparams.txt', 'w') as f:
-        #     f.write("%s\n" % self._config )
-        #     f.write("%s\n" % self.hyperparams )
-        # print('config: ', self._config)
-        # print('hyperparams: ', self.hyperparams)
+        self.gamma = self._hyperparams['gamma']
+        self.mode = self._hyperparams['mode']
 
-        self.gamma = self._config['gamma']
-        self.mode = self._config['mode']
         sample_u = sample.get_U()
         T = sample.T
         Du = sample.dU
@@ -85,16 +74,6 @@ class CostAction(Cost):
             lvx = np.zeros((T, Du, Dx))
 
             return -l, -lx, -lv, -lxx, -lvv, -lvx
-            # l = 0.5 * np.sum(self._hyperparams['wu'] * (sample_u ** 2), axis=1) - \
-            #     self.gamma * np.linalg.norm(sample_u ** 2, ord=2)
-            # lu = self._hyperparams['wu'] * sample_u - \
-            #      2 * self.gamma * sample_u
-            # lx = np.zeros((T, Dx))
-            # luu = np.tile(np.diag(self._hyperparams['wu']), [T, 1, 1]) - \
-            #       2 *  self.gamma
-            # lxx = np.zeros((T, Dx, Dx))
-            # lux = np.zeros((T, Du, Dx))
-            # return -l, -lx, -lu, -lxx, -luu, -lux
 
         else:
             os._exit("unknown mode. Cost Action Mode should either be protagonist or antagonist ")

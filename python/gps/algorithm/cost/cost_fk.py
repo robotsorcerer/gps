@@ -32,8 +32,8 @@ class CostFK(Cost):
             sample: A single sample.
         """
 
-        self.gamma = self._config['gamma']
-        self.mode = self._config['mode']
+        self.gamma = self._hyperparams['gamma']
+        self.mode = self._hyperparams['mode']
 
         T = sample.T
         dX = sample.dX

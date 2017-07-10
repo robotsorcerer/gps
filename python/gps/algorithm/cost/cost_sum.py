@@ -10,16 +10,18 @@ class CostSum(Cost):
     def __init__(self, hyperparams):
         config = copy.deepcopy(COST_SUM)
         config.update(hyperparams)
-        self.gamma = config['gamma']
-        self.mode = config['mode']
         Cost.__init__(self, config)
 
         self._costs = []
         self._weights = self._hyperparams['weights']
+        # print self._hyperparams['costs']
 
-        #[torque_cost, fk_cost, final_cost] = [Cost_Action, Cost_FK, Cost_FK]
+        # [torque_cost, fk_cost, final_cost] = [Cost_Action, Cost_FK, Cost_FK]
         for cost in self._hyperparams['costs']:
             self._costs.append(cost['type'](cost))
+            # fix gamma and mode from hyperparams file
+            self.gamma = cost['gamma'] if 'gamma' in cost else None
+            self.mode = cost['mode'] if 'mode' in cost else None
 
     def eval(self, sample, **kwargs):
         """
