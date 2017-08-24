@@ -55,7 +55,7 @@ class Algorithm(object):
             dynamics = self._hyperparams['dynamics']
 
         for m in range(self.M):
-            self.cur[m].traj_info = TrajectoryInfo()
+            self.cur[m].traj_info = TrajectoryInfo() #L24 algorithm_utils.py
             if self._hyperparams['fit_dynamics']:
                 self.cur[m].traj_info.dynamics = dynamics['type'](dynamics)
             init_traj_distr = extract_condition(
@@ -88,14 +88,16 @@ class Algorithm(object):
         Instantiate dynamics objects and update prior. Fit dynamics to
         current samples.
         """
-        for m in range(self.M):
-            cur_data = self.cur[m].sample_list
+        for m in range(self.M): #self.M is conditon #
+            cur_data = self.cur[m].sample_list # self.cur = IterationData() #L8 algorithm_utils
             X = cur_data.get_X()
             U = cur_data.get_U()
 
-            # Update prior and fit dynamics.
-            self.cur[m].traj_info.dynamics.update_prior(cur_data)
-            self.cur[m].traj_info.dynamics.fit(X, U)
+            print('X: ', X[0, :, :].shape, 'N: ', X.shape[0])
+
+            # Update prior and fit dynamics. #traj_info.dynamics = DynamicsLRPrior
+            self.cur[m].traj_info.dynamics.update_prior(cur_data) #L18, dynamics_lr_prior
+            self.cur[m].traj_info.dynamics.fit(X, U) #L29 dynamics_lr_prior
 
             # Fit x0mu/x0sigma.
             x0 = X[:, 0, :]
