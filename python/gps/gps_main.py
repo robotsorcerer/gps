@@ -20,7 +20,6 @@ from gps.gui.gps_training_gui import GPSTrainingGUI
 from gps.utility.data_logger import DataLogger
 from gps.sample.sample_list import SampleList
 
-
 class GPSMain(object):
     """ Main class to run algorithms and experiments. """
     def __init__(self, config, closeloop, quit_on_end=False):
@@ -51,6 +50,8 @@ class GPSMain(object):
         self.gui = GPSTrainingGUI(config['common']) if config['gui_on'] else None
 
         config['algorithm']['agent'] = self.agent
+        # for k, v in config['algorithm'].items():
+        #     print(k, v)
         self.algorithm = config['algorithm']['type'](config['algorithm'])
 
     def run(self, itr_load=None):
@@ -121,6 +122,8 @@ class GPSMain(object):
 
                 #take protagonist and antagonist iterations
                 print("Taking RL and Supervised Learning iterations")
+                # if isinstance(self.algorithm
+
                 self._take_iteration_cl(itr, traj_sample_lists)  # see impl in alg_mdgps.py# L36
                 # self._take_iteration(itr, traj_sample_lists)
 
@@ -420,6 +423,8 @@ def main():
     gps_dir = '/'.join(str.split(gps_filepath, '/')[:-3]) + '/'
     exp_dir = gps_dir + 'experiments/' + exp_name + '/'
     hyperparams_file = exp_dir + 'hyperparams.py'
+
+    print(args)
 
     if args.silent:
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)

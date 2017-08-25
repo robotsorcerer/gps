@@ -5,7 +5,7 @@ import numpy as np
 
 from gps.algorithm.cost.config import COST_STATE
 from gps.algorithm.cost.cost import Cost
-from gps.algorithm.cost.cost_utils import evall1l2term, evallogl2term_ant, get_ramp_multiplier
+from gps.algorithm.cost.cost_utils import evall1l2term, get_ramp_multiplier#evallogl2term_ant
 
 
 class CostState(Cost):
@@ -34,7 +34,7 @@ class CostState(Cost):
         final_lxx = np.zeros((T, Dx, Dx))
         final_lux = np.zeros((T, Du, Dx))
 
-        l1l2term = evall1l2term if self.mode == 'protagonist' else l1l2term = evallogl2term_ant
+        l1l2term = evall1l2term #if self.mode == 'protagonist' else evallogl2term_ant
 
         for data_type in self._hyperparams['data_types']:
             config = self._hyperparams['data_types'][data_type]

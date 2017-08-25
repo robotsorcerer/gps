@@ -47,7 +47,8 @@ common = {
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.txt',
     'conditions': 4,
-    'mode': 'protagonist'
+    'mode': 'protagonist',
+    'gamma': 0,
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -107,6 +108,7 @@ fk_cost = {
     'l1': 0.1,
     'l2': 10.0,
     'alpha': 1e-5,
+    'gamma': 0,
 }
 
 # Create second cost function for last step only.
@@ -119,12 +121,14 @@ final_cost = {
     'l2': 0.0,
     'alpha': 1e-5,
     'wp_final_multiplier': 10.0,
+    'gamma': 0,
 }
 
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [torque_cost, fk_cost, final_cost],
     'weights': [0.8, 0.8, 0.8], #[1.0, 1.0, 1.0],
+    'gamma': 0,
 }
 
 algorithm['dynamics'] = {

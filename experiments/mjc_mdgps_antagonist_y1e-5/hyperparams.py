@@ -46,6 +46,8 @@ common = {
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.txt',
     'conditions': 4,
+    'gamma': 1e-5,
+    'mode': 'antagonist'
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -122,6 +124,8 @@ final_cost = {
     'l2': 0.0,
     'alpha': 1e-5,
     'wp_final_multiplier': 10.0,
+    'gamma': 1e-5,
+    'mode': 'antagonist', #could also be protagonist
 }
 
 algorithm['cost'] = {

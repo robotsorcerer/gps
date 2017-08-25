@@ -16,9 +16,6 @@ class CostAction(Cost):
 
         self._config = config
 
-        self.gamma = self._hyperparams['gamma']# if 'gamma' in cost else None
-        self.mode = self._hyperparams['mode'] #if 'mode' in cost else None
-
     def eval(self, sample, **kwargs):
         """
         Evaluate cost function and derivatives on a sample.

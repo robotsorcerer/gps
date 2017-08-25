@@ -27,7 +27,7 @@ SENSOR_DIMS = {
 }
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/box2d_arm_example/'
+EXP_DIR = BASE_DIR + '/../experiments/box2d_arm_example_y1e8/'
 
 
 common = {
@@ -38,7 +38,7 @@ common = {
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.txt',
     'conditions': 1,
-    'gamma': 0,
+    'gamma': 1e8,
     'mode': 'antagonist'
 }
 
@@ -82,8 +82,8 @@ algorithm['init_traj_distr'] = {
 action_cost = {
     'type': CostAction,
     'wu': np.array([1, 1]),
-    'mode': 'antagonist', #could also be protagonist
-    'gamma': 0
+    'mode': 'protagonist', #could also be protagonist
+    'gamma': 1e8
 }
 
 state_cost = {

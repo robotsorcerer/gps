@@ -35,10 +35,10 @@ SENSOR_DIMS = {
 PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist_y1e3/'
+EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_antagonist_y1.5/'
 
 common = {
-    'experiment_name': 'mjc_mdgps_antagonist_y1e3' + '_' + \
+    'experiment_name': 'mjc_mdgps_antagonist_y1.5' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
@@ -46,6 +46,8 @@ common = {
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.txt',
     'conditions': 4,
+    'mode': 'antagonist',
+    'gamma': 1.5,
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -97,7 +99,7 @@ algorithm['init_traj_distr'] = {
 torque_cost = {
     'type': CostAction,
     'wu': 1e-3 / PR2_GAINS,
-    'gamma': 1e3,
+    'gamma': 1.5,
     'mode': 'antagonist', #could also be protagonist
 }
 
@@ -108,7 +110,7 @@ fk_cost = {
     'l1': 0.1,
     'l2': 10.0,
     'alpha': 1e-5,
-    'gamma': 1e3,
+    'gamma': 1.5,
     'mode': 'antagonist', #could also be protagonist
 }
 
@@ -121,6 +123,7 @@ final_cost = {
     'l1': 1.0,
     'l2': 0.0,
     'alpha': 1e-5,
+    'gamma': 1.5,
     'wp_final_multiplier': 10.0,
 }
 
@@ -128,6 +131,7 @@ algorithm['cost'] = {
     'type': CostSum,
     'costs': [torque_cost, fk_cost, final_cost],
     'weights': [1.0, 1.0, 1.0],
+    'gamma': 1.5,
 }
 
 algorithm['dynamics'] = {

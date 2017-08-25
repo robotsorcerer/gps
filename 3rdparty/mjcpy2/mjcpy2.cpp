@@ -22,6 +22,7 @@ bn::ndarray toNdarray1(const T* data, long dim0) {
   memcpy(out.get_data(), data, dim0*sizeof(T));
   return out;
 }
+
 template<typename T>
 bn::ndarray toNdarray2(const T* data, long dim0, long dim1) {
   long dims[2] = {dim0,dim1};
@@ -29,6 +30,7 @@ bn::ndarray toNdarray2(const T* data, long dim0, long dim1) {
   memcpy(out.get_data(), data, dim0*dim1*sizeof(T));
   return out;
 }
+
 template<typename T>
 bn::ndarray toNdarray3(const T* data, long dim0, long dim1, long dim2) {
   long dims[3] = {dim0,dim1,dim2};

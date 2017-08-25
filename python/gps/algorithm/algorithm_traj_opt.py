@@ -34,11 +34,34 @@ class AlgorithmTrajOpt(Algorithm):
 
         self._advance_iteration_variables()
 
+
+    def iteration_cl(self, sample_lists_prot, sample_lists):
+
+        for m in range(self.M):
+            self.cur[m].sample_list = sample_lists[m]
+            self.sample_prot = sample_lists_prot[m]
+        # print('self._hyperparams: ', self._hyperparams)
+
+        # Update dynamics model using all samples.
+        self._update_dynamics()
+
+        self._update_step_size()  # KL Divergence step size.
+
+        # Run inner loop to compute new policies.
+        for _ in range(self._hyperparams['inner_iterations']):
+            self._update_trajectories()
+
+        self._advance_iteration_variables()
+
+
     def _update_step_size(self):
         """ Evaluate costs on samples, and adjust the step size. """
         # Evaluate cost function for all conditions and samples.
         for m in range(self.M):
-            self._eval_cost(m)
+            if self._hyperparams['mode'] == 'protagonist':
+                self._eval_cost(m)
+            else:
+                self._eval_cost_cl(m, sample_lists_prot=self.sample_prot)
 
         # Adjust step size relative to the previous iteration.
         for m in range(self.M):
