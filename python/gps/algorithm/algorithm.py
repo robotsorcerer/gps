@@ -93,12 +93,10 @@ class Algorithm(object):
         Instantiate dynamics objects and update prior. Fit dynamics to
         current samples.
         """
-        for m in range(self.M):
-            cur_data = self.cur[m].sample_list
+        for m in range(self.M): #self.M is conditon #
+            cur_data = self.cur[m].sample_list # self.cur = IterationData() #L8 algorithm_utils
             X = cur_data.get_X()
             U = cur_data.get_U()
-
-            # print("X shape: {}, U.shape: {}".format(X.shape, U.shape))
 
             # Update prior and fit dynamics.
             self.cur[m].traj_info.dynamics.update_prior(cur_data)
