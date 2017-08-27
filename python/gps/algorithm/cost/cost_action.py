@@ -64,16 +64,23 @@ class CostAction(Cost):
             # compute 2nd order control derivative
             lvv_t1= 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) # shape (100,)
             lvv_t1 = np.expand_dims(lvv_t1, axis=1) # shape(100, 1)
-            lvv_t1 = np.tile(lvv_t1, 7)  # shape (100, 7)
+            lvv_t1 = np.tile(lvv_t1, Dx)  # shape (100, 7)
             lvv_t1 = np.expand_dims(lvv_t1, axis=2) # shape (100, 7, 1)
-            lvv_t1 = np.tile(lvv_t1, 7) # shape(100, 7, 7)
+            lvv_t1 = np.tile(lvv_t1, Dx) # shape(100, 7, 7)
             lvv_t2= np.tile(np.diag(2 * self.gamma * self._hyperparams['wu']), [T, 1, 1]) #shape (100, 7, 7)
-            # print('lvv_t1.shape: {},| lvv_t2.shape: {} ', lvv_t1.shape, lvv_t2.shape)
-            lvv = lvv_t1 - lvv_t2 # shape (100, 7, 7)
+            # print('lvv_t1.shape: {},| lvv_t2.shape: {} '.format(lvv_t1.shape, lvv_t2.shape))
+
+            if lvv_t2.shape[2] != lvv_t1.shape[2]:
+                # print('lvv_t1 ', lvv_t1[0:,:,:])
+                lvv_t2_box2d = np.zeros((T, Dx, Dx))
+                for t in range(T):
+                    # pad the matrix with zeros and index the concerned elems
+                    lvv_t2_box2d[t,:,:] = np.lib.pad(lvv_t2[t,:,:], ((7, 7), (7, 7)), 'constant', constant_values=(0,0))[7:14,7:14]
+                lvv = lvv_t1 - lvv_t2_box2d
+            else:
+                lvv = lvv_t1 - lvv_t2 # shape (100, 7, 7)
             lxx = np.zeros((T, Dx, Dx))
             lvx = np.zeros((T, Du, Dx))
-
             return -l, -lx, -lv, -lxx, -lvv, -lvx
-
         else:
             os._exit("unknown mode. Cost Action Mode should either be protagonist or antagonist ")

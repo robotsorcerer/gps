@@ -38,6 +38,8 @@ common = {
     'data_files_dir': EXP_DIR + 'data_files/',
     'log_filename': EXP_DIR + 'log.txt',
     'conditions': 4,
+    'gamma': 0,
+    'mode': 'protagonist'
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -77,6 +79,7 @@ algorithm = {
     'max_step_mult': 1.0,
     'sample_decrease_var': 0.05,
     'sample_increase_var': 0.1,
+    'mode': 'protagonist'
 }
 
 algorithm['init_traj_distr'] = {
@@ -91,7 +94,9 @@ algorithm['init_traj_distr'] = {
 
 action_cost = {
     'type': CostAction,
-    'wu': np.array([1, 1])
+    'wu': np.array([1, 1]),
+    'mode': 'protagonist', #could also be protagonist
+    'gamma': 1e8,
 }
 
 state_cost = {
@@ -108,6 +113,7 @@ algorithm['cost'] = {
     'type': CostSum,
     'costs': [action_cost, state_cost],
     'weights': [1e-5, 1.0],
+    'mode': 'protagonist'
 }
 
 algorithm['dynamics'] = {

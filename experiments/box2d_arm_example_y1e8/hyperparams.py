@@ -66,7 +66,7 @@ agent = {
 algorithm = {
     'type': AlgorithmTrajOpt,
     'conditions': common['conditions'],
-    'mode': 'protagonist'
+    'mode': 'antagonist'
 }
 
 algorithm['init_traj_distr'] = {
@@ -82,8 +82,9 @@ algorithm['init_traj_distr'] = {
 action_cost = {
     'type': CostAction,
     'wu': np.array([1, 1]),
-    'mode': 'protagonist', #could also be protagonist
-    'gamma': 1e8
+    # 'wu': np.array([1,1,0,0,0,0,0]),
+    'mode': 'antagonist', #could also be protagonist
+    'gamma': 1e8,
 }
 
 state_cost = {
@@ -100,6 +101,7 @@ algorithm['cost'] = {
     'type': CostSum,
     'costs': [action_cost, state_cost],
     'weights': [1e-5, 1.0],
+    'mode': 'antagonist'
 }
 
 algorithm['dynamics'] = {

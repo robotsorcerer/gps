@@ -21,6 +21,7 @@ class CostState(Cost):
         Args:
             sample:  A single sample
         """
+        print(self._hyperparams)
         self.gamma = 5
         self.mode = 'antagonist'
         T = sample.T

@@ -89,7 +89,6 @@ class GPSMain(object):
             self._end()
 
     def run_cl(self, itr, itr_load=None):
-
         protag_algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
         self.protag_algorithm = self.data_logger.unpickle(protag_algorithm_file)
 
