@@ -22,7 +22,7 @@ from gps.sample.sample_list import SampleList
 
 class GPSMain(object):
     """ Main class to run algorithms and experiments. """
-    def __init__(self, config, closeloop, quit_on_end=False):
+    def __init__(self, config, closeloop, test=False, quit_on_end=False):
         """
         Initialize GPSMain
         Args:
@@ -31,6 +31,7 @@ class GPSMain(object):
         """
         self._quit_on_end = quit_on_end
         self.closeloop = closeloop
+        self.test = test
         self._hyperparams = config
         self._conditions = config['common']['conditions'] # will be 4
         if 'train_conditions' in config['common']:
@@ -50,8 +51,7 @@ class GPSMain(object):
         self.gui = GPSTrainingGUI(config['common']) if config['gui_on'] else None
 
         config['algorithm']['agent'] = self.agent
-        # for k, v in config['algorithm'].items():
-        #     print(k, v)
+
         self.algorithm = config['algorithm']['type'](config['algorithm'])
 
     def run(self, itr_load=None):
@@ -78,7 +78,7 @@ class GPSMain(object):
 
                 # Clear agent samples.
                 self.agent.clear_samples()
-
+                # print('close loop in run: ', self.closeloop)
                 self._take_iteration(itr, traj_sample_lists)  #see impl in alg_mdgps.py#L36
                 pol_sample_lists = self._take_policy_samples()
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
@@ -148,7 +148,6 @@ class GPSMain(object):
         Returns: None
         """
         # print('itr: ', itr) # is 41
-        self.test_policy = True
         protag_algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
         self.protag_algorithm = self.data_logger.unpickle(protag_algorithm_file)
 
@@ -329,7 +328,7 @@ class GPSMain(object):
         if self.gui:
             self.gui.set_status_text('Taking policy samples.')
         pol_samples = [[None] for _ in range(len(self._test_idx))]
-        protag_pol_samples = pol_samples if self.closeloop or self.test_policy else None
+        protag_pol_samples = pol_samples if self.closeloop or self.test else None
         # Since this isn't noisy, just take one sample.
         # TODO: Make this noisy? Add hyperparam?
         # TODO: Take at all conditions for GUI?
@@ -337,7 +336,8 @@ class GPSMain(object):
             pol_samples[cond][0] = self.agent.sample(
                 self.algorithm.policy_opt.policy, self._test_idx[cond],
                 verbose=verbose, save=False, noisy=False)
-        if self.closeloop or self.test_policy:
+        
+        if self.closeloop or self.test:
             # print 'self.protag_algorithm: ', self.agent.sample(self.protag_algorithm.policy_opt.policy, self._test_idx[0],verbose=verbose, save=False, noisy=False)
             for cond in range(len(self._test_idx)):
                 protag_pol_samples[cond][0] = self.agent.sample(
@@ -496,7 +496,7 @@ def main():
         current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
         current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
 
-        gps = GPSMain(hyperparams.config, args.closeloop)
+        gps = GPSMain(hyperparams.config, args.closeloop, test_policy_N)
         if hyperparams.config['gui_on']:
             test_policy = threading.Thread(
                 target=lambda: gps.test_policy(itr=current_itr, N=test_policy_N)
@@ -517,6 +517,8 @@ def main():
         random.seed(seed)
         np.random.seed(seed)
 
+        self.closeloop = True
+
         data_files_dir = exp_dir + 'data_files/'
         data_filenames = os.listdir(data_files_dir)
         algorithm_prefix = 'algorithm_itr_'
@@ -524,7 +526,7 @@ def main():
         current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
         current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
 
-        gps = GPSMain(hyperparams.config, args.quit, args.closeloop)
+        gps = GPSMain(hyperparams.config, args.quit, args.closeloop, test=test_policy_N)
         if hyperparams.config['gui_on']:
             run_gps = threading.Thread(
                 target=lambda: gps.run_cl(itr=current_itr, itr_load=resume_training_itr)

@@ -69,6 +69,10 @@ class AlgorithmBADMM(Algorithm):
 
         self._advance_iteration_variables()
 
+    def iteration_cl(self, sample_lists_prot, sample_list):
+        """ Run iteration of the algorithm. """
+        raise NotImplementedError("Must be implemented in subclass")
+
     def _set_interp_values(self):
         """
         Use iteration-based interpolation to set values of some

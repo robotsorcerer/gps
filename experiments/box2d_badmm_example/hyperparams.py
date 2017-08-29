@@ -37,7 +37,9 @@ common = {
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
     'log_filename': EXP_DIR + 'log.txt',
+    'costs_filename': EXP_DIR + 'costs.csv',
     'conditions': 4,
+    'mode': 'protagonist'
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -91,7 +93,9 @@ algorithm['init_traj_distr'] = {
 
 action_cost = {
     'type': CostAction,
-    'wu': np.array([1, 1])
+    'wu': np.array([1, 1]),
+    'gamma': 0,
+    'mode': 'protagonist',
 }
 
 state_cost = {
@@ -102,12 +106,16 @@ state_cost = {
             'target_state': agent["target_state"],
         },
     },
+    'gamma': 0,
+    'mode': 'protagonist',
 }
 
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [action_cost, state_cost],
     'weights': [1e-5, 1.0],
+    'gamma': 0,
+    'mode': 'protagonist',
 }
 
 algorithm['dynamics'] = {
