@@ -69,7 +69,7 @@ class CostAction(Cost):
             lvv_t1 = np.expand_dims(lvv_t1, axis=2) # shape (100, Du, 1)
             lvv_t1 = np.tile(lvv_t1, Du) # shape(100, Du, Du)
             lvv_t2= np.tile(np.diag(2 * self.gamma * self._hyperparams['wu']), [T, 1, 1]) #shape (100, 7, 7)
-            print('lvv_t1.shape: {},| lvv_t2.shape: {} ', lvv_t1.shape, lvv_t2.shape)
+            # print('lvv_t1.shape: {},| lvv_t2.shape: {} ', lvv_t1.shape, lvv_t2.shape)
             # if lvv_t2.shape[2] != lvv_t1.shape[2]:
             #     lvv_t2 = np.empty_like(lvv_t1)
             #     lvv_t2 = np.tile(np.diag(2 * self.gamma * np.ones(Dx)), [T, 1, 1])

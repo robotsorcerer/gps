@@ -34,7 +34,7 @@ class CostSum(Cost):
         self.mode = self._hyperparams['mode']
         self.gamma = self._hyperparams['gamma']
 
-        if self.mode == 'antagonist': #'sample_prot' in kwargs:
+        if 'sample_prot' in kwargs: #self.mode == 'antagonist': #
             sample_prot = kwargs['sample_prot']
             # print('evaluating cost in antagonist')
             l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample, sample_prot=sample_prot)
