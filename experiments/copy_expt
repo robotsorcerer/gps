@@ -40,23 +40,29 @@ read ans_block
 
 if [[ $(is_yes $ans_block) ]]; then
   if [[ -d "$expt_to/data_files" ]]; then
-  		cd "$expt_to/data_files"
   		echo -e "enter itr to copy from \n"
   		read from
 
   		echo -e "enter itr to copy to \n"
   		read to
 
-  		for f in "$expt_from/data_files/*$from.pkl"; do cp $f "${f/$from/$to}"; done
+      DIR_VAR="$expt_to/data_files"
+
+      cd "$expt_to/data_files";
+  		for f in "*$from.pkl"; do cp $f "${f/$from/$to}"; done
+      rm "*.txt", "*.pyc"
 
   		echo -e "DONE!!!\n"
 
-  		echo -e "would you like to delete the *$from".pkl" files?  \n$yes_var $no_var\n"
-  		read resp
-
-  		if [[ $resp="" ]]; then
-  			exit $1
-  		fi
+  		# echo -e "would you like to delete the *$from".pkl" files?  \n$yes_var $no_var\n"
+  		# read resp
+      #
+  		# if [[ $resp="" ]]; then
+  		# 	exit $1
+  		# fi
+      echo -e "finished copying the files. Adjust your hyperparams file to reflect
+            the closeloop setting"
+            
     else
       echo -e "The directory '$expt_to/data_files' does not exist yet.
               Make sure you have ran the protagonist experiment first. \n"

@@ -336,7 +336,7 @@ class GPSMain(object):
             pol_samples[cond][0] = self.agent.sample(
                 self.algorithm.policy_opt.policy, self._test_idx[cond],
                 verbose=verbose, save=False, noisy=False)
-        
+
         if self.closeloop or self.test:
             # print 'self.protag_algorithm: ', self.agent.sample(self.protag_algorithm.policy_opt.policy, self._test_idx[0],verbose=verbose, save=False, noisy=False)
             for cond in range(len(self._test_idx)):
@@ -517,7 +517,7 @@ def main():
         random.seed(seed)
         np.random.seed(seed)
 
-        self.closeloop = True
+        closeloop = True
 
         data_files_dir = exp_dir + 'data_files/'
         data_filenames = os.listdir(data_files_dir)
@@ -526,7 +526,7 @@ def main():
         current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
         current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
 
-        gps = GPSMain(hyperparams.config, args.quit, args.closeloop, test=test_policy_N)
+        gps = GPSMain(hyperparams.config, args.quit, closeloop, False)
         if hyperparams.config['gui_on']:
             run_gps = threading.Thread(
                 target=lambda: gps.run_cl(itr=current_itr, itr_load=resume_training_itr)

@@ -35,6 +35,7 @@ class CostAction(Cost):
             lu = self._hyperparams['wu'] * sample_u
             lx = np.zeros((T, Dx))
             luu = np.tile(np.diag(self._hyperparams['wu']), [T, 1, 1])
+            print('luu shape: '.format(luu.shape))
             lxx = np.zeros((T, Dx, Dx))
             lux = np.zeros((T, Du, Dx))
 
@@ -64,12 +65,15 @@ class CostAction(Cost):
             # compute 2nd order control derivative
             lvv_t1= 0.5 * np.sum(self._hyperparams['wu'] * (sample_prot_u ** 2), axis=1) # shape (100,)
             lvv_t1 = np.expand_dims(lvv_t1, axis=1) # shape(100, 1)
-            lvv_t1 = np.tile(lvv_t1, 7)  # shape (100, 7)
-            lvv_t1 = np.expand_dims(lvv_t1, axis=2) # shape (100, 7, 1)
-            lvv_t1 = np.tile(lvv_t1, 7) # shape(100, 7, 7)
+            lvv_t1 = np.tile(lvv_t1, Du)  # shape (100, Du)
+            lvv_t1 = np.expand_dims(lvv_t1, axis=2) # shape (100, Du, 1)
+            lvv_t1 = np.tile(lvv_t1, Du) # shape(100, Du, Du)
             lvv_t2= np.tile(np.diag(2 * self.gamma * self._hyperparams['wu']), [T, 1, 1]) #shape (100, 7, 7)
-            # print('lvv_t1.shape: {},| lvv_t2.shape: {} ', lvv_t1.shape, lvv_t2.shape)
-            lvv = lvv_t1 - lvv_t2 # shape (100, 7, 7)
+            print('lvv_t1.shape: {},| lvv_t2.shape: {} ', lvv_t1.shape, lvv_t2.shape)
+            # if lvv_t2.shape[2] != lvv_t1.shape[2]:
+            #     lvv_t2 = np.empty_like(lvv_t1)
+            #     lvv_t2 = np.tile(np.diag(2 * self.gamma * np.ones(Dx)), [T, 1, 1])
+            lvv = lvv_t1 - lvv_t2 # shape (100, Du, Du)
             lxx = np.zeros((T, Dx, Dx))
             lvx = np.zeros((T, Du, Dx))
 

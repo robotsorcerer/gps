@@ -69,9 +69,43 @@ class AlgorithmBADMM(Algorithm):
 
         self._advance_iteration_variables()
 
-    def iteration_cl(self, sample_lists_prot, sample_list):
-        """ Run iteration of the algorithm. """
-        raise NotImplementedError("Must be implemented in subclass")
+    def iteration_cl(self, sample_lists_prot, sample_lists):
+        """
+        Run iteration of BADMM-based guided policy search.
+
+        Args:
+            sample_list: List of SampleList objects for each condition.
+            sample_list_prot: policy samples from the protagonist agent
+        """
+        for m in range(self.M):
+            self.cur[m].sample_list = sample_lists[m]
+            sample_prot = sample_lists_prot[m]
+
+
+        self._set_interp_values()
+        self._update_dynamics()  # Update dynamics model using all sample.
+        self._update_step_size_cl(sample_prot)  # KL Divergence step size.
+
+        for m in range(self.M):
+            # save initial kl for debugging / visualization
+            self.cur[m].pol_info.init_kl = self._policy_kl(m)[0]
+
+        # Run inner loop to compute new policies.
+        for inner_itr in range(self._hyperparams['inner_iterations']):
+            #TODO: Could start from init controller.
+            if self.iteration_count > 0 or inner_itr > 0:
+                # Update the policy.
+                self._update_policy(inner_itr)
+            for m in range(self.M):
+                self._update_policy_fit(m)  # Update policy priors.
+            if self.iteration_count > 0 or inner_itr > 0:
+                step = (inner_itr == self._hyperparams['inner_iterations'] - 1)
+                # Update dual variables.
+                for m in range(self.M):
+                    self._policy_dual_step(m, step=step)
+            self._update_trajectories()
+
+        self._advance_iteration_variables()
 
     def _set_interp_values(self):
         """
@@ -105,6 +139,16 @@ class AlgorithmBADMM(Algorithm):
         for m in range(self.M):
             self._update_policy_fit(m, init=True)
             self._eval_cost(m)
+            # Adjust step size relative to the previous iteration.
+            if self.iteration_count >= 1 and self.prev[m].sample_list:
+                self._stepadjust(m)
+
+    def _update_step_size_cl(self, sample_prot):
+        """ Evaluate costs on samples, and adjust the step size. """
+        # Evaluate cost function for all conditions and samples.
+        for m in range(self.M):
+            self._update_policy_fit(m, init=True)
+            self._eval_cost_cl(m, sample_lists_prot=sample_prot)
             # Adjust step size relative to the previous iteration.
             if self.iteration_count >= 1 and self.prev[m].sample_list:
                 self._stepadjust(m)
