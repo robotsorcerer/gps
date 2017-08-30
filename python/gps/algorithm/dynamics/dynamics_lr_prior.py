@@ -19,7 +19,7 @@ class DynamicsLRPrior(Dynamics):
         """ Update dynamics prior. """
         X = samples.get_X()
         U = samples.get_U()
-        self.prior.update(X, U)
+        self.prior.update(X, U)  #this is calling update in gmm_prior
 
     def get_prior(self):
         """ Return the dynamics prior. """

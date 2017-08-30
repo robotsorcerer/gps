@@ -21,7 +21,7 @@ class Dynamics(object):
         self.dyn_covar = np.array(np.nan)  # Covariance.
 
     @abc.abstractmethod
-    def update_prior(self, sample):
+    def update_prior(self, X, U):
         """ Update dynamics prior. """
         raise NotImplementedError("Must be implemented in subclass.")
 
