@@ -29,10 +29,10 @@ SENSOR_DIMS = {
 }
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/box2d_mdgps_y1e6/'
+EXP_DIR = BASE_DIR + '/../experiments/box2d_mdgps_y1e4/'
 
 common = {
-    'experiment_name': 'box2d_mdgps_y1e6' + '_' + \
+    'experiment_name': 'box2d_mdgps_y1e4' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
