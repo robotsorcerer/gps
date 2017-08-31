@@ -21,9 +21,11 @@ For details of the algorithm, please see the paper on arxiv under the name: Olal
 * We will then make a few modifications in the hyperparams directory of the new folder as follows:
 
 ```python
+EXP_DIR: change this to point to the new experiment directory
+
 common:
 	|
-	|--EXP_DIR: change this to point to the new experiment directory
+	|--'experiment_name': 'name_of_new_experiment'
 	|--'costs_filename': EXP_DIR + 'costs.csv',
   |--'mode': 'antagonist',  # whether we are running in block-alternating ascent mode
   |--'gamma': 1e8,   # the magnitude of the additive disturbance
