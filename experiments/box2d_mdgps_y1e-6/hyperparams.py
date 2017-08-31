@@ -29,10 +29,10 @@ SENSOR_DIMS = {
 }
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/box2d_mdgps_y1e2/'
+EXP_DIR = BASE_DIR + '/../experiments/box2d_mdgps_y1e-6/'
 
 common = {
-    'experiment_name': 'box2d_mdgps_y1e2' + '_' + \
+    'experiment_name': 'box2d_mdgps_y1e-6' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
@@ -40,7 +40,7 @@ common = {
     'costs_filename': EXP_DIR + 'costs.csv',
     'conditions': 4,
     'mode': 'antagonist',
-    'gamma': 1e2,
+    'gamma': 1e-6,
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -95,7 +95,7 @@ algorithm['init_traj_distr'] = {
 action_cost = {
     'type': CostAction,
     'wu': np.array([1, 1]),
-    'gamma': 1e2,
+    'gamma': 1e-6,
     'mode': 'antagonist',
 }
 
@@ -108,7 +108,7 @@ state_cost = {
         },
     },
     'mode': 'antagonist',
-    'gamma': 1e2,
+    'gamma': 1e-6,
 }
 
 algorithm['cost'] = {
@@ -116,7 +116,7 @@ algorithm['cost'] = {
     'costs': [action_cost, state_cost],
     'weights': [1e-5, 1.0],
     'mode': 'antagonist',
-    'gamma': 1e2,
+    'gamma': 1e-6,
 }
 
 algorithm['dynamics'] = {

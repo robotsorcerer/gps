@@ -8,7 +8,7 @@ import numpy as np
 from gps import __file__ as gps_filepath
 from gps.agent.box2d.agent_box2d import AgentBox2D
 from gps.agent.box2d.arm_world import ArmWorld
-from gps.algorithm.algorithm_badmm import AlgorithmBADMM
+from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS # for new experiments
 from gps.algorithm.cost.cost_state import CostState
 from gps.algorithm.cost.cost_action import CostAction
 from gps.algorithm.cost.cost_sum import CostSum
@@ -29,10 +29,10 @@ SENSOR_DIMS = {
 }
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/box2d_badmm_example_y1e8/'
+EXP_DIR = BASE_DIR + '/../experiments/box2d_mdgps_y1e0/'
 
 common = {
-    'experiment_name': 'box2d_badmm_example' + '_' + \
+    'experiment_name': 'box2d_mdgps_y1e0' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
@@ -40,7 +40,7 @@ common = {
     'costs_filename': EXP_DIR + 'costs.csv',
     'conditions': 4,
     'mode': 'antagonist',
-    'gamma': 1e8,
+    'gamma': 1e0,
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -68,7 +68,7 @@ agent = {
 }
 
 algorithm = {
-    'type': AlgorithmBADMM,
+    'type': AlgorithmMDGPS,
     'conditions': common['conditions'],
     'iterations': 10,
     'lg_step_schedule': np.array([1e-4, 1e-3, 1e-2, 1e-2]),
@@ -95,7 +95,7 @@ algorithm['init_traj_distr'] = {
 action_cost = {
     'type': CostAction,
     'wu': np.array([1, 1]),
-    'gamma': 1e8,
+    'gamma': 1e0,
     'mode': 'antagonist',
 }
 
@@ -107,16 +107,16 @@ state_cost = {
             'target_state': agent["target_state"],
         },
     },
-    'gamma': 0,
-    'mode': 'protagonist',
+    'mode': 'antagonist',
+    'gamma': 1e0,
 }
 
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [action_cost, state_cost],
     'weights': [1e-5, 1.0],
-    'gamma': 1e8,
     'mode': 'antagonist',
+    'gamma': 1e0,
 }
 
 algorithm['dynamics'] = {

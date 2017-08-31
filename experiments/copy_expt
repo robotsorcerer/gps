@@ -53,9 +53,9 @@ if [[ $(is_yes $ans_block) ]]; then
 
   		for f in $from_dir; do cp $f "${f/$from/$to}"; done
 
-      (cd $expt_to && rm "*.txt")
-      (cd $expt_to && rm "*.pyc")
-      (cd $expt_to && rm "*.csv")
+      (cd $expt_to && rm log.txt)
+      (cd $expt_to && rm hyperparams.pyc)
+      (cd $expt_to && rm costs.csv)
 
   		echo -e "DONE!!!\n"
 

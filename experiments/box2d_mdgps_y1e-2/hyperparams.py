@@ -8,7 +8,7 @@ import numpy as np
 from gps import __file__ as gps_filepath
 from gps.agent.box2d.agent_box2d import AgentBox2D
 from gps.agent.box2d.arm_world import ArmWorld
-from gps.algorithm.algorithm_badmm import AlgorithmBADMM
+from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS # for new experiments
 from gps.algorithm.cost.cost_state import CostState
 from gps.algorithm.cost.cost_action import CostAction
 from gps.algorithm.cost.cost_sum import CostSum
@@ -40,7 +40,7 @@ common = {
     'costs_filename': EXP_DIR + 'costs.csv',
     'conditions': 4,
     'mode': 'antagonist',
-    'gamma':  1e-2,
+    'gamma': 1e-2,
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -68,7 +68,7 @@ agent = {
 }
 
 algorithm = {
-    'type': AlgorithmBADMM,
+    'type': AlgorithmMDGPS,
     'conditions': common['conditions'],
     'iterations': 10,
     'lg_step_schedule': np.array([1e-4, 1e-3, 1e-2, 1e-2]),
@@ -96,7 +96,7 @@ action_cost = {
     'type': CostAction,
     'wu': np.array([1, 1]),
     'gamma': 1e-2,
-    'mode': 'protagonist',
+    'mode': 'antagonist',
 }
 
 state_cost = {
@@ -108,7 +108,7 @@ state_cost = {
         },
     },
     'mode': 'antagonist',
-    'gamma':  1e-2,
+    'gamma': 1e-2,
 }
 
 algorithm['cost'] = {
@@ -116,7 +116,7 @@ algorithm['cost'] = {
     'costs': [action_cost, state_cost],
     'weights': [1e-5, 1.0],
     'mode': 'antagonist',
-    'gamma':  1e-2,
+    'gamma': 1e-2,
 }
 
 algorithm['dynamics'] = {

@@ -20,6 +20,12 @@ For details of the algorithm, please see the paper on arxiv under the name: Olal
 
 * We will then make a few modifications in the hyperparams directory of the new folder as follows:
 
+For box2d experiments, we will import the MDGPS class like so at the top of the hyperparams file:
+
+```python
+from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS # for new experiments
+```
+
 ```python
 EXP_DIR: change this to point to the new experiment directory
 

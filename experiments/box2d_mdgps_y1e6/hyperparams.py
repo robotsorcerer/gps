@@ -8,7 +8,7 @@ import numpy as np
 from gps import __file__ as gps_filepath
 from gps.agent.box2d.agent_box2d import AgentBox2D
 from gps.agent.box2d.arm_world import ArmWorld
-from gps.algorithm.algorithm_badmm import AlgorithmBADMM
+from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS # for new experiments
 from gps.algorithm.cost.cost_state import CostState
 from gps.algorithm.cost.cost_action import CostAction
 from gps.algorithm.cost.cost_sum import CostSum
@@ -68,7 +68,7 @@ agent = {
 }
 
 algorithm = {
-    'type': AlgorithmBADMM,
+    'type': AlgorithmMDGPS,
     'conditions': common['conditions'],
     'iterations': 10,
     'lg_step_schedule': np.array([1e-4, 1e-3, 1e-2, 1e-2]),
@@ -107,16 +107,16 @@ state_cost = {
             'target_state': agent["target_state"],
         },
     },
-    'gamma': 0,
-    'mode': 'protagonist',
+    'mode': 'antagonist',
+    'gamma': 1e6,
 }
 
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [action_cost, state_cost],
     'weights': [1e-5, 1.0],
-    'gamma': 1e6,
     'mode': 'antagonist',
+    'gamma': 1e6,
 }
 
 algorithm['dynamics'] = {

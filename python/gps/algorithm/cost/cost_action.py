@@ -35,7 +35,6 @@ class CostAction(Cost):
             lu = self._hyperparams['wu'] * sample_u
             lx = np.zeros((T, Dx))
             luu = np.tile(np.diag(self._hyperparams['wu']), [T, 1, 1])
-            print('luu shape: '.format(luu.shape))
             lxx = np.zeros((T, Dx, Dx))
             lux = np.zeros((T, Du, Dx))
 

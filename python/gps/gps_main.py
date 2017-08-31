@@ -1,15 +1,15 @@
 import matplotlib as mpl
 mpl.use('Qt4Agg')
 
-import logging
-import imp
 import os
-import os.path
 import sys
+import imp
 import copy
+import time
+import os.path
+import logging
 import argparse
 import threading
-import time
 import traceback
 
 from random import shuffle
