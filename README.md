@@ -58,7 +58,7 @@ action_cost = {
 }
 ```
 
-* So also d we for `algorithm['cost']` e.g.,
+* So also for `algorithm['cost']` e.g.,
 
 ```python
 algorithm['cost'] = {
