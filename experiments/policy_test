@@ -1,0 +1,49 @@
+#!/bin/bash
+
+EXP_DIR="$(basename `pwd`)"
+
+if [[ "$EXP_DIR" -ne "experiments" ]]; then
+    echo "$EXP_DIR: Copy has to operate from within the experiments directory sorry.
+				Please try the experiment path."
+    exit 1
+fi
+
+is_yes() {
+		yesses={y,Y,yes,Yes,YES}
+		if [[ $yesses =~ $1 ]]; then
+				echo 1
+		fi
+}
+
+
+is_no(){
+	noes={n,N,no,No,NO}
+	if [[  $noes=~$1 ]]; then
+		echo 1
+	fi
+}
+
+yes_var="yes|y|Yes|YES"
+no_var="no|n|No|NO"
+
+trapper () {
+  printf "\rYikes! Exiting. Yer trying to kill me!"
+}
+
+trap trapper SIGINT
+
+while [[ true ]]; do
+  echo -e "\nenter the experiment you want to test\n"
+  read expt_name
+
+  files_dir = $expt_name"/data_files"
+
+  printf "here is the name you supplied: \n"
+  echo -e "$files_dir"
+
+  (cd $files_dir && for f in *9.pkl; do cp $f "${f/09/41}"; done)
+
+  # if [[ $trapper ]]; then
+  #   exit $0
+  # fi
+done
