@@ -1,0 +1,79 @@
+#!/bin/bash
+
+EXP_DIR="$(basename `pwd`)"
+
+if [[ "$EXP_DIR" -ne "experiments" ]]; then
+    echo "$EXP_DIR: Copy has to operate from within the experiments directory sorry.
+				Please try the experiment path."
+    exit 1
+fi
+
+is_yes() {
+		yesses={y,Y,yes,Yes,YES}
+		if [[ $yesses =~ $1 ]]; then
+				echo 1
+		fi
+}
+
+
+is_no(){
+	noes={n,N,no,No,NO}
+	if [[  $noes=~$1 ]]; then
+		echo 1
+	fi
+}
+
+yes_var="yes|y|Yes|YES"
+no_var="no|n|No|NO"
+
+echo -e "enter experiment to copy from \n"
+read expt_from
+
+echo -e "enter experiment to copy to \n"
+read expt_to
+
+echo -e "copying $expt_from to $expt_to \n"
+cp -r $expt_from $expt_to
+
+echo -e "are you running block-alternating optimization? \n "[$yes_var]" \n"
+read ans_block
+
+if [[ $(is_yes $ans_block) ]]; then
+  if [[ -d "$expt_to/data_files" ]]; then
+  		echo -e "enter itr to copy from\ne.g. '09'\n"
+  		read from
+
+  		echo -e "enter itr to copy to\ne.g. '40'\n"
+  		read to
+
+      DIR_VAR="$expt_to/data_files"
+      from_dir="$DIR_VAR/*$from.pkl"
+      # to="$DIR*$to.pkl"
+
+
+  		for f in $from_dir; do cp $f "${f/$from/$to}"; done
+
+      (cd $expt_to && rm log.txt)
+      (cd $expt_to && rm hyperparams.pyc)
+      (cd $expt_to && rm costs.csv)
+
+  		echo -e "DONE!!!\n"
+
+  		# echo -e "would you like to delete the *$from".pkl" files?  \n$yes_var $no_var\n"
+  		# read resp
+      #
+  		# if [[ $resp="" ]]; then
+  		# 	exit $1
+  		# fi
+      echo -e "finished copying the files. Adjust your hyperparams file to reflect
+            the closeloop setting"
+
+    else
+      echo -e "The directory '$expt_to/data_files' does not exist yet.
+              Make sure you have ran the protagonist experiment first. \n"
+              exit 1
+    fi
+      #statements
+elif [[ $(is_no $ans_block) ]]; then
+		exit $0
+fi

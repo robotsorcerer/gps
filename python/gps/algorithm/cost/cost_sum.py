@@ -1,7 +1,6 @@
 """ This file defines a cost sum of arbitrary other costs. """
 import copy, os
 import numpy as np
-
 from gps.algorithm.cost.config import COST_SUM
 from gps.algorithm.cost.cost import Cost
 
@@ -30,12 +29,16 @@ class CostSum(Cost):
         Args:
             sample:  A single sample
         """
-        self.mode = 'antagonist'
 
-        if 'sample_prot' in kwargs:
+        self.mode = self._hyperparams['mode']
+        self.gamma = self._hyperparams['gamma']
+
+        if 'sample_prot' in kwargs: #self.mode == 'antagonist': #
             sample_prot = kwargs['sample_prot']
+            # print('evaluating cost in antagonist')
             l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample, sample_prot=sample_prot)
         else:
+            # print('evaluating cost in protagonist')
             l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample) #we are optimizing cost action
 
         # Compute weighted sum of each cost value and derivatives.
@@ -56,17 +59,11 @@ class CostSum(Cost):
             lx  = lx + plx * weight
             lu  = lu + plu * weight
             lxx = lxx + plxx * weight
-            # print('luu: {}, pluu: {}'.format(luu.shape, pluu.shape))
-            # account for box_2d cl examples
-            # if luu.shape[2] != (pluu*weight).shape[2]:
-            #     # print('lvv_t1 ', lvv_t1[0:,:,:])
-            #     pluu_box2d = np.zeros((T, Dx, Dx))
-            #     for t in range(T):
-            #         # pad the matrix with zeros and index the concerned elems
-            #         pluu_box2d[t,:,:] = np.lib.pad(pluu[t,:,:], ((7, 7), (7, 7)), 'constant', constant_values=(0,0))[7:14,7:14]
-            #     luu = luu + pluu_box2d * weight
-            # else:
-            #     luu = luu + pluu * weight
+
+            # print('luu.shape: {},| pluu.shape: {} ', luu.shape, pluu.shape)
+            # print('costs: ', self._costs[i])
+            # if luu.shape[2] != pluu.shape[2]:
+            #     pluu = np.zeros(luu.shape)  # it's a tensor of zeros anyways
             luu = luu + pluu * weight
             lux = lux + plux * weight
         return l, lx, lu, lxx, luu, lux #don't negate here cause torque and fk costs are already negated

@@ -233,5 +233,3 @@ framework_module = __import__('gps.agent.box2d.'+'%s_framework' %
                                         %fwSettings.backend.capitalize()])
 Framework = getattr(framework_module, '%sFramework' %
                     fwSettings.backend.capitalize())
-
-

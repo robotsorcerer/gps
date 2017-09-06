@@ -144,4 +144,3 @@ class ArmWorld(Framework):
                  END_EFFECTOR_POINTS: np.append(np.array(self.body2.position),[0])}
 
         return state
-

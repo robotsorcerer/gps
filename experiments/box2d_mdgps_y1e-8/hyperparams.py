@@ -8,7 +8,7 @@ import numpy as np
 from gps import __file__ as gps_filepath
 from gps.agent.box2d.agent_box2d import AgentBox2D
 from gps.agent.box2d.arm_world import ArmWorld
-from gps.algorithm.algorithm_badmm import AlgorithmBADMM
+from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS # for new experiments
 from gps.algorithm.cost.cost_state import CostState
 from gps.algorithm.cost.cost_action import CostAction
 from gps.algorithm.cost.cost_sum import CostSum
@@ -29,21 +29,18 @@ SENSOR_DIMS = {
 }
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/box2d_badmm_example/'
+EXP_DIR = BASE_DIR + '/../experiments/box2d_mdgps_y1e-8/'
 
 common = {
-    'experiment_name': 'box2d_badmm_example' + '_' + \
+    'experiment_name': 'box2d_mdgps_y1e-8' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.csv',
     'conditions': 4,
-<<<<<<< HEAD
-    'gamma': 0,
-=======
->>>>>>> iDG
-    'mode': 'protagonist'
+    'mode': 'antagonist',
+    'gamma': 1e-8,
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -71,7 +68,7 @@ agent = {
 }
 
 algorithm = {
-    'type': AlgorithmBADMM,
+    'type': AlgorithmMDGPS,
     'conditions': common['conditions'],
     'iterations': 10,
     'lg_step_schedule': np.array([1e-4, 1e-3, 1e-2, 1e-2]),
@@ -83,7 +80,6 @@ algorithm = {
     'max_step_mult': 1.0,
     'sample_decrease_var': 0.05,
     'sample_increase_var': 0.1,
-    'mode': 'protagonist'
 }
 
 algorithm['init_traj_distr'] = {
@@ -99,13 +95,8 @@ algorithm['init_traj_distr'] = {
 action_cost = {
     'type': CostAction,
     'wu': np.array([1, 1]),
-<<<<<<< HEAD
-    'mode': 'protagonist', #could also be protagonist
-    'gamma': 1e8,
-=======
-    'gamma': 0,
-    'mode': 'protagonist',
->>>>>>> iDG
+    'gamma': 1e-8,
+    'mode': 'antagonist',
 }
 
 state_cost = {
@@ -116,20 +107,16 @@ state_cost = {
             'target_state': agent["target_state"],
         },
     },
-    'gamma': 0,
-    'mode': 'protagonist',
+    'mode': 'antagonist',
+    'gamma': 1e-8,
 }
 
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [action_cost, state_cost],
     'weights': [1e-5, 1.0],
-<<<<<<< HEAD
-    'mode': 'protagonist'
-=======
-    'gamma': 0,
-    'mode': 'protagonist',
->>>>>>> iDG
+    'mode': 'antagonist',
+    'gamma': 1e-8,
 }
 
 algorithm['dynamics'] = {
