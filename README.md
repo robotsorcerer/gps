@@ -20,7 +20,7 @@ For details of the algorithm, please see the paper on arxiv under the name: Olal
 
 * We will then make a few modifications in the hyperparams directory of the new folder as follows:
 
-For box2d experiments, we will import the MDGPS class like so at the top of the hyperparams file:
+For box2d experiments, we will import the MDGPS class like below at the top of the hyperparams file:
 
 ```python
 from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS # for new experiments
@@ -29,9 +29,11 @@ from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS # for new experiments
 ```python
 EXP_DIR: change this to point to the new experiment directory
 
+```python
 common:
 	|
 	|--'experiment_name': 'name_of_new_experiment'
+	|--EXP_DIR: change this to point to the new experiment directory
 	|--'costs_filename': EXP_DIR + 'costs.csv',
   |--'mode': 'antagonist',  # whether we are running in block-alternating ascent mode
   |--'gamma': 1e8,   # the magnitude of the additive disturbance
@@ -64,7 +66,7 @@ action_cost = {
 }
 ```
 
-* So also for `algorithm['cost']` e.g.,
+* So also d we for `algorithm['cost']` e.g.,
 
 ```python
 algorithm['cost'] = {
