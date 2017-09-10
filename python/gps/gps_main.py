@@ -22,7 +22,7 @@ from gps.sample.sample_list import SampleList
 
 class GPSMain(object):
     """ Main class to run algorithms and experiments. """
-    def __init__(self, config, closeloop, robust=True, test=False, quit_on_end=False):
+    def __init__(self, config, closeloop, robust=False, test=False, quit_on_end=False):
         """
         Initialize GPSMain
         Args:
@@ -93,7 +93,7 @@ class GPSMain(object):
         finally:
             self._end()
 
-    def run_idg(self, itr_load=None):
+    def run_robust(self, itr_load=None):
         """
         Run training by iteratively sampling and taking an iteration.
         Args:
@@ -445,20 +445,23 @@ def main():
                         help='run target setup')
     parser.add_argument('-r', '--resume', metavar='N', type=int,
                         help='resume training from iter N')
+    parser.add_argument('-i', '--robust', action='store_true',
+                        help='run iDG robust algorithm?')
     parser.add_argument('-p', '--policy', metavar='N', type=int,
                         help='take N policy samples (for BADMM/MDGPS only)')
     parser.add_argument('-c', '--closeloop', action='store_true',
-                        help='run in close loo[]')  #to train the antagonist and protagonist
+                        help='run in close loop')  #to train the antagonist and protagonist
     parser.add_argument('-s', '--silent', action='store_true',
                         help='silent debug print outs')
     parser.add_argument('-q', '--quit', action='store_true',
                         help='quit GUI automatically when finished')
     args = parser.parse_args()
 
-    exp_name = args.experiment
+    robust              = args.robust
+    exp_name            = args.experiment
+    test_policy_N       = args.policy
     resume_training_itr = args.resume
-    test_policy_N = args.policy
-    run_cl_policy = args.closeloop
+    run_cl_policy       = args.closeloop
 
     from gps import __file__ as gps_filepath
     gps_filepath = os.path.abspath(gps_filepath)
@@ -578,6 +581,27 @@ def main():
 
             plt.ioff()
             plt.show()
+    elif robust:
+        import random
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        seed = hyperparams.config.get('random_seed', 0)
+        random.seed(seed)
+        np.random.seed(seed)
+
+        gps = GPSMain(hyperparams.config, args.quit, args.robust)
+        if hyperparams.config['gui_on']:
+            run_gps = threading.Thread(
+                target=lambda: gps.run_robust(itr_load=resume_training_itr)
+            )
+            run_gps.daemon = True
+            run_gps.start()
+
+            plt.ioff()
+            plt.show()
+        else:
+            gps.run(itr_load=resume_training_itr)
     else:
         import random
         import numpy as np
