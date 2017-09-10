@@ -103,6 +103,40 @@ class AlgorithmMDGPS(Algorithm):
         # Prepare for next iteration
         self._advance_iteration_variables()
 
+    def iteration_idg(self, sample_lists, sample_lists_adv):
+        # Store the samples and evaluate the costs.
+        for m in range(self.M):                       # self.M is the # of the condition number
+            self.cur[m].sample_list     = sample_lists[m] # cur is every var in iteration data
+            self.cur[m].sample_list_adv = sample_lists_adv[m]
+            self._eval_cost_idg(m)                    # _eval_cost is defined in algorithm.py line 220
+
+        # Update dynamics linearizations.
+        # self._update_dynamics_cl(sample_lists_prot=sample_prot)
+        self._update_dynamics()
+
+        # On the first iteration, need to catch policy up to init_traj_distr.
+        if self.iteration_count == 0:
+            self.new_traj_distr = [
+                self.cur[cond].traj_distr for cond in range(self.M) # defined in algorithm_utils#L13: None
+            ]
+            self._update_policy()
+
+        # Update policy linearizations.
+        for m in range(self.M):
+            self._update_policy_fit(m)
+
+        # C-step
+        if self.iteration_count > 0:
+            self._stepadjust()
+        self._update_trajectories()
+
+        # S-step
+        self._update_policy()
+
+        # Prepare for next iteration
+        self._advance_iteration_variables()
+
+
     def _update_policy(self):
         """ Compute the new policy. """
         dU, dO, T = self.dU, self.dO, self.T

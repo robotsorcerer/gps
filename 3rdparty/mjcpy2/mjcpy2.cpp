@@ -3,12 +3,26 @@
 #include "macros.h"
 #include <iostream>
 #include <boost/python/slice.hpp>
+#define BOOST_NO_CXX11_SCOPED_ENUMS
+#include <boost/filesystem.hpp>
+#undef BOOST_NO_CXX11_SCOPED_ENUMS
+#include <boost/tuple/tuple.hpp>
 #include "mujoco_osg_viewer.hpp"
 
 namespace bp = boost::python;
 namespace bn = boost::numpy;
 
 
+namespace pathfinder{
+    bool getMujocoFile(boost::filesystem::path & mujocoPath)    {
+        std::string const & user_name = std::getenv("USER");
+        std::string const& key_path = user_name + "/mujoco/mjpro150/mjkey.txt";
+
+        mujocoPath = "/home/" + key_path;
+
+        return true;
+    }
+}
 
 
 namespace {
@@ -88,7 +102,15 @@ private:
 };
 
 PyMJCWorld2::PyMJCWorld2(const std::string& loadfile) {
-    mj_activate("3rdparty/mjpro/bin/mjkey.txt");
+    // activate software
+    boost::filesystem::path mjkey_file;
+    if(!pathfinder::getMujocoFile(mjkey_file))
+        printf("Ouch, I had problem reconciling the path variable with your dir structure. %s",
+               "please ensure you have a Linux system. Darwin architectures are yet unsupported.");
+
+    mj_activate(mjkey_file.c_str());
+
+    // mj_activate("3rdparty/mjpro/bin/mjkey.txt"); //old
   	if (endswith(loadfile, "xml")) {
         NewModelFromXML(loadfile.c_str(), m_model);
   	}

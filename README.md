@@ -4,6 +4,11 @@ This code is a reimplementation of the guided policy search algorithm and iterat
 
 The code base is **a work in progress**. See the [FAQ](http://rll.berkeley.edu/gps/faq.html) for information on planned future additions to the code.
 
+#### Mujoco dependency
+
+Create a `mujoco` directory in your home folder and place the downloaded `mjpro131` folder there. This is important as the activation function and openscenegraph bindings will look for mujoco in this path.
+
+
 ### iDG
 
 This fork of the code implements the iterative Dynamic Game that was proposed in the paper:

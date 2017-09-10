@@ -217,6 +217,58 @@ class Algorithm(object):
 
         self.cur[cond].cs = cs  # True value of cost.
 
+
+    def _eval_cost_idg(self, cond):
+        """
+        Evaluate costs for all samples for a condition.
+        Args:
+            cond: Condition to evaluate cost on.
+        """
+        # Constants.
+        T, dX, dU, dV = self.T, self.dX, self.dU, self.dU
+        N = len(self.cur[cond].sample_list)  # cur is every var in iteration data
+
+        # Compute cost.
+        cs = np.zeros((N, T))  # see algorithm_utils.py
+        cc = np.zeros((N, T))   # Cost estimate constant term.
+        cv = np.zeros((N, T, dX+dU, dX+dV))    # Cost estimate vector term.
+        Cm = np.zeros((N, T, dX+dU, dX+dU, dX+dV, dX+dV)) # Cost estimate matrix term.
+        for n in range(N):
+            sample = self.cur[cond].sample_list[n] # cur is every var in iteration data
+            sample_adv = self.cur[cond].sample_list_adv[n]
+            # Get costs.  Self.cost will be a CostSum object see mdgps/antag/hyperparams#L128
+            l, lx, lu, lv, lxx, luu, lvv, lux, lvx  = self.cost[cond].eval(sample, sample_adv=sample_adv)
+            cc[n, :] = l
+            cs[n, :] = l
+
+            # Assemble matrix and vector.
+            cv[n, :, :] = np.c_[lx, lu, lv]
+            Cm[n, :, :, :] = np.concatenate(
+                (np.c_[lxx, np.transpose(lux, [0, 2, 1]), np.transpose(lvx, [0, 2, 1])], \
+                 np.c_[lux, luu], np.c_[lvx, lvv]),
+                axis=1
+            )
+
+            # Adjust for expanding cost around a sample.
+            X = sample.get_X()
+            U = sample.get_U()
+            V = sample.get_V()
+
+            yhat = np.c_[X, U, V]
+            rdiff = -yhat
+            rdiff_expand = np.expand_dims(rdiff, axis=2)
+            cv_update = np.sum(Cm[n, :, :, :] * rdiff_expand, axis=1)
+            cc[n, :] += np.sum(rdiff * cv[n, :, :], axis=1) + 0.5 * \
+                    np.sum(rdiff * cv_update, axis=1)
+            cv[n, :, :] += cv_update
+
+        # Fill in cost estimate.
+        self.cur[cond].traj_info.cc = np.mean(cc, 0)  # Constant term (scalar).
+        self.cur[cond].traj_info.cv = np.mean(cv, 0)  # Linear term (vector).
+        self.cur[cond].traj_info.Cm = np.mean(Cm, 0)  # Quadratic term (matrix).
+
+        self.cur[cond].cs = cs  # True value of cost.
+
     def _eval_cost_cl(self, cond, sample_lists_prot=None):
         """
         Evaluate costs for all samples for a condition.

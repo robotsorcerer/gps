@@ -10,8 +10,8 @@ int main(int argc, char** argv) {
 
 	mjOption* option;
 	mjModel* model;
-    NewModelFromXML(fname, model, option);
-    mjData* data = mj_makeData(model, option);
+    NewModelFromXML(fname, model);
+    mjData* data = mj_makeData(model);
     if (!model) PRINT_AND_THROW("couldn't load model: " + std::string(fname));
     MujocoOSGViewer viewer;
     viewer.SetModel(model);

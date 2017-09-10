@@ -22,7 +22,7 @@ from gps.sample.sample_list import SampleList
 
 class GPSMain(object):
     """ Main class to run algorithms and experiments. """
-    def __init__(self, config, closeloop, test=False, quit_on_end=False):
+    def __init__(self, config, closeloop, robust=True, test=False, quit_on_end=False):
         """
         Initialize GPSMain
         Args:
@@ -31,6 +31,7 @@ class GPSMain(object):
         """
         self._quit_on_end = quit_on_end
         self.closeloop = closeloop
+        self.robust = robust
         self.test = test
         self._hyperparams = config
         self._conditions = config['common']['conditions'] # will be 4
@@ -46,6 +47,8 @@ class GPSMain(object):
         self._data_files_dir = config['common']['data_files_dir']
 
         self.agent = config['agent']['type'](config['agent']) #will be AgentMujoCo object
+        # run iDG algorithm
+        self.agent_robust = config['agent']['type'](config['agent']) if self.robust else None
 
         self.data_logger = DataLogger()
         self.gui = GPSTrainingGUI(config['common']) if config['gui_on'] else None
@@ -53,6 +56,8 @@ class GPSMain(object):
         config['algorithm']['agent'] = self.agent
 
         self.algorithm = config['algorithm']['type'](config['algorithm'])
+        self.algorithm_robust = config['algorithm']['type'](config['algorithm']) \
+            if self.robust else None
 
     def run(self, itr_load=None):
         """
@@ -80,6 +85,45 @@ class GPSMain(object):
                 self.agent.clear_samples()
                 # print('close loop in run: ', self.closeloop)
                 self._take_iteration(itr, traj_sample_lists)  #see impl in alg_mdgps.py#L36
+                pol_sample_lists = self._take_policy_samples()
+                self._log_data(itr, traj_sample_lists, pol_sample_lists)
+
+        except Exception as e:
+            traceback.print_exception(*sys.exc_info())
+        finally:
+            self._end()
+
+    def run_idg(self, itr_load=None):
+        """
+        Run training by iteratively sampling and taking an iteration.
+        Args:
+            itr_load: If specified, loads algorithm state from that
+                iteration, and resumes training at the next iteration.
+        Returns: None
+        """
+        try:
+            itr_start = self._initialize(itr_load)
+
+            for itr in range(itr_start, self._hyperparams['iterations']):
+                for cond in self._train_idx:
+                    for i in range(self._hyperparams['num_samples']):
+                        self._take_sample(itr, cond, i)
+
+                traj_sample_lists = [
+                    self.agent.get_samples(cond, -self._hyperparams['num_samples'])
+                    for cond in self._train_idx
+                ]
+
+                adv_sample_lists = [
+                    self.agent_robust.get_samples(cond, -self.hyperparams['num_samples'])
+                    for cond in self._train_idx
+                    ]
+
+                # Clear agent samples.
+                self.agent.clear_samples()
+                self.agent_robust.clear_samples()
+
+                self._take_iteration(itr, traj_sample_lists, adv_sample_lists=adv_sample_lists)  #see impl in alg_mdgps.py#L36
                 pol_sample_lists = self._take_policy_samples()
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
 
@@ -122,10 +166,8 @@ class GPSMain(object):
 
                 #take protagonist and antagonist iterations
                 print("Taking RL and Supervised Learning iterations")
-                # if isinstance(self.algorithm
 
-                self._take_iteration_cl(itr, traj_sample_lists)  # see impl in alg_mdgps.py# L36
-                # self._take_iteration(itr, traj_sample_lists)
+                self._take_iteration(itr, traj_sample_lists)  # see impl in alg_mdgps.py# L36
 
                 print("Taking pro/antagonist policy samples")
                 pol_sample_lists = self._take_policy_samples()
@@ -219,14 +261,20 @@ class GPSMain(object):
         Returns: None
         """
         if self.algorithm._hyperparams['sample_on_policy'] \
-                and self.algorithm.iteration_count > 0:
+                and self.algorithm.iteration_count > 0:  # whether to use global policies
             pol = self.algorithm.policy_opt.policy  # calling alg_mdgps.py.policy_opt
             if self.closeloop:
-                protag_pol = self.protag_algorithm.policy_opt.policy
-        else:
+                pol_protag = self.protag_algorithm.policy_opt.policy
+            if self.robust:
+                pol_robust = self.algorithm_robust.policy_opt.policy
+
+        else:      # use local policies from iLQG
             pol = self.algorithm.cur[cond].traj_distr # cur is every var in iteration data
             if self.closeloop:
-                protag_pol = self.protag_algorithm.cur[cond].traj_distr
+                pol_protag = self.protag_algorithm.cur[cond].traj_distr
+            if self.robust:
+                pol_robust = self.algorithm_robust.cur[cond].traj_distr
+
         if self.gui:
             self.gui.set_image_overlays(cond)   # Must call for each new cond.
             redo = True
@@ -253,10 +301,17 @@ class GPSMain(object):
                     pol, cond,
                     verbose=(i < self._hyperparams['verbose_trials'])
                 )
+
                 #take adversary samples if we are in close loop
                 if self.closeloop:
                     self.agent.sample(
-                        protag_pol, cond,
+                        pol_protag, cond,
+                        verbose=(i < self._hyperparams['verbose_trials'])
+                    )
+
+                if self.robust:
+                    self.agent_robust.sample(
+                        pol_robust, cond,
                         verbose=(i < self._hyperparams['verbose_trials'])
                     )
 
@@ -273,11 +328,11 @@ class GPSMain(object):
             )
             if self.closeloop:
                 self.agent.sample(
-                    protag_pol, cond,
+                    pol_protag, cond,
                     verbose=(i < self._hyperparams['verbose_trials'])
                 )
 
-    def _take_iteration(self, itr, sample_lists):
+    def _take_iteration(self, itr, sample_lists, **kwargs):
         """
         Take an iteration of the algorithm.
         Args:
@@ -288,28 +343,15 @@ class GPSMain(object):
             self.gui.set_status_text('Calculating.')
             self.gui.start_display_calculating()
         # see corresponding alg being used e.g. algorithm_mdgps
-        self.algorithm.iteration(sample_lists)
-
         if self.closeloop:
-            self.protag_algorithm.iteration(sample_lists)
+            # do block alternating optimization
+            self.algorithm.iteration_cl(self.protag_traj_sample_lists, sample_lists)
 
-        if self.gui:
-            self.gui.stop_display_calculating()
+        elif self.robust: # do idg
+            self.algorithm.iteration_idg(sample_lists, adv_sample_lists)
 
-    def _take_iteration_cl(self, itr, sample_lists):
-        """
-        Take an iteration of the algorithm.
-        Args:
-            itr: Iteration number.
-        Returns: None
-        """
-
-        if self.gui:
-            self.gui.set_status_text('Calculating.')
-            self.gui.start_display_calculating()
-
-        self.algorithm.iteration_cl(self.protag_traj_sample_lists, sample_lists)
-        # self.protag_algorithm.iteration_cl(self.protag_traj_sample_lists, sample_lists)
+        else: # do ordinary optimization
+            self.algorithm.iteration(sample_lists)
 
         if self.gui:
             self.gui.stop_display_calculating()

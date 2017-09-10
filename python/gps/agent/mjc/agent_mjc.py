@@ -141,7 +141,7 @@ class AgentMuJoCo(Agent):
                 self._world[condition].plot(mj_X)
             if (t + 1) < self.T:
                 for _ in range(self._hyperparams['substeps']):
-                    mj_X, _ = self._world[condition].step(mj_X, mj_U)
+                    mj_X, _ = self._world[condition].step(mj_X, mj_U)  # run the passive dynamics
                 self._data = self._world[condition].get_data()
                 self._set_sample(new_sample, mj_X, t, condition, feature_fn=feature_fn)
         new_sample.set(ACTION, U)

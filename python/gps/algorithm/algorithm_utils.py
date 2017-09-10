@@ -10,6 +10,7 @@ class IterationData(BundleType):
     def __init__(self):
         variables = {
             'sample_list': None,  # List of samples for the current iteration.
+            'sample_list_adv': None,
             'traj_info': None,  # Current TrajectoryInfo object.
             'pol_info': None,  # Current PolicyInfo object.
             'traj_distr': None,  # Initial trajectory distribution.
