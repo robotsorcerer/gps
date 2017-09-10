@@ -1,0 +1,11 @@
+{
+  "projectPath": "/home/lex/catkin_ws/src/gps",
+  "title": "LaTeX-Plus Project",
+  "root": "experiments/mjc_mdgps_idg/hyperparams.py",
+  "program": "pdflatex",
+  "latexmkOptions": "-bibtex -pdf -shell-escape",
+  "output": ".latex",
+  "openOutput": "true",
+  "postAction": "link",
+  "postPath": ""
+}

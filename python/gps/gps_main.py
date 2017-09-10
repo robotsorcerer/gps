@@ -22,7 +22,7 @@ from gps.sample.sample_list import SampleList
 
 class GPSMain(object):
     """ Main class to run algorithms and experiments. """
-    def __init__(self, config, closeloop, robust=False, test=False, quit_on_end=False):
+    def __init__(self, config, closeloop, robust, test=False, quit_on_end=False):
         """
         Initialize GPSMain
         Args:
@@ -46,9 +46,16 @@ class GPSMain(object):
 
         self._data_files_dir = config['common']['data_files_dir']
 
+        # print('robust in class init: ', self.robust)
         self.agent = config['agent']['type'](config['agent']) #will be AgentMujoCo object
+
         # run iDG algorithm
-        self.agent_robust = config['agent']['type'](config['agent']) if self.robust else None
+        # print('post robust in class init: ', self.robust)
+        if self.robust:
+            # somehow this is better than creating a new instance of agent mujoco
+            self.agent_robust = copy.copy(self.agent) #config['agent_adv']['type'](config['agent_adv'])
+
+        # print('post robust in class init: ', self.robust)
 
         self.data_logger = DataLogger()
         self.gui = GPSTrainingGUI(config['common']) if config['gui_on'] else None
@@ -114,10 +121,14 @@ class GPSMain(object):
                     for cond in self._train_idx
                 ]
 
+                # print('self.robust: ', self.robust)
+
                 adv_sample_lists = [
-                    self.agent_robust.get_samples(cond, -self.hyperparams['num_samples'])
+                    self.agent_robust.get_samples(cond, -self._hyperparams['num_samples'])
                     for cond in self._train_idx
                     ]
+
+                print("finished taking traj_sample_lists for u and v")
 
                 # Clear agent samples.
                 self.agent.clear_samples()
@@ -348,6 +359,7 @@ class GPSMain(object):
             self.algorithm.iteration_cl(self.protag_traj_sample_lists, sample_lists)
 
         elif self.robust: # do idg
+            adv_sample_lists = kwargs['adv_sample_lists']
             self.algorithm.iteration_idg(sample_lists, adv_sample_lists)
 
         else: # do ordinary optimization
@@ -571,7 +583,7 @@ def main():
         current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
         current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
 
-        gps = GPSMain(hyperparams.config, args.quit, closeloop, False)
+        gps = GPSMain(hyperparams.config, args.quit, closeloop, robust)
         if hyperparams.config['gui_on']:
             run_gps = threading.Thread(
                 target=lambda: gps.run_cl(itr=current_itr, itr_load=resume_training_itr)
@@ -581,6 +593,7 @@ def main():
 
             plt.ioff()
             plt.show()
+
     elif robust:
         import random
         import numpy as np
@@ -590,7 +603,9 @@ def main():
         random.seed(seed)
         np.random.seed(seed)
 
-        gps = GPSMain(hyperparams.config, args.quit, args.robust)
+        # print('robust in main: ', robust)
+        gps = GPSMain(hyperparams.config, run_cl_policy, robust, test_policy_N, args.quit)
+        # print('called class')
         if hyperparams.config['gui_on']:
             run_gps = threading.Thread(
                 target=lambda: gps.run_robust(itr_load=resume_training_itr)
@@ -602,6 +617,7 @@ def main():
             plt.show()
         else:
             gps.run(itr_load=resume_training_itr)
+
     else:
         import random
         import numpy as np

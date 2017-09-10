@@ -7,7 +7,7 @@ import mjcpy
 
 from gps.agent.agent import Agent
 from gps.agent.agent_utils import generate_noise, setup
-from gps.agent.config import AGENT_MUJOCO
+from gps.agent.config import AGENT_MUJOCO, AGENT_MUJOCO_ADV
 from gps.proto.gps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
         END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES, \
         END_EFFECTOR_POINT_JACOBIANS, ACTION, RGB_IMAGE, RGB_IMAGE_SIZE, \

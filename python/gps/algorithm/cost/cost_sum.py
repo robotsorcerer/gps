@@ -29,38 +29,86 @@ class CostSum(Cost):
         Args:
             sample:  A single sample
         """
+
+        # Compute weighted sum of each cost value and derivatives.
+        weight = self._weights[0]
+
         # print('hyperparams file: ', self._hyperparams)
+        # print('mode: ', self.mode)
 
-        self.mode = self._hyperparams['mode']
-        self.gamma = self._hyperparams['gamma']
-
-        if 'sample_prot' in kwargs: #self.mode == 'antagonist': #
+        if self.mode == 'antagonist':  # 'sample_prot' in kwargs: #
             sample_prot = kwargs['sample_prot']
-            # print('evaluating cost in antagonist')
+            # note cost[0] is torque/action cost
             l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample, sample_prot=sample_prot)
+
+            l = l * weight
+            lx = lx * weight
+            lu = lu * weight
+            lxx = lxx * weight
+            luu = luu * weight
+            lux = lux * weight
+            for i in range(1, len(self._costs)):
+                pl, plx, plu, plxx, pluu, plux = self._costs[i].eval(sample)
+                weight = self._weights[i]
+                l = l + pl * weight
+                lx = lx + plx * weight
+                lu = lu + plu * weight
+                lxx = lxx + plxx * weight
+                luu = luu + pluu * weight
+                lux = lux + plux * weight
+            return l, lx, lu, lxx, luu, lux #don't negate here cause torque and fk costs are already negated
+
+        elif self.mode=='robust': #'sample_adv' in kwargs:
+            sample_adv = kwargs['sample_adv']
+            l, lx, lu, lv, lxx, luu, lvv, lux, lvx = self._costs[0].eval(sample, sample_adv=sample_adv)
+
+            l   = l   * weight
+
+            lx  = lx  * weight
+            lu  = lu  * weight
+            lv  = lv  * weight
+
+            lxx = lxx * weight
+            luu = luu * weight
+            lvv = lvv * weight
+
+            lux = lux * weight
+            lvx = lvx * weight
+
+            for i in range(1, len(self._costs)): # evals fk_cost and final_cost
+                pl, plx, plu,  plv, plxx, pluu, plvv, plux, plvx = self._costs[i].eval(sample)
+                weight = self._weights[i]
+                l = l + pl * weight
+                lx = lx + plx * weight
+                lu = lu + plu * weight
+                lv = lv + plv * weight
+
+                lxx = lxx + plxx * weight
+                luu = luu + pluu * weight
+                lvv = lvv + plvv * weight
+
+                lux = lux + plux * weight
+                lvx = lvx + plvx * weight
+
+            return l, lx, lu, lv, lxx, luu, lvv, lux, lvx #don't negate here cause torque and fk costs are already negated
+
         else:
             # print('evaluating cost in protagonist')
             l, lx, lu, lxx, luu, lux = self._costs[0].eval(sample) #we are optimizing cost action
 
-        # Compute weighted sum of each cost value and derivatives.
-        weight = self._weights[0]
-        l = l * weight
-        lx = lx * weight
-        lu = lu * weight
-        lxx = lxx * weight
-        luu = luu * weight
-        lux = lux * weight
-        for i in range(1, len(self._costs)):
-            pl, plx, plu, plxx, pluu, plux = self._costs[i].eval(sample)
-            weight = self._weights[i]
-            l = l + pl * weight
-            lx = lx + plx * weight
-            lu = lu + plu * weight
-            lxx = lxx + plxx * weight
-            # print('luu.shape: {},| pluu.shape: {} ', luu.shape, pluu.shape)
-            # print('costs: ', self._costs[i])
-            # if luu.shape[2] != pluu.shape[2]:
-            #     pluu = np.zeros(luu.shape)  # it's a tensor of zeros anyways
-            luu = luu + pluu * weight
-            lux = lux + plux * weight
-        return l, lx, lu, lxx, luu, lux #don't negate here cause torque and fk costs are already negated
+            l = l * weight
+            lx = lx * weight
+            lu = lu * weight
+            lxx = lxx * weight
+            luu = luu * weight
+            lux = lux * weight
+            for i in range(1, len(self._costs)):
+                pl, plx, plu, plxx, pluu, plux = self._costs[i].eval(sample)
+                weight = self._weights[i]
+                l = l + pl * weight
+                lx = lx + plx * weight
+                lu = lu + plu * weight
+                lxx = lxx + plxx * weight
+                luu = luu + pluu * weight
+                lux = lux + plux * weight
+            return l, lx, lu, lxx, luu, lux #don't negate here cause torque and fk costs are already negated

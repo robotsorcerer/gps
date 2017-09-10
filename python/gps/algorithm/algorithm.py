@@ -88,6 +88,11 @@ class Algorithm(object):
         """ Run iteration of the algorithm. """
         raise NotImplementedError("Must be implemented in subclass")
 
+    @abc.abstractmethod
+    def iteration_idg(self, sample_lists_prot, sample_list):
+        """ Run iteration of the algorithm. """
+        raise NotImplementedError("Must be implemented in subclass")
+
     def _update_dynamics(self):
         """
         Instantiate dynamics objects and update prior. Fit dynamics to
@@ -233,6 +238,7 @@ class Algorithm(object):
         cc = np.zeros((N, T))   # Cost estimate constant term.
         cv = np.zeros((N, T, dX+dU, dX+dV))    # Cost estimate vector term.
         Cm = np.zeros((N, T, dX+dU, dX+dU, dX+dV, dX+dV)) # Cost estimate matrix term.
+        
         for n in range(N):
             sample = self.cur[cond].sample_list[n] # cur is every var in iteration data
             sample_adv = self.cur[cond].sample_list_adv[n]

@@ -72,6 +72,16 @@ AGENT_MUJOCO = {
     'meta_include': []
 }
 
+# AgentMuJoCo
+AGENT_MUJOCO_ADV = {
+    'substeps': 1,
+    'camera_pos': np.array([2., -3., 2., 0., 0., 0.]),
+    'image_width': 640,
+    'image_height': 480,
+    'image_channels': 3,
+    'meta_include': []
+}
+
 AGENT_BOX2D = {
     'render': True,
 }
