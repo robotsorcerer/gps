@@ -124,7 +124,7 @@ class Algorithm(object):
                         Phi + (N*priorm) / (N+priorm) * \
                         np.outer(x0mu-mu0, x0mu-mu0) / (N+n0)
 
-    def _update_dynamics_cl(self, sample_lists_prot):
+    def _update_dynamics_idg(self):
         """
         Instantiate dynamics objects and update prior. Fit dynamics to
         current samples.
@@ -132,19 +132,15 @@ class Algorithm(object):
 
         for m in range(self.M):
             cur_data = self.cur[m].sample_list
-            sample_prot = sample_lists_prot[m]
 
             X = cur_data.get_X()
             U = cur_data.get_U()
-
-            # index last time step and sqeeze along first singleton dimesion
-            U_adv = np.mean(sample_prot.get_U(), axis=0)
-
-            print('X: ', X[0, :, :].shape, 'N: ', X.shape[0])
+            V = cur_date.get_V()
 
             # Update prior and fit dynamics. #traj_info.dynamics = DynamicsLRPrior
             self.cur[m].traj_info.dynamics.update_prior(cur_data) #L18, dynamics_lr_prior
             self.cur[m].traj_info.dynamics.fit(X, U) #L29 dynamics_lr_prior
+            self.cur[m].traj_info.dynamics.fit(X, V)
 
             # Fit x0mu/x0sigma.
             x0 = X[:, 0, :]
@@ -188,7 +184,7 @@ class Algorithm(object):
         # Compute cost.
         cs = np.zeros((N, T))  # see algorithm_utils.py
         cc = np.zeros((N, T))   # Cost estimate constant term.
-        cv = np.zeros((N, T, dX+dU))    # Cost estimate vector term.
+        cv = np.zeros((N, T, dX + dU))    # Cost estimate vector term.
         Cm = np.zeros((N, T, dX+dU, dX+dU)) # Cost estimate matrix term.
         for n in range(N):
             sample = self.cur[cond].sample_list[n] # cur is every var in iteration data
@@ -236,9 +232,9 @@ class Algorithm(object):
         # Compute cost.
         cs = np.zeros((N, T))  # see algorithm_utils.py
         cc = np.zeros((N, T))   # Cost estimate constant term.
-        cv = np.zeros((N, T, dX+dU, dX+dV))    # Cost estimate vector term.
-        Cm = np.zeros((N, T, dX+dU, dX+dU, dX+dV, dX+dV)) # Cost estimate matrix term.
-        
+        cv = np.zeros((N, T, dX+dU+dV))    # Cost estimate vector term.
+        Cm = np.zeros((N, T, dX+dU+dV, dX+dU+dV)) # Cost estimate matrix term.
+
         for n in range(N):
             sample = self.cur[cond].sample_list[n] # cur is every var in iteration data
             sample_adv = self.cur[cond].sample_list_adv[n]
@@ -246,14 +242,12 @@ class Algorithm(object):
             l, lx, lu, lv, lxx, luu, lvv, lux, lvx  = self.cost[cond].eval(sample, sample_adv=sample_adv)
             cc[n, :] = l
             cs[n, :] = l
-
-            # Assemble matrix and vector.
-            cv[n, :, :] = np.c_[lx, lu, lv]
-            Cm[n, :, :, :] = np.concatenate(
-                (np.c_[lxx, np.transpose(lux, [0, 2, 1]), np.transpose(lvx, [0, 2, 1])], \
-                 np.c_[lux, luu], np.c_[lvx, lvv]),
-                axis=1
-            )
+            cv[n,:,:] = np.c_[lx, lu,  lv]
+            Cm_temp = np.concatenate(
+                    (np.c_[lxx, np.transpose(lux, [0, 2, 1]), np.transpose(lvx, [0, 2, 1])], np.c_[lux, luu, lvv]),
+                    axis=1
+                )
+            Cm[n, :, :, :] = np.concatenate((Cm_temp, np.c_[lvx, lvv, luu],), axis=1)
 
             # Adjust for expanding cost around a sample.
             X = sample.get_X()

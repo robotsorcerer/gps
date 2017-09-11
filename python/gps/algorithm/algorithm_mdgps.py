@@ -111,8 +111,8 @@ class AlgorithmMDGPS(Algorithm):
             self._eval_cost_idg(m)                    # _eval_cost is defined in algorithm.py line 220
 
         # Update dynamics linearizations.
-        # self._update_dynamics_cl(sample_lists_prot=sample_prot)
-        self._update_dynamics()
+        self._update_dynamics_idg()
+        # self._update_dynamics()
 
         # On the first iteration, need to catch policy up to init_traj_distr.
         if self.iteration_count == 0:
