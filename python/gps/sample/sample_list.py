@@ -13,7 +13,7 @@ LOGGER = logging.getLogger(__name__)
 class SampleList(object):
     """ Class that handles writes and reads to sample data. """
     def __init__(self, samples):
-        self._samples = samples
+        self._samples = samples #will be empty lists
 
     def get_X(self, idx=None):
         """ Returns N x T x dX numpy array of states. """

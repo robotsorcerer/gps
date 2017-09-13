@@ -40,13 +40,13 @@ class Algorithm(object):
         self.dU = self._hyperparams['dU'] = agent.dU # agent.py#L25. will be 7
         self.dX = self._hyperparams['dX'] = agent.dX # agent.py#L40
         self.dO = self._hyperparams['dO'] = agent.dO #not found
-        self.dV = self._hyperparams['dV'] = agent.dV if self._hyperparams['mode'] == 'robust' else None
+        self.dV = self._hyperparams['dV'] = agent.dV #if self._hyperparams['mode'] == 'robust' else None
 
         init_traj_distr = config['init_traj_distr']
         init_traj_distr['x0'] = agent.x0
         init_traj_distr['dX'] = agent.dX
         init_traj_distr['dU'] = agent.dU
-        init_traj_distr['dV'] = agent.dV if self._hyperparams['mode'] == 'robust' else None
+        init_traj_distr['dV'] = agent.dV #if self._hyperparams['mode'] == 'robust' else None
         del self._hyperparams['agent']  # Don't want to pickle this.
 
         # IterationData objects for each condition.
@@ -63,7 +63,10 @@ class Algorithm(object):
             init_traj_distr = extract_condition( #L28 general_utils.py
                 self._hyperparams['init_traj_distr'], self._cond_idx[m] #L84 hyperparams
             )
+            # note that both prot and adv act in turns on adversary
             self.cur[m].traj_distr = init_traj_distr['type'](init_traj_distr) #will be init_lqr
+            self.cur[m].traj_distr_adv = init_traj_distr['type'](init_traj_distr) #adv traj dist
+
             #init_lqr is defined in algorithm/policy/lin_gauss_init
         self.traj_opt = hyperparams['traj_opt']['type'](
             hyperparams['traj_opt']
@@ -95,6 +98,7 @@ class Algorithm(object):
         """ Run iteration of the algorithm. """
         raise NotImplementedError("Must be implemented in subclass")
 
+    
     def _update_dynamics(self):
         """
         Instantiate dynamics objects and update prior. Fit dynamics to
@@ -137,12 +141,11 @@ class Algorithm(object):
 
             X = cur_data.get_X()
             U = cur_data.get_U()
-            V = cur_data.get_V()
+            V = cur_data.get_V() # this should be correct. Though we need the gamma term
 
             # Update prior and fit dynamics. #traj_info.dynamics = DynamicsLRPrior
-            self.cur[m].traj_info.dynamics.update_prior(cur_data) #L18, dynamics_lr_prior
-            self.cur[m].traj_info.dynamics.fit_robust(X, U, V) #L29 dynamics_lr_prior
-            # self.cur[m].traj_info.dynamics.fit(X, V)
+            self.cur[m].traj_info.dynamics.update_prior_robust(cur_data) #L18, dynamics_lr_prior
+            self.cur[m].traj_info.dynamics.fit_robust(X, U, V) #L77 dynamics_lr_prior
 
             # Fit x0mu/x0sigma.
             x0 = X[:, 0, :]

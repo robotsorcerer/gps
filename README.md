@@ -91,6 +91,24 @@ algorithm['init_traj_distr'] = {
 
 to account for the new robust lqr algorithm in [lin_gauss_init](/python/gps/algorithm/policy/lin_gauss_init.py)
 
+In agent, we want to define the mode as
+
+```python
+agent = {
+	... : ...
+	'mode': 'robust'
+	}
+```
+
+Also,
+
+```python
+algorithm['traj_opt'] = {
+    'type': TrajOptLQRPython,
+    'mode': 'robust'
+}
+```
+
 ### Docker Image
 
 The docker image for the base gps codes is located at [lakehanne/gps/](https://hub.docker.com/r/lakehanne/gps/)

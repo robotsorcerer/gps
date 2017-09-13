@@ -80,6 +80,51 @@ class PolicyInfo(BundleType):
         return LinearGaussianPolicy(self.pol_K, self.pol_k, self.pol_S,
                 self.chol_pol_S, inv_pol_S)
 
+class PolicyInfoRobust(BundleType):
+    """ Collection of policy-related variables. """
+    def __init__(self, hyperparams):
+        if self.mode == 'antagonist':
+            T, dU, dX = hyperparams['T'], hyperparams['dU'], hyperparams['dX']
+        elif self.mode == 'protagonist':
+            T, dU, dX = hyperparams['T'], hyperparams['dU'], hyperparams['dX']
+        else:
+            print("you have entered an invalid mode in PolicyInfo class" +
+                  "in algorithm_utils.py file")
+
+        variables = {
+            'lambda_k': np.zeros((T, dU)),  # Dual variables.
+            'lambda_K': np.zeros((T, dU, dX)),  # Dual variables.
+            'pol_wt': hyperparams['init_pol_wt'] * np.ones(T),  # Policy weight.
+            'pol_mu': None,  # Mean of the current policy output.
+            'pol_sig': None,  # Covariance of the current policy output.
+            'pol_K': np.zeros((T, dU, dX)),  # Policy linearization.
+            'pol_k': np.zeros((T, dU)),  # Policy linearization.
+            'pol_S': np.zeros((T, dU, dU)),  # Policy linearization covariance.
+            'chol_pol_S': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
+            'pol_G_tilde': np.zeros((T, dU, dX)),  # Policy linearization.
+            'pol_g_tilde': np.zeros((T, dU)),  # Policy linearization.
+            'pol_S_tilde': np.zeros((T, dU, dU)),  # Policy linearization covariance.
+            'chol_pol_S_tilde': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
+            'prev_kl': None,  # Previous KL divergence.
+            'init_kl': None,  # The initial KL divergence, before the iteration.
+            'policy_samples': [],  # List of current policy samples.
+            'policy_prior': None,  # Current prior for policy linearization.
+        }
+        BundleType.__init__(self, variables)
+
+    def traj_distr(self):
+        """ Create a trajectory distribution object from policy info. """
+        T, dU, dX = self.pol_K.shape
+        # Compute inverse policy covariances.
+        inv_pol_S = np.empty_like(self.chol_pol_S)
+        for t in range(T):
+            inv_pol_S[t, :, :] = np.linalg.solve(
+                self.chol_pol_S[t, :, :],
+                np.linalg.solve(self.chol_pol_S[t, :, :].T, np.eye(dU))
+            )
+        return LinearGaussianPolicy(self.pol_K, self.pol_k, self.pol_S,
+                self.chol_pol_S, inv_pol_S)
+
 
 def estimate_moments(X, mu, covar):
     """ Estimate the moments for a given linearized policy. """

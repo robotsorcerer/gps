@@ -55,18 +55,14 @@ def guess_dynamics_robust(gains, acc, dX, dU, dV, dt):
         np.hstack([
             np.eye(dU), dt * np.eye(dU), np.zeros((dU, dX - dU*2)),
             dt ** 2 * np.diag(gains),
-            np.eye(dV), dt * np.eye(dV), np.zeros((dV, dX - dV*2)),
-            dt ** 2 * np.diag(gains),
+            np.eye(dV), 
         ]),
         np.hstack([
             np.zeros((dU, dU)), np.eye(dU), np.zeros((dU, dX - dU*2)),
             dt * np.diag(gains),
-            np.zeros((dV, dV)), np.eye(dV), np.zeros((dV, dX - dV*2)),
-            dt ** 2 * np.diag(gains),
+            np.zeros((dV, dV)), #augmented by dV states
         ]),
-        np.zeros((dX - dU*2, dX+dU+dX+dV))
+       np.zeros((dX - dU*2, dX+dU+dV))
     ])
-    fc = np.hstack([acc * dt ** 2, acc * dt, np.zeros((dX - dU*2)),
-                    acc * dt ** 2, acc * dt, np.zeros((dX - dV*2))
-                    ])
+    fc = np.hstack([acc * dt ** 2, acc * dt, np.zeros((dX - dU))]) # will now be augmented by dV states
     return Fd, fc

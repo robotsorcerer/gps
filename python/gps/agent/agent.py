@@ -18,12 +18,11 @@ class Agent(object):
         config = copy.deepcopy(AGENT)
         config.update(hyperparams)
         self._hyperparams = config
-
         # Store samples, along with size/index information for samples.
         self._samples = [[] for _ in range(self._hyperparams['conditions'])]
         self.T = self._hyperparams['T']
         self.dU = self._hyperparams['sensor_dims'][ACTION]
-        self.dV = self._hyperparams['sensor_dims'][ACTION] if self._hyperparams['mode'] == 'robust' else None
+        self.dV = self._hyperparams['sensor_dims'][ACTION] #if self._hyperparams['mode'] == 'robust' else None
 
         self.x_data_types = self._hyperparams['state_include']
         self.obs_data_types = self._hyperparams['obs_include']
@@ -76,6 +75,16 @@ class Agent(object):
         pass  # May be overridden in subclass.
 
     def get_samples(self, condition, start=0, end=None):
+        """
+        Return the requested samples based on the start and end indices.
+        Args:
+            start: Starting index of samples to return.
+            end: End index of samples to return.
+        """
+        return (SampleList(self._samples[condition][start:]) if end is None
+                else SampleList(self._samples[condition][start:end]))
+
+    def get_adversary_samples(self, condition, start=0, end=None):
         """
         Return the requested samples based on the start and end indices.
         Args:

@@ -18,6 +18,7 @@ AGENT = {
     'smooth_noise': True,
     'smooth_noise_var': 2.0,
     'smooth_noise_renormalize': True,
+    'mode': None
 }
 
 

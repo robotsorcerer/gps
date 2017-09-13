@@ -72,6 +72,7 @@ agent = {
     'obs_include': [JOINT_ANGLES, JOINT_VELOCITIES, END_EFFECTOR_POINTS,
                     END_EFFECTOR_POINT_VELOCITIES],
     'camera_pos': np.array([0., 0., 2., 0., 0.2, 0.5]),
+    'mode': 'robust'
 }
 
 algorithm = {
@@ -140,6 +141,7 @@ algorithm['dynamics'] = {
         'min_samples_per_cluster': 40,
         'max_samples': 20,
     },
+    'mode': 'robust'
 }
 
 algorithm['traj_opt'] = {

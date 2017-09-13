@@ -121,10 +121,8 @@ class GPSMain(object):
                     for cond in self._train_idx
                 ]
 
-                # print('self.robust: ', self.robust)
-
                 adv_sample_lists = [
-                    self.agent_robust.get_samples(cond, -self._hyperparams['num_samples'])
+                    self.agent_robust.get_adversary_samples(cond, -self._hyperparams['num_samples'])
                     for cond in self._train_idx
                     ]
 

@@ -6,7 +6,7 @@ import numpy as np
 import scipy as sp
 
 from gps.algorithm.algorithm import Algorithm
-from gps.algorithm.algorithm_utils import PolicyInfo
+from gps.algorithm.algorithm_utils import PolicyInfo, PolicyInfoRobust
 from gps.algorithm.config import ALG_MDGPS
 from gps.sample.sample_list import SampleList
 
@@ -83,7 +83,7 @@ class AlgorithmMDGPS(Algorithm):
 
         # On the first iteration, need to catch policy up to init_traj_distr.
         if self.iteration_count == 0:
-            self.new_traj_distr = [
+            self.new_traj_distr = [   # traj_distr defined in algorithm.py#L67
                 self.cur[cond].traj_distr for cond in range(self.M) # defined in algorithm_utils#L13: None
             ]
             self._update_policy()
@@ -121,8 +121,8 @@ class AlgorithmMDGPS(Algorithm):
             self.new_traj_distr_adv = [
                 self.cur[cond].traj_distr_adv for cond in range(self.M) # defined in algorithm_utils#L13: None
             ]
-            self._update_policy()  # update p(u|x)
-            self._update_adv_policy() # update p(v|x)
+            # self._update_policy()  # update p(u|v, x)
+            self._update_policy_robust() # update p(v|x)
 
         # Update policy linearizations.
         for m in range(self.M):
@@ -139,9 +139,8 @@ class AlgorithmMDGPS(Algorithm):
         # Prepare for next iteration
         self._advance_iteration_variables()
 
-
     def _update_policy(self):
-        """ Compute the new policy for local p(u|x). """
+        """ Compute the new policy. """
         dU, dO, T = self.dU, self.dO, self.T
         # Compute target mean, cov, and weight for each sample.
         obs_data, tgt_mu = np.zeros((0, T, dO)), np.zeros((0, T, dU))
@@ -168,6 +167,40 @@ class AlgorithmMDGPS(Algorithm):
             tgt_wt = np.concatenate((tgt_wt, wt))
             obs_data = np.concatenate((obs_data, samples.get_obs()))
         self.policy_opt.update(obs_data, tgt_mu, tgt_prc, tgt_wt)
+
+    def _update_policy_robust(self):
+        """
+            Compute the new robust policy.
+            \pi(u | v, x)
+        """
+        dU, dV, dO, T = self.dU, self.dV, self.dO, self.T
+        # Compute target mean, cov, and weight for each sample.
+        obs_data, tgt_mu = np.zeros((0, T, dO)), np.zeros((0, T, dU+dV))
+        tgt_prc, tgt_wt = np.zeros((0, T, dU+dV, dU+dV)), np.zeros((0, T))
+        for m in range(self.M):
+            samples = self.cur[m].sample_list
+            X = samples.get_X()
+            N = len(samples)
+            # Note traj is defined in base class init function as init_lqr
+            # self.new_traj_distr is from traj distr in gps main
+            traj, pol_info = self.new_traj_distr[m], self.cur[m].pol_info #from algorithm_utils.py#L15
+            mu = np.zeros((N, T, dU+dV))
+            prc = np.zeros((N, T, dU+dV, dU+dV))
+            wt = np.zeros((N, T))
+            # Get time-indexed actions.
+            for t in range(T):
+                # Compute actions along this trajectory.
+                prc[:, t, :, :] = np.tile(traj.inv_pol_covar[t, :, :],
+                                          [N, 1, 1])
+                for i in range(N):
+                    mu[i, t, :] = (traj.K[t, :, :].dot(X[i, t, :]) + traj.k[t, :])
+                wt[:, t].fill(pol_info.pol_wt[t])
+            tgt_mu = np.concatenate((tgt_mu, mu))
+            tgt_prc = np.concatenate((tgt_prc, prc))
+            tgt_wt = np.concatenate((tgt_wt, wt))
+            obs_data = np.concatenate((obs_data, samples.get_obs()))
+        self.policy_opt.update(obs_data, tgt_mu, tgt_prc, tgt_wt)
+
 
     def _update_policy_fit(self, m):
         """
