@@ -40,11 +40,13 @@ class Algorithm(object):
         self.dU = self._hyperparams['dU'] = agent.dU # agent.py#L25. will be 7
         self.dX = self._hyperparams['dX'] = agent.dX # agent.py#L40
         self.dO = self._hyperparams['dO'] = agent.dO #not found
+        self.dV = self._hyperparams['dV'] = agent.dV if self._hyperparams['mode'] == 'robust' else None
 
         init_traj_distr = config['init_traj_distr']
         init_traj_distr['x0'] = agent.x0
         init_traj_distr['dX'] = agent.dX
         init_traj_distr['dU'] = agent.dU
+        init_traj_distr['dV'] = agent.dV if self._hyperparams['mode'] == 'robust' else None
         del self._hyperparams['agent']  # Don't want to pickle this.
 
         # IterationData objects for each condition.
@@ -135,19 +137,19 @@ class Algorithm(object):
 
             X = cur_data.get_X()
             U = cur_data.get_U()
-            V = cur_date.get_V()
+            V = cur_data.get_V()
 
             # Update prior and fit dynamics. #traj_info.dynamics = DynamicsLRPrior
             self.cur[m].traj_info.dynamics.update_prior(cur_data) #L18, dynamics_lr_prior
-            self.cur[m].traj_info.dynamics.fit(X, U) #L29 dynamics_lr_prior
-            self.cur[m].traj_info.dynamics.fit(X, V)
+            self.cur[m].traj_info.dynamics.fit_robust(X, U, V) #L29 dynamics_lr_prior
+            # self.cur[m].traj_info.dynamics.fit(X, V)
 
             # Fit x0mu/x0sigma.
             x0 = X[:, 0, :]
             x0mu = np.mean(x0, axis=0)
             self.cur[m].traj_info.x0mu = x0mu
             self.cur[m].traj_info.x0sigma = np.diag(
-                np.maximum(np.var(x0, axis=0),
+                            np.maximum(np.var(x0, axis=0),
                            self._hyperparams['initial_state_var'])
             )
 
@@ -236,8 +238,8 @@ class Algorithm(object):
         Cm = np.zeros((N, T, dX+dU+dV, dX+dU+dV)) # Cost estimate matrix term.
 
         for n in range(N):
-            sample = self.cur[cond].sample_list[n] # cur is every var in iteration data
-            sample_adv = self.cur[cond].sample_list_adv[n]
+            sample      = self.cur[cond].sample_list[n] # cur is every var in iteration data
+            sample_adv  = self.cur[cond].sample_list_adv[n]
             # Get costs.  Self.cost will be a CostSum object see mdgps/antag/hyperparams#L128
             l, lx, lu, lv, lxx, luu, lvv, lux, lvx  = self.cost[cond].eval(sample, sample_adv=sample_adv)
             cc[n, :] = l

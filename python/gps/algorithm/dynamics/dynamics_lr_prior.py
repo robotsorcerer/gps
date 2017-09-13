@@ -13,7 +13,7 @@ class DynamicsLRPrior(Dynamics):
         self.fv = None
         self.dyn_covar = None
         self.prior = \
-                self._hyperparams['prior']['type'](self._hyperparams['prior'])
+                self._hyperparams['prior']['type'](self._hyperparams['prior']) # DynamicsPriorGMM
 
     def update_prior(self, samples):
         """ Update dynamics prior. """
@@ -50,6 +50,35 @@ class DynamicsLRPrior(Dynamics):
             sig_reg[it, it] = self._hyperparams['regularization']
             Fm, fv, dyn_covar = gauss_fit_joint_prior(Ys,
                         mu0, Phi, mm, n0, dwts, dX+dU, dX, sig_reg)
+            self.Fm[t, :, :] = Fm
+            self.fv[t, :] = fv
+            self.dyn_covar[t, :, :] = dyn_covar
+        return self.Fm, self.fv, self.dyn_covar
+
+    def fit_robust(self, X, U, V):
+        """ Fit dynamics. """
+        N, T, dX = X.shape
+        dU, dV = U.shape[2], V.shape[2]
+
+        if N == 1:
+            raise ValueError("Cannot fit dynamics on 1 sample")
+
+        self.Fm = np.zeros([T, dX, dX+dU+dV])
+        self.fv = np.zeros([T, dX])
+        self.dyn_covar = np.zeros([T, dX, dX])
+
+        it = slice(dX+dU+dV)
+        ip = slice(dX+dU+dV, dX+dU+dV+dX)
+        # Fit dynamics with least squares regression.
+        dwts = (1.0 / N) * np.ones(N)
+        for t in range(T - 1):
+            Ys = np.c_[X[:, t, :], U[:, t, :], V[:, t, :], X[:, t+1, :]]
+            # Obtain Normal-inverse-Wishart prior.
+            mu0, Phi, mm, n0 = self.prior.eval_robust(dX, dU, dV, Ys)
+            sig_reg = np.zeros((dX+dU+dV+dX, dX+dU+dV+dX))
+            sig_reg[it, it] = self._hyperparams['regularization']
+            Fm, fv, dyn_covar = gauss_fit_joint_prior(Ys,
+                        mu0, Phi, mm, n0, dwts, dX+dU+dV, dX, sig_reg)
             self.Fm[t, :, :] = Fm
             self.fv[t, :] = fv
             self.dyn_covar[t, :, :] = dyn_covar

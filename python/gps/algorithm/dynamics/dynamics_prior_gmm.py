@@ -117,3 +117,24 @@ class DynamicsPriorGMM(object):
         # Multiply Phi by m (since it was normalized before).
         Phi *= m
         return mu0, Phi, m, n0
+
+    def eval_robust(self, Dx, Du, Dv, pts):
+        """
+        Evaluate prior.
+        Args:
+            pts: A N x Dx+Du+Dv+Dx matrix.
+        """
+        # Construct query data point by rearranging entries and adding
+        # in reference.
+        assert pts.shape[1] == Dx + Du + Dv + Dx
+
+        # Perform query and fix mean.
+        mu0, Phi, m, n0 = self.gmm.inference(pts)
+
+        # Factor in multiplier.
+        n0 = n0 * self._strength
+        m = m * self._strength
+
+        # Multiply Phi by m (since it was normalized before).
+        Phi *= m
+        return mu0, Phi, m, n0

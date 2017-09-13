@@ -112,14 +112,17 @@ class AlgorithmMDGPS(Algorithm):
 
         # Update dynamics linearizations.
         self._update_dynamics_idg()
-        # self._update_dynamics()
 
         # On the first iteration, need to catch policy up to init_traj_distr.
         if self.iteration_count == 0:
             self.new_traj_distr = [
                 self.cur[cond].traj_distr for cond in range(self.M) # defined in algorithm_utils#L13: None
             ]
-            self._update_policy()
+            self.new_traj_distr_adv = [
+                self.cur[cond].traj_distr_adv for cond in range(self.M) # defined in algorithm_utils#L13: None
+            ]
+            self._update_policy()  # update p(u|x)
+            self._update_adv_policy() # update p(v|x)
 
         # Update policy linearizations.
         for m in range(self.M):
@@ -138,7 +141,7 @@ class AlgorithmMDGPS(Algorithm):
 
 
     def _update_policy(self):
-        """ Compute the new policy. """
+        """ Compute the new policy for local p(u|x). """
         dU, dO, T = self.dU, self.dO, self.T
         # Compute target mean, cov, and weight for each sample.
         obs_data, tgt_mu = np.zeros((0, T, dO)), np.zeros((0, T, dU))
@@ -147,6 +150,7 @@ class AlgorithmMDGPS(Algorithm):
             samples = self.cur[m].sample_list
             X = samples.get_X()
             N = len(samples)
+            # Note traj is defined in base class init function as init_lqr
             traj, pol_info = self.new_traj_distr[m], self.cur[m].pol_info #from algorithm_utils.py#L15
             mu = np.zeros((N, T, dU))
             prc = np.zeros((N, T, dU, dU))

@@ -81,6 +81,15 @@ algorithm['cost'] = {
 }
 ```
 
+Similarly, in the `algorithm['init_traj_distr']` field, we would want to modify the type of the lqr implementation to
+
+```python
+algorithm['init_traj_distr'] = {
+    'type': init_lqr_robust,
+		}
+```		
+
+to account for the new robust lqr algorithm in [lin_gauss_init](/python/gps/algorithm/policy/lin_gauss_init.py)
 
 ### Docker Image
 

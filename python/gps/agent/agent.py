@@ -23,6 +23,7 @@ class Agent(object):
         self._samples = [[] for _ in range(self._hyperparams['conditions'])]
         self.T = self._hyperparams['T']
         self.dU = self._hyperparams['sensor_dims'][ACTION]
+        self.dV = self._hyperparams['sensor_dims'][ACTION] if self._hyperparams['mode'] == 'robust' else None
 
         self.x_data_types = self._hyperparams['state_include']
         self.obs_data_types = self._hyperparams['obs_include']

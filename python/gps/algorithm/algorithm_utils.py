@@ -15,6 +15,8 @@ class IterationData(BundleType):
             'pol_info': None,  # Current PolicyInfo object.
             'traj_distr': None,  # Initial trajectory distribution.
             'new_traj_distr': None, # Updated trajectory distribution.
+            'traj_distr_adv': None,  # Initial trajectory distribution for adversary.
+            'new_traj_distr_adv': None, # Updated trajectory distribution for adversary
             'cs': None,  # Sample costs of the current iteration.
             'step_mult': 1.0,  # KL step multiplier for the current iteration.
             'eta': 1.0,  # Dual variable used in LQR backward pass.

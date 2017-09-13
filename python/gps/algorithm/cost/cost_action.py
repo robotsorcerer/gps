@@ -87,7 +87,7 @@ class CostAction(Cost):
             sample_adv_lists = kwargs['sample_adv']
             # if sample_prot is not None:
             sample = sample.get_U()
-            sample_adv = sample_adv_lists.get_U()
+            sample_adv = sample_adv_lists.get_V()
 
             # print('sample: ', sample.shape, ' | sample_adv: ', sample_adv.shape) #('sample: ', (100, 7), ' | sample_adv: ', (100, 7))
             l = 0.5 * np.sum(self._hyperparams['wu'] * (sample ** 2), axis=1) - \

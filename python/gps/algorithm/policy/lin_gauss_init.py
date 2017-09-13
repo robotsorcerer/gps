@@ -104,6 +104,126 @@ def init_lqr(hyperparams):
     return LinearGaussianPolicy(K, k, PSig, cholPSig, invPSig)
 
 
+def init_lqr_robust(hyperparams):
+    """
+    Return initial gains for a robust, time-varying linear Gaussian controller
+    that tries to hold the initial position.
+    """
+    config = copy.deepcopy(INIT_LG_LQR)
+    config.update(hyperparams)
+
+    x0, dX, dU, dV = config['x0'], config['dX'], config['dU'], config['dV'] # will be 7,26,7, 7
+    dt, T = config['dt'], config['T']
+
+    #TODO: Use packing instead of assuming which indices are the joint
+    #      angles.
+
+    # Notation notes:
+    # L = loss, Q = q-function (dX+dU+dV dimensional),
+    # V = value function (dX dimensional), F = dynamics
+    # Vectors are lower-case, matrices are upper case.
+    # Derivatives: x = state, u = action, v=disturbance, t = state+action+dist (trajectory).
+    # The time index is denoted by _t after the above.
+    # Ex. Ltt_t = Loss, 2nd derivative (w.r.t. trajectory),
+    # indexed by time t.
+
+    # Constants.
+    idx_x = slice(dX)  # Slices out state.
+    idx_u = slice(dX, dX+dU)  # Slices out actions.
+    idx_v = slice(dX, dX+dV)  # Slice out disturbances.
+
+    if len(config['init_acc']) == 0:
+        config['init_acc'] = np.zeros(dU)
+
+    if len(config['init_gains']) == 0:
+        config['init_gains'] = np.ones(dU)
+
+    # compute local protagonisic action (see appendix II, ICRA18 paper)
+    # Set up simple linear dynamics model.
+    """
+    Below, Fd will return 26 x 66 matrix containing the two trajectories of the
+    controller and adversary
+    """
+    Fd, fc = guess_dynamics_robust(config['init_gains'], config['init_acc'],
+                            dX, dU, dV, dt)
+
+    # Setup a cost function based on stiffness.
+    # Ltt = (dX+dU) by (dX+dU) - Hessian of loss with respect to
+    # trajectory at a single timestep.
+    Ltt = np.hstack([
+         config['stiffness'] * np.ones(dU),
+         config['stiffness'] * config['stiffness_vel'] * np.ones(dU),
+         config['stiffness'] * np.ones(dV),
+         config['stiffness'] * config['stiffness_vel'] * np.ones(dV),
+        np.zeros(dX - dU*2), np.ones(dU),
+        np.zeros(dX - dV*2), np.ones(dV)
+    ])
+    Ltt = Ltt / config['init_var']  # Cost function - quadratic term.
+    lt = -Ltt.dot(np.r_[x0, np.zeros(dU), np.zeros(dV)])  # Cost function - linear term.
+
+    # Perform dynamic programming.
+    gu =np.zeros((T, dU))  # local open loop control
+    gv = np.zeros((T, dV))  # local open loop control adversary
+    Gu = np.zeros((T, dU, dX))  # local state feedback gain
+    Gv = np.zeros((T, dV, dX))  # local state feedback gain adversary
+
+    # the gains will also be linear Gaussian with the same dimensions
+    K = np.zeros((T, dU, dX))  # overall controller state feedback gains matrix.
+    k = np.zeros((T, dU))  #  overall controller open loop control
+
+    # see equation 23 in appendix for these
+    PSig = np.zeros((T, dU, dU))  # Covariance of noise.
+    cholPSig = np.zeros((T, dU, dU))  # Cholesky decomposition.
+    invPSig = np.zeros((T, dU, dU))  # Inverse of covariance.
+    vx_t = np.zeros(dX)  # Vx = dV/dX. Derivative of value function.
+    Vxx_t = np.zeros((dX, dX))  # Vxx = ddV/dXdX.
+
+    #TODO: A lot of this code is repeated with traj_opt_lqr_python.py
+    #      backward pass.
+    for t in range(T - 1, -1, -1):
+        # Compute Q function at this step.
+        if t == (T - 1):
+            Ltt_t = config['final_weight'] * Ltt
+            lt_t = config['final_weight'] * lt
+        else:
+            Ltt_t = Ltt
+            lt_t = lt
+        # Qtt = (dX+dU+dV) by (dX+dU+dV) 2nd Derivative of Q-function with
+        # respect to trajectory (dX+dU+dV).
+        Qtt_t = Ltt_t + Fd.T.dot(Vxx_t).dot(Fd)
+        # Qt = (dX+dU) 1st Derivative of Q-function with respect to
+        # trajectory (dX+dU).
+        qt_t = lt_t + Fd.T.dot(vx_t + Vxx_t.dot(fc))
+
+        # Compute preceding value function.
+        V = sp.linalg.cholesky(Qtt_t[idx_v, idx_v])
+        L = V.T
+
+        # compute Quk Qvk Quvk Quuk Quxk Qvxk
+        Qu_k = lu_k + fxk * Vx_k
+        # compute local u^star and v^star
+        Kstar = Qtt_t[]
+
+        # see eqn 22 in appendix III
+        invPSig[t, :, :] = Qtt_t[idx_v, idx_v]
+        PSig[t, :, :] = sp.linalg.solve_triangular(
+            V, sp.linalg.solve_triangular(L, np.eye(dV), lower=True)
+        )
+        cholPSig[t, :, :] = sp.linalg.cholesky(PSig[t, :, :])
+        K[t, :, :] = -sp.linalg.solve_triangular(
+            V, sp.linalg.solve_triangular(L, Qtt_t[idx_u, idx_x], lower=True)
+        )
+        k[t, :] = -sp.linalg.solve_triangular(
+            U, sp.linalg.solve_triangular(L, qt_t[idx_u], lower=True)
+        )
+        Vxx_t = Qtt_t[idx_x, idx_x] + Qtt_t[idx_x, idx_u].dot(K[t, :, :])
+        vx_t = qt_t[idx_x] + Qtt_t[idx_x, idx_u].dot(k[t, :])
+        Vxx_t = 0.5 * (Vxx_t + Vxx_t.T)
+    # """
+
+    return LinearGaussianPolicy(K, k, PSig, cholPSig, invPSig)
+
+
 #TODO: Fix docstring
 def init_pd(hyperparams):
     """
