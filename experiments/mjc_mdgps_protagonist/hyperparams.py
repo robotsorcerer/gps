@@ -159,6 +159,7 @@ algorithm['policy_prior'] = {
     'max_clusters': 20,
     'min_samples_per_cluster': 40,
     'max_samples': 20,
+    'mode': 'robust',
 }
 
 config = {

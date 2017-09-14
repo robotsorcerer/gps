@@ -81,7 +81,7 @@ algorithm['cost'] = {
 }
 ```
 
-Similarly, in the `algorithm['init_traj_distr']` field, we would want to modify the type of the lqr implementation to
+* Similarly, in the `algorithm['init_traj_distr']` field, we would want to modify the type of the lqr implementation to
 
 ```python
 algorithm['init_traj_distr'] = {
@@ -91,7 +91,7 @@ algorithm['init_traj_distr'] = {
 
 to account for the new robust lqr algorithm in [lin_gauss_init](/python/gps/algorithm/policy/lin_gauss_init.py)
 
-In agent, we want to define the mode as
+*	In agent, we want to define the mode as
 
 ```python
 agent = {
@@ -108,6 +108,7 @@ algorithm['traj_opt'] = {
     'mode': 'robust'
 }
 ```
+
 
 ### Docker Image
 

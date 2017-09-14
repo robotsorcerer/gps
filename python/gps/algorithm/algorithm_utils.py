@@ -2,7 +2,7 @@
 import numpy as np
 
 from gps.utility.general_utils import BundleType
-from gps.algorithm.policy.lin_gauss_policy import LinearGaussianPolicy
+from gps.algorithm.policy.lin_gauss_policy import LinearGaussianPolicy, LinearGaussianPolicyRobust
 
 
 class IterationData(BundleType):
@@ -83,13 +83,7 @@ class PolicyInfo(BundleType):
 class PolicyInfoRobust(BundleType):
     """ Collection of policy-related variables. """
     def __init__(self, hyperparams):
-        if self.mode == 'antagonist':
-            T, dU, dX = hyperparams['T'], hyperparams['dU'], hyperparams['dX']
-        elif self.mode == 'protagonist':
-            T, dU, dX = hyperparams['T'], hyperparams['dU'], hyperparams['dX']
-        else:
-            print("you have entered an invalid mode in PolicyInfo class" +
-                  "in algorithm_utils.py file")
+        T, dU, dV, dX = hyperparams['T'], hyperparams['dU'], hyperparams['dV'], hyperparams['dX']
 
         variables = {
             'lambda_k': np.zeros((T, dU)),  # Dual variables.
@@ -101,10 +95,10 @@ class PolicyInfoRobust(BundleType):
             'pol_k': np.zeros((T, dU)),  # Policy linearization.
             'pol_S': np.zeros((T, dU, dU)),  # Policy linearization covariance.
             'chol_pol_S': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
-            'pol_G_tilde': np.zeros((T, dU, dX)),  # Policy linearization.
-            'pol_g_tilde': np.zeros((T, dU)),  # Policy linearization.
-            'pol_S_tilde': np.zeros((T, dU, dU)),  # Policy linearization covariance.
-            'chol_pol_S_tilde': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
+            'pol_G_tilde': np.zeros((T, dU+dV, dX)),  # Policy linearization.
+            'pol_g_tilde': np.zeros((T, dU+dV)),  # Policy linearization.
+            'pol_S_tilde': np.zeros((T, dU+dV, dU+dV)),  # Policy linearization covariance.
+            'chol_pol_S_tilde': np.zeros((T, dU+dV, dU+dV)),  # Cholesky decomp of covar.
             'prev_kl': None,  # Previous KL divergence.
             'init_kl': None,  # The initial KL divergence, before the iteration.
             'policy_samples': [],  # List of current policy samples.
@@ -122,7 +116,7 @@ class PolicyInfoRobust(BundleType):
                 self.chol_pol_S[t, :, :],
                 np.linalg.solve(self.chol_pol_S[t, :, :].T, np.eye(dU))
             )
-        return LinearGaussianPolicy(self.pol_K, self.pol_k, self.pol_S,
+        return LinearGaussianPolicyRobust(self.pol_K, self.pol_k, self.pol_S,
                 self.chol_pol_S, inv_pol_S)
 
 

@@ -24,8 +24,12 @@ class AlgorithmMDGPS(Algorithm):
         Algorithm.__init__(self, config)
 
         policy_prior = self._hyperparams['policy_prior'] #self._hyperparams is from algorithm.py
+        # print(self._hyperparams)
         for m in range(self.M):  #self.M= # conditions
-            self.cur[m].pol_info = PolicyInfo(self._hyperparams) # from algorithm_utils.py
+            if self._hyperparams['cost']['mode'] == 'robust':
+                self.cur[m].pol_info = PolicyInfoRobust(self._hyperparams)
+            else:
+                self.cur[m].pol_info = PolicyInfo(self._hyperparams) # from algorithm_utils.py
             self.cur[m].pol_info.policy_prior = \
                     policy_prior['type'](policy_prior) # in hyperparams = PolicyPriorGMM
 

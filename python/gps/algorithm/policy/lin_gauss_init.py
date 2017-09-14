@@ -165,6 +165,7 @@ def init_lqr_robust(hyperparams):
     Gv = np.zeros((T, dV, dX))  # local state feedback gain adversary
 
     # combined gains based on derivation in appendix III
+    # I have used dU since we expect both dims to be equal
     g_tilde = np.zeros((T, dU))
     G_tilde = np.zeros((T, dU, dX))
     G_tilde_addendum = np.zeros((T, dU, dX))
@@ -175,9 +176,13 @@ def init_lqr_robust(hyperparams):
     invPSig = np.zeros((T, dU, dU))  # Inverse of covariance.
 
     # see eqn 14 for these ones that enter the deterministic policy law
-    PSigv = np.zeros((T, dU, dV))  # Covariance of noise.
-    cholPSigv = np.zeros((T, dU, dU))  # Cholesky decomposition.
-    invPSigv = np.zeros((T, dU, dU))  # Inverse of covariance.
+    PSigv = np.zeros((T, dV, dV))  # Covariance of noise.
+    cholPSigv = np.zeros((T, dV, dV))  # Cholesky decomposition.
+    invPSigv = np.zeros((T, dV, dV))  # Inverse of covariance.
+
+    invPSig_UV  = np.zeros((T, dU, dV))
+    PSig_UV     = np.zeros((T, dU, dV))
+    cholPSig_UV = np.zeros((T, dU, dV))
 
     vx_t = np.zeros(dX)  # Vx = dV/dX. Derivative of value function.
     Vxx_t = np.zeros((dX, dX))  # Vxx = ddV/dXdX.
@@ -275,9 +280,21 @@ def init_lqr_robust(hyperparams):
                                 )
         G_tilde[t,:,:] = G_tilde[t,:,:] + G_tilde_addendum[t,:,:]
 
-    return LinearGaussianPolicyRobust(G_tilde, g_tilde,  # PSigu, cholPSigu, invPSigu, \
-                                                PSigv, cholPSigv, invPSigv),
+        # compute covariance of the deterministic optimal policy
+        UV = sp.linalg.cholesky(Qtt_t[id_u, idx_v].dot(PSigv[t,:,:].dot(
+                                    np.eye(dV) + Qtt_t[idx_v, idx_u] ))
+        L_UV = (UV).T
+        invPSig_UV[t, :, :] = Qtt_t[id_u, idx_v].dot(PSigv[t,:,:].dot(
+                                    np.eye(dV) + Qtt_t[idx_v, idx_u] )
+        PSig_UV[t,:,:] = sp.linalg.solve_triangular(
+                            UV, sp.linalg.solve_triangular(L_UV, np.eye(dU), lower=True)
+                        )
+        cholPSig_UV[t,:,:] =  sp.linalg.cholesky(PSig_UV[t, :, :])
 
+    return LinearGaussianPolicyRobust( Gu, gu, PSigu, cholPSigu, invPSigu, # protagonist terms
+                                       Gv, gv, PSigv, cholPSigv, invPSigv,  # adversarial terms
+                                       G_tilde, g_tilde, , PSig_UV, cholPSig_UV, invPSig_UV # global terms
+                                    )
 
 #TODO: Fix docstring
 def init_pd(hyperparams):
