@@ -10,6 +10,7 @@ class PolicyOpt(object):
         self._hyperparams = hyperparams
         self._dO = dO
         self._dU = dU
+        self._dV = dV
 
     @abc.abstractmethod
     def update(self):

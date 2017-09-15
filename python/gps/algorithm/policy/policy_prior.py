@@ -32,6 +32,20 @@ class PolicyPrior(object):
         ])
         return np.zeros(dX+dU), Phi, 0, self._hyperparams['strength']
 
+    def eval_robust(self, Ts, Ps, Ps_v):
+        """ Evaluate the policy prior. """
+        dX, dU, dV = Ts.shape[-1], Ps.shape[-1], Ps_v.shape[-1]
+        prior_fd = np.zeros((dU+dV, dX))
+        prior_cond = 1e-5 * np.eye(dU)
+        sig = np.eye(dX)
+        Phi = self._hyperparams['strength'] * np.vstack([
+            np.hstack([sig, sig.dot(prior_fd.T)]),
+            np.hstack([prior_fd.dot(sig),
+                       prior_fd.dot(sig).dot(prior_fd.T) + prior_cond])
+        ])
+        return np.zeros(dX+dU+dV), Phi, 0, self._hyperparams['strength']
+
+
     def fit(self, X, pol_mu, pol_sig):
         """
         Fit policy linearization.
@@ -71,4 +85,51 @@ class PolicyPrior(object):
                     gauss_fit_joint_prior(Ys,
                             mu0, Phi, mm, n0, dwts, dX, dU, sig_reg)
         pol_S += pol_sig
+        return pol_K, pol_k, pol_S
+
+    def fit_robust(self, X, pol_mu, pol_sig, pol_mu_adv, pol_sig_adv):
+        """
+        Fit policy linearization.
+
+        Args:
+            X: Samples (N, T, dX)
+            pol_mu: Policy means protagonist (N, T, dU)
+            pol_sig: Policy covariance protagonist (N, T, dU)
+            pol_mu_adv: Policy means adversary (N, T, dU)
+            pol_sig_adv: Policy covariance adversary (N, T, dU)
+        """
+        N, T, dX = X.shape
+        dU = pol_mu.shape[2]
+        dV = pol_mu_adv.shape[2]
+
+        if N == 1:
+            raise ValueError("Cannot fit dynamics on 1 sample")
+
+        # Collapse policy covariances. (This is only correct because
+        # the policy doesn't depend on state).
+        pol_sig = np.mean(pol_sig, axis=0)
+        pol_sig_adv = np.mean(pol_sig_adv, axis=0)
+
+        # Allocate.
+        pol_K = np.zeros([T, dU, dX])
+        pol_k = np.zeros([T, dU])
+        pol_S = np.zeros([T, dU, dU])
+
+        # Fit policy linearization with least squares regression.
+        dwts = (1.0 / N) * np.ones(N)
+        for t in range(T):
+            Ts = X[:, t, :]
+            Ps = pol_mu[:, t, :]
+            Ps_adv = pol_mu_adv[:, t, :]
+            Ys = np.concatenate([Ts, Ps, Ps_adv], axis=1)
+            # Obtain Normal-inverse-Wishart prior.
+            mu0, Phi, mm, n0 = self.eval_robust(Ts, Ps, Ps_adv)
+            sig_reg = np.zeros((dX+dU+dV, dX+dU+dV))
+            # Slightly regularize on first timestep.
+            if t == 0:
+                sig_reg[:dX, :dX] = 1e-8
+            pol_K[t, :, :], pol_k[t, :], pol_S[t, :, :] = \
+                    gauss_fit_joint_prior(Ys,
+                            mu0, Phi, mm, n0, dwts, dX, dU, sig_reg)
+        pol_S += pol_sig + pol_sig_adv
         return pol_K, pol_k, pol_S

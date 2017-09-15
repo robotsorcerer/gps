@@ -17,9 +17,12 @@ class IterationData(BundleType):
             'new_traj_distr': None, # Updated trajectory distribution.
             'traj_distr_adv': None,  # Initial trajectory distribution for adversary.
             'new_traj_distr_adv': None, # Updated trajectory distribution for adversary
+            'traj_distr_robust': None,  # Initial trajectory distribution for both agents.
+            'new_traj_distr_robust': None, # Updated trajectory distribution for both agentsy
             'cs': None,  # Sample costs of the current iteration.
             'step_mult': 1.0,  # KL step multiplier for the current iteration.
             'eta': 1.0,  # Dual variable used in LQR backward pass.
+            'eta_adv': 1.0,  # Dual variable used in LQR backward pass.
         }
         BundleType.__init__(self, variables)
 
@@ -91,10 +94,26 @@ class PolicyInfoRobust(BundleType):
             'pol_wt': hyperparams['init_pol_wt'] * np.ones(T),  # Policy weight.
             'pol_mu': None,  # Mean of the current policy output.
             'pol_sig': None,  # Covariance of the current policy output.
+            'pol_mu_prot': None,  # Mean of the current policy output.
+            'pol_sig_prot': None,  # Covariance of the current policy output
+            'pol_mu_adv': None,  # Mean of the current policy output.
+            'pol_sig_adv': None,  # Covariance of the current policy output
             'pol_K': np.zeros((T, dU, dX)),  # Policy linearization.
             'pol_k': np.zeros((T, dU)),  # Policy linearization.
             'pol_S': np.zeros((T, dU, dU)),  # Policy linearization covariance.
             'chol_pol_S': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
+            'pol_Gu': np.zeros((T, dU, dX)),  # Policy linearization.
+            'pol_gu': np.zeros((T, dU)),  # Policy linearization.
+            'pol_Su': np.zeros((T, dU, dU)),  # Policy linearization covariance.
+            'chol_pol_Su': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
+            'pol_Gv': np.zeros((T, dU, dX)),  # Policy linearization.
+            'pol_gv': np.zeros((T, dU)),  # Policy linearization.
+            'pol_Sv': np.zeros((T, dU, dU)),  # Policy linearization covariance.
+            'chol_pol_Sv': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
+            'pol_G': np.zeros((T, dU, dX)),  # Policy linearization.
+            'pol_g': np.zeros((T, dU)),  # Policy linearization.
+            'pol_Suv': np.zeros((T, dU, dU)),  # Policy linearization covariance.
+            'chol_pol_Suv': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
             'pol_G_tilde': np.zeros((T, dU+dV, dX)),  # Policy linearization.
             'pol_g_tilde': np.zeros((T, dU+dV)),  # Policy linearization.
             'pol_S_tilde': np.zeros((T, dU+dV, dU+dV)),  # Policy linearization covariance.
@@ -102,23 +121,37 @@ class PolicyInfoRobust(BundleType):
             'prev_kl': None,  # Previous KL divergence.
             'init_kl': None,  # The initial KL divergence, before the iteration.
             'policy_samples': [],  # List of current policy samples.
-            'policy_prior': None,  # Current prior for policy linearization.
+            'policy_prior': None,  # Current prior for policy linearization. PolicyPriorGMM
         }
         BundleType.__init__(self, variables)
 
     def traj_distr(self):
         """ Create a trajectory distribution object from policy info. """
-        T, dU, dX = self.pol_K.shape
+        T, dU, dX = self.pol_Gu.shape
         # Compute inverse policy covariances.
-        inv_pol_S = np.empty_like(self.chol_pol_S)
+        inv_pol_Su = np.empty_like(self.chol_pol_Su)
+        inv_pol_Sv = np.empty_like(self.chol_pol_Sv)
+        inv_pol_Suv = np.empty_like(self.chol_pol_Suv)
         for t in range(T):
-            inv_pol_S[t, :, :] = np.linalg.solve(
-                self.chol_pol_S[t, :, :],
-                np.linalg.solve(self.chol_pol_S[t, :, :].T, np.eye(dU))
+            inv_pol_Su[t, :, :] = np.linalg.solve(
+                self.chol_pol_Su[t, :, :],
+                np.linalg.solve(self.chol_pol_Su[t, :, :].T, np.eye(dU))
             )
-        return LinearGaussianPolicyRobust(self.pol_K, self.pol_k, self.pol_S,
-                self.chol_pol_S, inv_pol_S)
+            inv_pol_Sv[t, :, :] = np.linalg.solve(
+                self.chol_pol_Sv[t, :, :],
+                np.linalg.solve(self.chol_pol_Sv[t, :, :].T, np.eye(dU))
+            )
+            inv_pol_Suv[t, :, :] = np.linalg.solve(
+                self.chol_pol_Suv[t, :, :],
+                np.linalg.solve(self.chol_pol_Suv[t, :, :].T, np.eye(dU))
+            )
 
+        return LinearGaussianPolicyRobust(self.pol_Gu, self.pol_gu, self.pol_Su,
+                                            self.chol_pol_Su, inv_pol_Su,
+                                        self.pol_Gv, self.pol_gv, self.pol_Sv,
+                                            self.chol_pol_Sv, inv_pol_Sv,
+                                        self.pol_Guv, self.pol_guv, self.pol_Suv,
+                                            self.chol_pol_Suv, inv_pol_Suv)
 
 def estimate_moments(X, mu, covar):
     """ Estimate the moments for a given linearized policy. """

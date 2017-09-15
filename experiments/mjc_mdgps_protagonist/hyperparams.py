@@ -152,6 +152,7 @@ algorithm['policy_opt'] = {
     'type': PolicyOptCaffe,
     'iterations': 4000,
     'weights_file_prefix': EXP_DIR + 'policy',
+    'robust_weights_file_prefix': EXP_DIR + 'robust_policy',
 }
 
 algorithm['policy_prior'] = {

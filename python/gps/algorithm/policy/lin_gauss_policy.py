@@ -179,6 +179,48 @@ class LinearGaussianPolicyRobust(Policy):
             k[i] = scaled_noise + self.k[i]
         return k
 
+    def fold_gu(self, noise):
+        """
+        Fold noise into gu.
+        Args:
+            noise: A T x Du noise vector with mean 0 and variance 1.
+        Returns:
+            gu: A T x dU bias vector.
+        """
+        gu = np.zeros_like(self.gu)
+        for i in range(self.T):
+            scaled_noise = self.chol_pol_covar[i].T.dot(noise[i])
+            gu[i] = scaled_noise + self.gu[i]
+        return gu
+
+    def fold_gv(self, noise):
+        """
+        Fold noise into gv.
+        Args:
+            noise: A T x Du noise vector with mean 0 and variance 1.
+        Returns:
+            gv: A T x dU bias vector.
+        """
+        gv = np.zeros_like(self.gv)
+        for i in range(self.T):
+            scaled_noise = self.chol_pol_covar[i].T.dot(noise[i])
+            gv[i] = scaled_noise + self.gv[i]
+        return gv
+
+    def fold_g(self, noise):
+        """
+        Fold noise into g.
+        Args:
+            noise: A T x Du noise vector with mean 0 and variance 1.
+        Returns:
+            g: A T x dU bias vector.
+        """
+        g = np.zeros_like(self.g)
+        for i in range(self.T):
+            scaled_noise = self.chol_pol_covar[i].T.dot(noise[i])
+            g[i] = scaled_noise + self.g[i]
+        return g
+
     def nans_like(self):
         """
         Returns:

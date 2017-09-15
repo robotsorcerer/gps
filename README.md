@@ -109,6 +109,13 @@ algorithm['traj_opt'] = {
 }
 ```
 
+* Add the following to `algorithm['policy_opt']` to account for the robust policy
+
+```python
+algorithm['policy_opt'] = {
+    'robust_weights_file_prefix': EXP_DIR + 'robust_policy',
+}
+```
 
 ### Docker Image
 

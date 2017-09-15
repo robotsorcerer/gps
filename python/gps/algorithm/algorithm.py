@@ -64,8 +64,9 @@ class Algorithm(object):
                 self._hyperparams['init_traj_distr'], self._cond_idx[m] #L84 hyperparams
             )
             # note that both prot and adv act in turns on adversary
-            self.cur[m].traj_distr = init_traj_distr['type'](init_traj_distr) #will be init_lqr
-            self.cur[m].traj_distr_adv = init_traj_distr['type'](init_traj_distr) #adv traj dist
+            self.cur[m].traj_distr          = init_traj_distr['type'](init_traj_distr) #will be init_lqr / init_lqr_robust
+            self.cur[m].traj_distr_adv      = init_traj_distr['type'](init_traj_distr) #adv traj dist
+            self.cur[m].traj_distr_robust   = init_traj_distr['type'](init_traj_distr) #robust traj dist
 
             #init_lqr is defined in algorithm/policy/lin_gauss_init
         self.traj_opt = hyperparams['traj_opt']['type'](
@@ -98,7 +99,7 @@ class Algorithm(object):
         """ Run iteration of the algorithm. """
         raise NotImplementedError("Must be implemented in subclass")
 
-    
+
     def _update_dynamics(self):
         """
         Instantiate dynamics objects and update prior. Fit dynamics to
@@ -175,6 +176,42 @@ class Algorithm(object):
         for cond in range(self.M):
             self.new_traj_distr[cond], self.cur[cond].eta = \
                     self.traj_opt.update(cond, self)
+
+    def _update_trajectories_robust(self):
+        """
+        Compute new linear Gaussian controllers.
+        """
+        if not hasattr(self, 'new_traj_distr'):
+            self.new_traj_distr = [
+                self.cur[cond].traj_distr for cond in range(self.M)
+            ]
+
+        if not hasattr(self, 'new_traj_distr_adv'):
+            self.new_traj_distr_adv = [
+                self.cur[cond].traj_distr_adv for cond in range(self.M)
+            ]
+
+        if not hasattr(self, 'new_traj_distr_robust'):
+            self.new_traj_distr_robust = [
+                self.cur[cond].traj_distr_robust for cond in range(self.M)
+            ]
+
+        for cond in range(self.M):
+            LOGGER.debug("updating protagonist trajectory")
+            self.new_traj_distr[cond], self.cur[cond].eta = \
+                    self.traj_opt.update_protagonist(cond, self)
+
+            LOGGER.debug("updating adversary trajectory")
+            self.new_traj_distr_adv[cond], self.cur[cond].eta_adv = \
+                    self.traj_opt.update_adversary(cond, self)
+
+            LOGGER.debug("Computing conditional of protagonist on adversary")
+            self.new_traj_distr_robust[cond], self.cur[cond].eta = \
+                    self.traj_opt.update_robust(cond, self, \
+                            self.new_traj_distr[cond], \
+                            self.new_traj_distr_adv[cond], \
+                            self.cur[cond].eta, \
+                            self.cur[cond].eta_adv)
 
     def _eval_cost(self, cond):
         """

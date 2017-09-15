@@ -84,6 +84,49 @@ class PolicyPriorGMM(object):
         LOGGER.debug('Generating %d clusters for policy prior GMM.', K)
         self.gmm.update(XU, K)
 
+def update_robust(self, samples, samples_adv, policy_opt, mode='add'):
+    """
+    Update GMM using new samples or policy_opt.
+    By default does not replace old samples.
+
+    Args:
+        samples: SampleList containing new samples
+        policy_opt: PolicyOpt containing current policy
+    """
+    X, obs, obs_adv = samples.get_X(), samples.get_obs(), samples_adv.get_obs()
+
+    if self.X is None or mode == 'replace':
+        self.X = X
+        self.obs = obs
+        self.obs_adv = obs_adv
+    elif mode == 'add' and X.size > 0:
+        self.X = np.concatenate([self.X, X], axis=0)
+        self.obs = np.concatenate([self.obs, obs], axis=0)
+        self.obs_adv = np.concatenate([self.obs_adv, obs_adv], axis=0)
+        # Trim extra samples
+        # TODO: how should this interact with replace_samples?
+        N = self.X.shape[0]
+        if N > self._max_samples:
+            start = N - self._max_samples
+            self.X = self.X[start:, :, :]
+            self.obs = self.obs[start:, :, :]
+            self.obs_adv = self.obs_adv[start:, :, :]
+
+    # Evaluate policy at samples to get mean policy action.
+    U = policy_opt.prob(self.obs.copy())[0]
+    V = policy_opt.prob(self.obs_adv.copy())[0]
+    # Create the dataset
+    N, T = self.X.shape[:2]
+    dO = self.X.shape[2] + U.shape[2] + V.shape[2]
+    # XU = np.reshape(np.concatenate([self.X, U], axis=2), [T * N, dO])
+    XUV = np.reshape(np.concatenate([self.X, U, V], axis=2), [T * N, dO])
+    # Choose number of clusters.
+    K = int(max(2, min(self._max_clusters,
+                       np.floor(float(N * T) / self._min_samp))))
+
+    LOGGER.debug('Generating %d clusters for policy prior robust GMM.', K)
+    self.gmm.update(XUV, K)
+
     def eval(self, Ts, Ps):
         """ Evaluate prior. """
         # Construct query data point.
