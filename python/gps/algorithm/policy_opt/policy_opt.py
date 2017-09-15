@@ -6,7 +6,7 @@ class PolicyOpt(object):
     """ Policy optimization superclass. """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, hyperparams, dO, dU):
+    def __init__(self, hyperparams, dO, dU, dV):
         self._hyperparams = hyperparams
         self._dO = dO
         self._dU = dU

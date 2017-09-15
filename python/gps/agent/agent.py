@@ -20,6 +20,7 @@ class Agent(object):
         self._hyperparams = config
         # Store samples, along with size/index information for samples.
         self._samples = [[] for _ in range(self._hyperparams['conditions'])]
+        self._samples_adv = [[] for _ in range(self._hyperparams['conditions'])]
         self.T = self._hyperparams['T']
         self.dU = self._hyperparams['sensor_dims'][ACTION]
         self.dV = self._hyperparams['sensor_dims'][ACTION] #if self._hyperparams['mode'] == 'robust' else None
@@ -84,15 +85,15 @@ class Agent(object):
         return (SampleList(self._samples[condition][start:]) if end is None
                 else SampleList(self._samples[condition][start:end]))
 
-    def get_adversary_samples(self, condition, start=0, end=None):
+    def get_samples_adv(self, condition, start=0, end=None):
         """
         Return the requested samples based on the start and end indices.
         Args:
             start: Starting index of samples to return.
             end: End index of samples to return.
         """
-        return (SampleList(self._samples[condition][start:]) if end is None
-                else SampleList(self._samples[condition][start:end]))
+        return (SampleList(self._samples_adv[condition][start:]) if end is None
+    else SampleList(self._samples_adv[condition][start:]))
 
     def clear_samples(self, condition=None):
         """
@@ -104,6 +105,17 @@ class Agent(object):
             self._samples = [[] for _ in range(self._hyperparams['conditions'])]
         else:
             self._samples[condition] = []
+
+    def clear_samples_adv(self, condition=None):
+        """
+        Reset the samples_adv for a given condition, defaulting to all conditions.
+        Args:
+            condition: Condition for which to reset samples.
+        """
+        if condition is None:
+            self._samples_adv = [[] for _ in range(self._hyperparams['conditions'])]
+        else:
+            self._samples_adv[condition] = []
 
     def delete_last_sample(self, condition):
         """ Delete the last sample from the specified condition. """

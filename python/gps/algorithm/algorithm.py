@@ -139,13 +139,15 @@ class Algorithm(object):
 
         for m in range(self.M):
             cur_data = self.cur[m].sample_list
+            cur_data_adv = self.cur[m].sample_list_adv
 
             X = cur_data.get_X()
             U = cur_data.get_U()
-            V = cur_data.get_V() # this should be correct. Though we need the gamma term
+            print('U, :', U)
+            V = cur_data_adv.get_U() # this should be correct. Though we need the gamma term
 
             # Update prior and fit dynamics. #traj_info.dynamics = DynamicsLRPrior
-            self.cur[m].traj_info.dynamics.update_prior_robust(cur_data) #L18, dynamics_lr_prior
+            self.cur[m].traj_info.dynamics.update_prior_robust(cur_data, cur_data_adv) #L18, dynamics_lr_prior
             self.cur[m].traj_info.dynamics.fit_robust(X, U, V) #L77 dynamics_lr_prior
 
             # Fit x0mu/x0sigma.
@@ -201,17 +203,17 @@ class Algorithm(object):
             self.new_traj_distr[cond], self.cur[cond].eta = \
                     self.traj_opt.update_protagonist(cond, self)
 
-            LOGGER.debug("updating adversary trajectory")
-            self.new_traj_distr_adv[cond], self.cur[cond].eta_adv = \
-                    self.traj_opt.update_adversary(cond, self)
-
-            LOGGER.debug("Computing conditional of protagonist on adversary")
-            self.new_traj_distr_robust[cond], self.cur[cond].eta = \
-                    self.traj_opt.update_robust(cond, self, \
-                            self.new_traj_distr[cond], \
-                            self.new_traj_distr_adv[cond], \
-                            self.cur[cond].eta, \
-                            self.cur[cond].eta_adv)
+            # LOGGER.debug("updating adversary trajectory")
+            # self.new_traj_distr_adv[cond], self.cur[cond].eta_adv = \
+            #         self.traj_opt.update_adversary(cond, self)
+            #
+            # LOGGER.debug("Computing conditional of protagonist on adversary")
+            # self.new_traj_distr_robust[cond], self.cur[cond].eta = \
+            #         self.traj_opt.update_robust(cond, self, \
+            #                 self.new_traj_distr[cond], \
+            #                 self.new_traj_distr_adv[cond], \
+            #                 self.cur[cond].eta, \
+            #                 self.cur[cond].eta_adv)
 
     def _eval_cost(self, cond):
         """

@@ -146,6 +146,8 @@ class DynamicsPriorGMM(object):
                            np.floor(float(N * T) / self._min_samp))))
         LOGGER.debug('Generating %d clusters for dynamics GMM.', K)
 
+        print('xuvx shape: ', xuvx.shape)
+        print('V: ', V)
         # Update GMM.
         self.gmm.update(xuvx, K)
 

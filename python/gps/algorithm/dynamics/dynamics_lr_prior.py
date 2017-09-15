@@ -21,11 +21,11 @@ class DynamicsLRPrior(Dynamics):
         U = samples.get_U()
         self.prior.update(X, U)  #this is calling update in gmm_prior
 
-    def update_prior_robust(self, samples):
+    def update_prior_robust(self, samples, samples_adv):
         """ Update dynamics prior. """
         X = samples.get_X()
         U = samples.get_U()
-        V = samples.get_V()
+        V = samples_adv.get_U()
         self.prior.update_robust(X, U, V)  #this is calling update in gmm_prior
 
     def get_prior(self):

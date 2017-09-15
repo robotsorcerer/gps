@@ -35,7 +35,7 @@ class AlgorithmMDGPS(Algorithm):
                     policy_prior['type'](policy_prior) # in hyperparams = PolicyPriorGMM
 
         self.policy_opt = self._hyperparams['policy_opt']['type']( #will be PolicyOptCaffe
-            self._hyperparams['policy_opt'], self.dO, self.dU #dO and dX are from hyperparams
+            self._hyperparams['policy_opt'], self.dO, self.dU, self.dV #dO and dX are from hyperparams
         )
 
     def iteration(self, sample_lists):
@@ -112,7 +112,7 @@ class AlgorithmMDGPS(Algorithm):
         # Store the samples and evaluate the costs.
         for m in range(self.M):                       # self.M is the # of the condition number
             self.cur[m].sample_list     = sample_lists[m] # cur is every var in iteration data
-            self.cur[m].sample_list_adv = sample_lists_adv[m]
+            self.cur[m].sample_list_adv = sample_lists_adv[m]  # will be real adversarial samples
             self._eval_cost_idg(m)                    # _eval_cost is defined in algorithm.py line 220
 
         # Update dynamics linearizations.
@@ -161,7 +161,7 @@ class AlgorithmMDGPS(Algorithm):
         self._update_trajectories_robust()
 
         # S-step
-        self._update_policy()
+        self._update_policy_robust()
 
         # Prepare for next iteration
         self._advance_iteration_variables()
@@ -209,11 +209,11 @@ class AlgorithmMDGPS(Algorithm):
         obs_data, tgt_mu_u = np.zeros((0, T, dO)), np.zeros((0, T, dU))
         tgt_prc_u, tgt_wt = np.zeros((0, T, dU, dU)), np.zeros((0, T))
 
-        # Compute target mean, and cov for adv sample.
-        tgt_mu_v, tgt_prc_v = np.zeros((0, T, dV)), np.zeros((0, T, dV, dV))
-
-        # Compute target mean, and cov for both trajectories sample.
-        tgt_mu_uv, tgt_prc_uv = np.zeros((0, T, dU or dV)), np.zeros((0, T, dU or dV, dU or dV))
+        # # Compute target mean, and cov for adv sample.
+        # tgt_mu_v, tgt_prc_v = np.zeros((0, T, dV)), np.zeros((0, T, dV, dV))
+        #
+        # # Compute target mean, and cov for both trajectories sample.
+        # tgt_mu_uv, tgt_prc_uv = np.zeros((0, T, dU or dV)), np.zeros((0, T, dU or dV, dU or dV))
 
         for m in range(self.M):
             samples = self.cur[m].sample_list
@@ -228,46 +228,46 @@ class AlgorithmMDGPS(Algorithm):
             prc_u   = np.zeros((N, T, dU, dU))
             wt_u    = np.zeros((N, T))
 
-            # for adversary
-            traj_v, pol_info_v = self.new_traj_distr_adv[m], self.cur[m].pol_info #from algorithm_utils.py#L15
-            mu_v    = np.zeros((N, T, dV))
-            prc_v   = np.zeros((N, T, dV, dV))
-            wt_v      = np.zeros((N, T))
-
-            # for control and adversary
-            traj_uv, pol_info_uv = self.new_traj_distr_robust[m], self.cur[m].pol_info #from algorithm_utils.py#L15
-            mu_uv    = np.zeros((N, T, dU or dV))
-            prc_uv   = np.zeros((N, T, dU or dV, dU or dV))
-            wt_uv    = np.zeros((N, T))
+            # # for adversary
+            # traj_v, pol_info_v = self.new_traj_distr_adv[m], self.cur[m].pol_info #from algorithm_utils.py#L15
+            # mu_v    = np.zeros((N, T, dV))
+            # prc_v   = np.zeros((N, T, dV, dV))
+            # wt_v      = np.zeros((N, T))
+            #
+            # # for control and adversary
+            # traj_uv, pol_info_uv = self.new_traj_distr_robust[m], self.cur[m].pol_info #from algorithm_utils.py#L15
+            # mu_uv    = np.zeros((N, T, dU or dV))
+            # prc_uv   = np.zeros((N, T, dU or dV, dU or dV))
+            # wt_uv    = np.zeros((N, T))
 
             # Get time-indexed actions.
             for t in range(T):
                 # Compute actions along this trajectory.
                 prc_u[:, t, :, :] = np.tile(traj_u.inv_pol_covar_u[t, :, :],
                                           [N, 1, 1])
-                prc_v[:, t, :, :] = np.tile(traj_v.inv_pol_covar_v[t, :, :],
-                                          [N, 1, 1])
-                prc_uv[:, t, :, :] = np.tile(traj_uv.inv_pol_covar_uv[t, :, :],
-                                          [N, 1, 1])
+                # prc_v[:, t, :, :] = np.tile(traj_v.inv_pol_covar_v[t, :, :],
+                #                           [N, 1, 1])
+                # prc_uv[:, t, :, :] = np.tile(traj_uv.inv_pol_covar_uv[t, :, :],
+                #                           [N, 1, 1])
                 for i in range(N):
                     mu_u[i, t, :]  = (traj_u.Gu[t, :, :].dot(X[i, t, :]) + traj_u.gu[t, :])
-                    mu_v[i, t, :]  = (traj_v.Gv[t, :, :].dot(X[i, t, :]) + traj_v.gv[t, :])
-                    mu_uv[i, t, :] = (traj_uv.G[t, :, :].dot(X[i, t, :]) + traj_uv.g[t, :])
+                    # mu_v[i, t, :]  = (traj_v.Gv[t, :, :].dot(X[i, t, :]) + traj_v.gv[t, :])
+                    # mu_uv[i, t, :] = (traj_uv.G[t, :, :].dot(X[i, t, :]) + traj_uv.g[t, :])
                 wt_u[:, t].fill(pol_info.pol_wt[t])
-                wt_v[:, t].fill(pol_info.pol_wt[t])
-                wt_uv[:, t].fill(pol_info.pol_wt[t])
+                # wt_v[:, t].fill(pol_info.pol_wt[t])
+                # wt_uv[:, t].fill(pol_info.pol_wt[t])
 
             tgt_mu_u = np.concatenate((tgt_mu_u, mu_u))
-            tgt_mu_v = np.concatenate((tgt_mu_v, mu_v))
-            tgt_mu_uv = np.concatenate((tgt_mu_uv, mu_uv))
+            # tgt_mu_v = np.concatenate((tgt_mu_v, mu_v))
+            # tgt_mu_uv = np.concatenate((tgt_mu_uv, mu_uv))
 
             tgt_prc_u = np.concatenate((tgt_prc_u, prc_u))
-            tgt_prc_v = np.concatenate((tgt_prc_v, prc_v))
-            tgt_prc_uv = np.concatenate((tgt_prc_uv, prc_uv))
+            # tgt_prc_v = np.concatenate((tgt_prc_v, prc_v))
+            # tgt_prc_uv = np.concatenate((tgt_prc_uv, prc_uv))
 
             tgt_wt_u = np.concatenate((tgt_wt_u, wt_u))
-            tgt_wt_v = np.concatenate((tgt_wt_v, wt_v))
-            tgt_wt_uv = np.concatenate((tgt_wt_uv, wt_uv))
+            # tgt_wt_v = np.concatenate((tgt_wt_v, wt_v))
+            # tgt_wt_uv = np.concatenate((tgt_wt_uv, wt_uv))
 
             obs_data = np.concatenate((obs_data, samples.get_obs()))
         """
@@ -278,10 +278,10 @@ class AlgorithmMDGPS(Algorithm):
         """
         # update pi(u | x)
         self.policy_opt.update_locals(obs_data, tgt_mu_u, tgt_prc_u, tgt_wt_u)
-        # update pi(v|x)
-        self.policy_opt.update_locals(obs_data, tgt_mu_v, tgt_prc_v, tgt_wt_v)
-        # update pi(u, v | x)
-        # self.policy_opt.update_locals(obs_data, tgt_mu_uv, tgt_prc_uv, tgt_wt_uv)
+        # # update pi(v|x)
+        # self.policy_opt.update_locals(obs_data, tgt_mu_v, tgt_prc_v, tgt_wt_v)
+        # # update pi(u, v | x)
+        # # self.policy_opt.update_locals(obs_data, tgt_mu_uv, tgt_prc_uv, tgt_wt_uv)
 
     def _update_policy_fit(self, m):
         """
@@ -377,6 +377,7 @@ class AlgorithmMDGPS(Algorithm):
         """
         Re-estimate the local policy values in the neighborhood of the
         trajectory.
+        Here I used the normal inverse wishart prior
         Args:
             m: Condition
         """
@@ -384,7 +385,7 @@ class AlgorithmMDGPS(Algorithm):
         # Choose samples to use.
         # samples = shuffle(self.cur[m].sample_list + self.cur[m].sample_list_adv)
         samples = self.cur[m].sample_list
-        samples_adv =  self.cur[m].sample_list_adv)
+        samples_adv =  self.cur[m].sample_list_adv
         N = len(samples)
         pol_info = self.cur[m].pol_info
         X = samples.get_X()
@@ -405,7 +406,8 @@ class AlgorithmMDGPS(Algorithm):
 
         # Fit linearization and store in pol_info.
         pol_info.pol_G, pol_info.pol_g, pol_info.pol_Suv = \
-                policy_prior.fit_robust(X, pol_mu, pol_sig, pol_mu,pol_sig_mu)
+                policy_prior.fit(X, pol_mu, pol_sig)
+                # policy_prior.fit_robust(X, pol_mu, pol_sig, pol_mu,pol_sig_mu)
         for t in range(T):
             pol_info.chol_pol_Suv[t, :, :] = \
                     sp.linalg.cholesky(pol_info.pol_Suv[t, :, :])

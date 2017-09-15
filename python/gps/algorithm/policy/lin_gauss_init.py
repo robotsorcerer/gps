@@ -1,9 +1,10 @@
 """ Initializations for linear Gaussian controllers. """
 import copy
 import numpy as np
+import numpy.linalg as LinAlgError
 import scipy as sp
 
-from gps.algorithm.dynamics.dynamics_utils import guess_dynamics
+from gps.algorithm.dynamics.dynamics_utils import guess_dynamics, guess_dynamics_robust
 from gps.algorithm.policy.lin_gauss_policy import LinearGaussianPolicy, LinearGaussianPolicyRobust
 from gps.algorithm.policy.config import INIT_LG_PD, INIT_LG_LQR
 
@@ -51,7 +52,7 @@ def init_lqr(hyperparams):
     Ltt = np.diag(np.hstack([
         config['stiffness'] * np.ones(dU),
         config['stiffness'] * config['stiffness_vel'] * np.ones(dU),
-        np.zeros(dX - dU*2), np.ones(dU)
+        np.zeros(dX - dU*2), np.ones(dU),
     ]))
     Ltt = Ltt / config['init_var']  # Cost function - quadratic term.
     lt = -Ltt.dot(np.r_[x0, np.zeros(dU)])  # Cost function - linear term.
@@ -78,6 +79,7 @@ def init_lqr(hyperparams):
         # Qtt = (dX+dU) by (dX+dU) 2nd Derivative of Q-function with
         # respect to trajectory (dX+dU).
         Qtt_t = Ltt_t + Fd.T.dot(Vxx_t).dot(Fd)
+
         # Qt = (dX+dU) 1st Derivative of Q-function with respect to
         # trajectory (dX+dU).
         qt_t = lt_t + Fd.T.dot(vx_t + Vxx_t.dot(fc))
@@ -147,19 +149,22 @@ def init_lqr_robust(hyperparams):
                             dX, dU, dV, dt)
 
     # Setup a cost function based on stiffness.
-    # Ltt = (dX+dU) by (dX+dU) - Hessian of loss with respect to
+    # Ltt = (dX+dU+dV) by (dX+dU+dV) - Hessian of loss with respect to
     # trajectory at a single timestep.
     Ltt = np.hstack([
          config['stiffness'] * np.ones(dU),
          config['stiffness'] * config['stiffness_vel'] * np.ones(dU),
          np.zeros(dX - dU*2), np.ones(dU),
-         np.ones(dV)  # augment dynamics with disturbance controller
+         # set up adversarial terms
+         config['stiffness'] * np.ones(dV),
+         config['stiffness'] * config['stiffness_vel'] * np.ones(dV),
+         np.zeros(dX - dV*2), np.ones(dV)
     ])
     Ltt = Ltt / config['init_var']  # Cost function - quadratic term.
-    lt = -Ltt.dot(np.r_[x0, np.zeros(dU), np.zeros(dV)])  # Cost function - linear term.
+    lt = -Ltt.dot(np.r_[x0, np.zeros(dU), x0, np.zeros(dV)])  # Cost function - linear term.
 
     # Perform dynamic programming.
-    gu =np.zeros((T, dU))  # local open loop control
+    gu = np.zeros((T, dU))  # local open loop control
     gv = np.zeros((T, dV))  # local open loop control adversary
     Gu = np.zeros((T, dU, dX))  # local state feedback gain
     Gv = np.zeros((T, dV, dX))  # local state feedback gain adversary
@@ -197,11 +202,14 @@ def init_lqr_robust(hyperparams):
         else:
             Ltt_t = Ltt
             lt_t = lt
-        # Qtt = (dX+dU+dV) by (dX+dU+dV) 2nd Derivative of Q-function with
+        # Qtt = (dX+dU+dX+dV) by (dX+dU+dX+dV) 2nd Derivative of Q-function with
         # respect to trajectory (dX+dU+dV).
         Qtt_t = Ltt_t + Fd.T.dot(Vxx_t).dot(Fd)
         # Qt = (dX+dU) 1st Derivative of Q-function with respect to
         # trajectory (dX+dU).
+        # print('lt_t: {}, Fd: {}, vx_t: {}, Vxx_t: {}, fc: {}'.format( \
+        # lt_t.shape, Fd.shape, vx_t.shape,
+        # Vxx_t.shape, fc.shape))
         qt_t = lt_t + Fd.T.dot(vx_t + Vxx_t.dot(fc))
 
         """
@@ -214,57 +222,75 @@ def init_lqr_robust(hyperparams):
 
         PSigu = inverse of covariance term for local controllers
         """
-        U = sp.linalg.cholesky(Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_v]) -
-                         (Qtt_t[idx_u, idx_v].T).dot(Qtt_t[idx_u, idx_v]))
-        L = U.T
-        invPsig[t, :, :] = Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_v]) - \
-                         (Qtt_t[idx_u, idx_v].T).dot(Qtt_t[idx_u, idx_v])
-        Psig[t, :, :] = sp.linalg.solve_triangular(
-            U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
-        )
-        cholPSig[t, :, :] = sp.linalg.cholesky(PSig[t, :, :])
 
-        # compute additive term to G_tilde in eqn 14
-        V = sp.linalg.cholesky(Qtt_t[idx_v, idx_v])
-        Lv = V.T
-        invPSigv[t, :, :] = Qtt_t[idx_v, idx_v]
-        PSigv[t, :, :]   =  sp.linalg.solve_triangular(
-            V, sp.linalg.solve_triangular(Lv, np.eye(dV), lower=True)
-        )
-        cholPSigv[t, :, :] = sp.linalg.cholesky(PSigv[t, :, :])
+        if np.any(np.isnan(Qtt_t[idx_u, idx_u])): # Fix Q function
+            Qtt_t[idx_u, idx_u] = np.eye(Qtt_t.shape[-1])
+        # print('Quu: ', Qtt_t[idx_u, idx_u])
+        # print('Qvv: ', Qtt_t[idx_v, idx_v])
+        # print('Quv: ', Qtt_t[idx_u, idx_v])
+        # print('Quu . Qvv: ', Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_v]))
+        # print('Quv.T , Quv', Qtt_t[idx_u, idx_v].T.dot(Qtt_t[idx_u, idx_v]))
 
-        # control gain - state term
-        Gu[t, :, :] = -sp.linalg.solve_triangular(
-            U, sp.linalg.solve_triangular(L, (
-                            - Qtt_t[idx_u, idx_v].dot(Qtt_t[idx_v, idx_x])
-                            - Qtt_t[idx_u, idx_x].dot(Qtt_t[idx_v, idx_v])
-                            ), lower=True)
-        )
-        # control gain - open loop term
-        gu[t, :] = -sp.linalg.solve_triangular(
-            U, sp.linalg.solve_triangular(L, (
-                                qt_t[idx_u].dot(Qtt_t[idx_v, idx_v])
-                                - Qtt_t[idx_u, idx_v].dot(qt_t(idx_v))
-                                ),
-                                lower=True)
-        )
+        try:
+            U_inner = Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_v]) - \
+                             Qtt_t[idx_u, idx_v].T.dot(Qtt_t[idx_u, idx_v])
+            # print('U_inner shape: ', U_inner)
+            reg_term = 1e-4 * np.eye(dU) # reg term to avoid factorization errors
+            U = sp.linalg.cholesky(U_inner + reg_term)
+            L = U.T
+            invPSig[t, :, :] = Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_v]) - \
+                               Qtt_t[idx_u, idx_v].T.dot(Qtt_t[idx_u, idx_v]) + reg_term
+            PSig[t, :, :] = sp.linalg.solve_triangular(
+                U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
+            )
+            cholPSig[t, :, :] = sp.linalg.cholesky(PSig[t, :, :])
 
-        # adversarial gain - state term
-        Gv[t, :, :] = sp.linalg.solve_triangular(
-            U, sp.linalg.solve_triangular(L, (
-                            + Qtt_t[idx_u, idx_v].dot(Qtt_t[idx_u, idx_x])
-                            - Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_x])
-                            ), lower=True)
-        )
-        # adversarial gain - open loop term
-        gv[t, :] = sp.linalg.solve_triangular(
-            U, sp.linalg.solve_triangular(L, (
-                                qt_t[idx_u].dot(Qtt_t[idx_u, idx_v])
-                                - Qtt_t[idx_u, idx_u].dot(qt_t(idx_v))
-                                ),
-                                lower=True)
-        )
+            # compute additive term to G_tilde in eqn 14
+            V = sp.linalg.cholesky(Qtt_t[idx_v, idx_v] + reg_term)
+            Lv = V.T
+            invPSigv[t, :, :] = Qtt_t[idx_v, idx_v] + reg_term
+            PSigv[t, :, :]   =  sp.linalg.solve_triangular(
+                V, sp.linalg.solve_triangular(Lv, np.eye(dV), lower=True)
+            )
+            cholPSigv[t, :, :] = sp.linalg.cholesky(PSigv[t, :, :])
 
+            # control gain - state term
+            Gu[t, :, :] = -sp.linalg.solve_triangular(
+                U, sp.linalg.solve_triangular(L, (
+                                - Qtt_t[idx_u, idx_v].dot(Qtt_t[idx_v, idx_x])
+                                + Qtt_t[idx_v, idx_v].dot(Qtt_t[idx_u, idx_x])
+                                ), lower=True)
+            )
+            # control gain - open loop term
+            gu[t, :] = -sp.linalg.solve_triangular(
+                U, sp.linalg.solve_triangular(L, (
+                                    qt_t[idx_u].dot(Qtt_t[idx_v, idx_v])
+                                    - qt_t[idx_v].dot(Qtt_t[idx_u, idx_v])
+                                    ),
+                                    lower=True)
+            )
+
+            # adversarial gain - state term
+            Gv[t, :, :] = sp.linalg.solve_triangular(
+                U, sp.linalg.solve_triangular(L, (
+                                + Qtt_t[idx_u, idx_v].dot(Qtt_t[idx_u, idx_x])
+                                - Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_x])
+                                ), lower=True)
+            )
+            # adversarial gain - open loop term
+            gv[t, :] = sp.linalg.solve_triangular(
+                U, sp.linalg.solve_triangular(L, (
+                                    qt_t[idx_u].dot(Qtt_t[idx_u, idx_v])
+                                    - qt_t[idx_v].dot(Qtt_t[idx_u, idx_u])
+                                    ),
+                                    lower=True)
+            )
+        except LinAlgError as e:
+            # Error thrown when Qtt[idx_u, idx_u] is not
+            # symmetric positive definite.
+            LOGGER.debug('LinAlgError in lin_gauss: %s', e)
+            # fail = t if self.cons_per_step else True
+            break
         """
             combine \tilde{g} = gu - gv
                     \tilde{G} = Gu - Gv
@@ -272,28 +298,27 @@ def init_lqr_robust(hyperparams):
         """
 
         # g_tilde and G_tilde are as given in quation 14 in the appendix
-        g_tilde[t, :, :] = gv[t, :, :] + gu[t, :, :]
+        g_tilde[t, :] = gv[t, :] + gu[t, :]
+        # Fix G_tilde for now
         G_tilde[t, :, :] = Gu[t, :, :] + Gv[t, :, :]
 
-        G_tilde_addendum[t,:,:] = Qtt_t[id_u, idx_v].dot(PSigv[t,:,:].dot(
-                                    np.eye(dV) + Qtt_t[idx_v, idx_u] )
-                                )
-        G_tilde[t,:,:] = G_tilde[t,:,:] + G_tilde_addendum[t,:,:]
+        # G_tilde_addendum[t,:,:] = (Qtt_t[idx_u, idx_v].dot(PSigv[t,:,:])).dot(np.eye(dV) + Qtt_t[idx_v, idx_u])
+        # G_tilde[t,:,:] += G_tilde_addendum[t,:,:]
 
         # compute covariance of the deterministic optimal policy
-        UV = sp.linalg.cholesky(Qtt_t[id_u, idx_v].dot(PSigv[t,:,:].dot(
-                                    np.eye(dV) + Qtt_t[idx_v, idx_u] ))
-        L_UV = (UV).T
-        invPSig_UV[t, :, :] = Qtt_t[id_u, idx_v].dot(PSigv[t,:,:].dot(
-                                    np.eye(dV) + Qtt_t[idx_v, idx_u] )
-        PSig_UV[t,:,:] = sp.linalg.solve_triangular(
-                            UV, sp.linalg.solve_triangular(L_UV, np.eye(dU), lower=True)
-                        )
-        cholPSig_UV[t,:,:] =  sp.linalg.cholesky(PSig_UV[t, :, :])
+        # UV = sp.linalg.cholesky(Qtt_t[idx_u, idx_v].dot(PSigv[t,:,:]).dot(
+        #                             np.eye(dV) + Qtt_t[idx_v, idx_u] ))
+        # Luv = (UV).T
+        # invPSig_UV[t, :, :] = Qtt_t[idx_u, idx_v].dot(PSigv[t,:,:]).dot(
+        #                             np.eye(dV) + Qtt_t[idx_v, idx_u] )
+        # PSig_UV[t,:,:] = sp.linalg.solve_triangular(
+        #                     UV, sp.linalg.solve_triangular(Luv, np.eye(dU), lower=True)
+        #                 )
+        # cholPSig_UV[t,:,:] =  sp.linalg.cholesky(PSig_UV[t, :, :])
 
-    return LinearGaussianPolicyRobust( Gu, gu, PSigu, cholPSigu, invPSigu, # protagonist terms
+    return LinearGaussianPolicyRobust( Gu, gu, PSig, cholPSig, invPSig, # protagonist terms
                                        Gv, gv, PSigv, cholPSigv, invPSigv,  # adversarial terms
-                                       G_tilde, g_tilde, , PSig_UV, cholPSig_UV, invPSig_UV # global terms
+                                       G_tilde, g_tilde, PSig_UV, cholPSig_UV, invPSig_UV # global terms
                                     )
 
 #TODO: Fix docstring

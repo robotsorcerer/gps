@@ -114,7 +114,7 @@ class GPSMain(object):
             for itr in range(itr_start, self._hyperparams['iterations']):
                 for cond in self._train_idx:
                     for i in range(self._hyperparams['num_samples']):
-                        self._take_sample(itr, cond, i)
+                        self._take_sample(itr, cond, i)  # this runs D_{ui} and D_{vj}
 
                 traj_sample_lists = [
                     self.agent.get_samples(cond, -self._hyperparams['num_samples'])
@@ -122,7 +122,7 @@ class GPSMain(object):
                 ]
 
                 adv_sample_lists = [
-                    self.agent_robust.get_adversary_samples(cond, -self._hyperparams['num_samples'])
+                    self.agent_robust.get_samples_adv(cond, -self._hyperparams['num_samples'])
                     for cond in self._train_idx
                     ]
 
@@ -319,7 +319,7 @@ class GPSMain(object):
                     )
 
                 if self.robust:
-                    self.agent_robust.sample(
+                    self.agent.sample_adv(
                         pol_robust, cond,
                         verbose=(i < self._hyperparams['verbose_trials'])
                     )

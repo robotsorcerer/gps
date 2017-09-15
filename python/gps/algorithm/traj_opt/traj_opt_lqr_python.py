@@ -1212,7 +1212,7 @@ class TrajOptLQRPython(TrajOpt):
                     )
 
                 # Compute value function.
-                if (self.cons_per_step or
+                if (self.cons_per_step or \
                     not self._hyperparams['update_in_bwd_pass']):
                     Kv_inner[t, :, :]  = (Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_x, idx_x]).dot(Qtt[t, idx_u, idx_v]))
                     U_kv = sp.linalg.cholesky(Kv_inner[t, :, :])
@@ -1235,6 +1235,7 @@ class TrajOptLQRPython(TrajOpt):
                                 2*(Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_x]).dot(Qtt[t, idx_v])) + \
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v]).dot(Qtt[t, idx_v, idx_x])) - \
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v, idx_v]).dot(Qtt[t, idx_x]))
+                                )
                 else:
                     Vxx[t, :, :] = -Kv[t,:,:].dot(
                                     (Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_x, idx_x]).dot(Qtt[t, idx_u, idx_v])) - \
@@ -1251,6 +1252,7 @@ class TrajOptLQRPython(TrajOpt):
                                 2*(Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_x]).dot(Qtt[t, idx_v])) + \
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v]).dot(Qtt[t, idx_v, idx_x])) - \
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v, idx_v]).dot(Qtt[t, idx_x]))
+                                )
                     # Vxx[t, :, :] = Qtt[t, idx_x, idx_x] + \
                     #         Qtt[t, idx_x, idx_u].dot(traj_distr.K[t, :, :])
                     # Vx[t, :] = Qt[t, idx_x] + \
@@ -1479,6 +1481,7 @@ class TrajOptLQRPython(TrajOpt):
                                 2*(Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_x]).dot(Qtt[t, idx_v])) + \
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v]).dot(Qtt[t, idx_v, idx_x])) - \
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v, idx_v]).dot(Qtt[t, idx_x]))
+                                )
                 else:
                     Vxx[t, :, :] = -Kv[t,:,:].dot(
                                     (Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_x, idx_x]).dot(Qtt[t, idx_u, idx_v])) - \
@@ -1495,6 +1498,7 @@ class TrajOptLQRPython(TrajOpt):
                                 2*(Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_x]).dot(Qtt[t, idx_v])) + \
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v]).dot(Qtt[t, idx_v, idx_x])) - \
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v, idx_v]).dot(Qtt[t, idx_x]))
+                                )
                     # Vxx[t, :, :] = Qtt[t, idx_x, idx_x] + \
                     #         Qtt[t, idx_x, idx_u].dot(traj_distr.K[t, :, :])
                     # Vx[t, :] = Qt[t, idx_x] + \
@@ -1628,8 +1632,8 @@ class TrajOptLQRPython(TrajOpt):
                     # K_term = Qtt[t, idx_u, idx_x]
                     # Guu_inv_term = - Qtt[idx_u, idx_u]
                     # Gvv_inv_term = - Qtt[idx_v, idx_v]
-                    Kstar = Qtt[t, idx_u, idx_u].dot(Qtt_t[t, idx_v, idx_v])
-                            - Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_u, idx_v])
+                    Kstar = Qtt[t, idx_u, idx_u].dot(Qtt_t[t, idx_v, idx_v]) - \
+                            Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_u, idx_v])
                     U_Kstar = sp.linalg.cholesky(Kstar)
                     L_Kstar = U_Kstar.T
                     InvKstar = sp.linalg.solve_triangular(

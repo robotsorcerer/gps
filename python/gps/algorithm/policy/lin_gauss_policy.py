@@ -126,6 +126,19 @@ class LinearGaussianPolicyRobust(Policy):
         self.chol_pol_covar = chol_pol_covar
         self.inv_pol_covar = inv_pol_covar
 
+    def act(self, x, obs, t, noise=None):
+        """
+        Return an action for a state.
+        Args:
+            x: State vector.
+            obs: Observation vector.
+            t: Time step.
+            noise: Action noise. This will be scaled by the variance.
+        """
+        u = self.K[t].dot(x) + self.k[t]
+        u += self.chol_pol_covar[t].T.dot(noise)
+        return u
+        
     def act_u(self, x, obs, t, noise=None):
         """
         Return an action for a state.

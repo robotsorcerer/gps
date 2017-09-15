@@ -19,11 +19,11 @@ LOGGER = logging.getLogger(__name__)
 
 class PolicyOptCaffe(PolicyOpt):
     """ Policy optimization using Caffe neural network library. """
-    def __init__(self, hyperparams, dO, dU):
+    def __init__(self, hyperparams, dO, dU, dV):
         config = copy.deepcopy(POLICY_OPT_CAFFE)
         config.update(hyperparams)
 
-        PolicyOpt.__init__(self, config, dO, dU)
+        PolicyOpt.__init__(self, config, dO, dU, dV)
 
         self.batch_size = self._hyperparams['batch_size']
 
