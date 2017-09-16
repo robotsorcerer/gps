@@ -38,13 +38,15 @@ void protobuf_AssignDesc_gps_2eproto() {
       "gps.proto");
   GOOGLE_CHECK(file != NULL);
   Sample_descriptor_ = file->message_type(0);
-  static const int Sample_offsets_[8] = {
+  static const int Sample_offsets_[10] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Sample, t_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Sample, dx_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Sample, du_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Sample, dv_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Sample, do__),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Sample, x_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Sample, u_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Sample, v_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Sample, obs_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Sample, meta_),
   };
@@ -93,31 +95,32 @@ void protobuf_AddDesc_gps_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\tgps.proto\022\003gps\"}\n\006Sample\022\016\n\001T\030\001 \001(\r:\0031"
-    "00\022\n\n\002dX\030\002 \001(\r\022\n\n\002dU\030\003 \001(\r\022\n\n\002dO\030\004 \001(\r\022\r"
-    "\n\001X\030\005 \003(\002B\002\020\001\022\r\n\001U\030\006 \003(\002B\002\020\001\022\017\n\003obs\030\007 \003("
-    "\002B\002\020\001\022\020\n\004meta\030\010 \003(\002B\002\020\001*\223\004\n\nSampleType\022\n"
-    "\n\006ACTION\020\000\022\020\n\014JOINT_ANGLES\020\001\022\024\n\020JOINT_VE"
-    "LOCITIES\020\002\022\027\n\023END_EFFECTOR_POINTS\020\003\022!\n\035E"
-    "ND_EFFECTOR_POINT_VELOCITIES\020\004\022 \n\034END_EF"
-    "FECTOR_POINT_JACOBIANS\020\005\022$\n END_EFFECTOR"
-    "_POINT_ROT_JACOBIANS\020\006\022\032\n\026END_EFFECTOR_P"
-    "OSITIONS\020\007\022\032\n\026END_EFFECTOR_ROTATIONS\020\010\022\032"
-    "\n\026END_EFFECTOR_JACOBIANS\020\t\022\031\n\025END_EFFECT"
-    "OR_HESSIANS\020\n\022\r\n\tRGB_IMAGE\020\013\022\017\n\013DEPTH_IM"
-    "AGE\020\014\022\022\n\016RGB_IMAGE_SIZE\020\r\022\021\n\rCONTEXT_IMA"
-    "GE\020\016\022\026\n\022CONTEXT_IMAGE_SIZE\020\017\022\016\n\nIMAGE_FE"
-    "AT\020\020\022!\n\035END_EFFECTOR_POINTS_NO_TARGET\020\021\022"
-    "+\n\'END_EFFECTOR_POINT_VELOCITIES_NO_TARG"
-    "ET\020\022\022\t\n\005NOISE\020\023\022\024\n\020TOTAL_DATA_TYPES\020\024*J\n"
-    "\014ActuatorType\022\r\n\tTRIAL_ARM\020\000\022\021\n\rAUXILIAR"
-    "Y_ARM\020\001\022\030\n\024TOTAL_ACTUATOR_TYPES\020\002*_\n\023Pos"
-    "itionControlMode\022\016\n\nNO_CONTROL\020\000\022\017\n\013JOIN"
-    "T_SPACE\020\001\022\016\n\nTASK_SPACE\020\002\022\027\n\023TOTAL_CONTR"
-    "OL_MODES\020\003*o\n\016ControllerType\022\030\n\024LIN_GAUS"
-    "S_CONTROLLER\020\000\022\024\n\020CAFFE_CONTROLLER\020\001\022\021\n\r"
-    "TF_CONTROLLER\020\002\022\032\n\026TOTAL_CONTROLLER_TYPE"
-    "S\020\003", 963);
+    "\n\tgps.proto\022\003gps\"\230\001\n\006Sample\022\016\n\001T\030\001 \001(\r:\003"
+    "100\022\n\n\002dX\030\002 \001(\r\022\n\n\002dU\030\003 \001(\r\022\n\n\002dV\030\004 \001(\r\022"
+    "\n\n\002dO\030\005 \001(\r\022\r\n\001X\030\006 \003(\002B\002\020\001\022\r\n\001U\030\007 \003(\002B\002\020"
+    "\001\022\r\n\001V\030\010 \003(\002B\002\020\001\022\017\n\003obs\030\t \003(\002B\002\020\001\022\020\n\004met"
+    "a\030\n \003(\002B\002\020\001*\241\004\n\nSampleType\022\n\n\006ACTION\020\000\022\014"
+    "\n\010ACTION_V\020\001\022\020\n\014JOINT_ANGLES\020\002\022\024\n\020JOINT_"
+    "VELOCITIES\020\003\022\027\n\023END_EFFECTOR_POINTS\020\004\022!\n"
+    "\035END_EFFECTOR_POINT_VELOCITIES\020\005\022 \n\034END_"
+    "EFFECTOR_POINT_JACOBIANS\020\006\022$\n END_EFFECT"
+    "OR_POINT_ROT_JACOBIANS\020\007\022\032\n\026END_EFFECTOR"
+    "_POSITIONS\020\010\022\032\n\026END_EFFECTOR_ROTATIONS\020\t"
+    "\022\032\n\026END_EFFECTOR_JACOBIANS\020\n\022\031\n\025END_EFFE"
+    "CTOR_HESSIANS\020\013\022\r\n\tRGB_IMAGE\020\014\022\017\n\013DEPTH_"
+    "IMAGE\020\r\022\022\n\016RGB_IMAGE_SIZE\020\016\022\021\n\rCONTEXT_I"
+    "MAGE\020\017\022\026\n\022CONTEXT_IMAGE_SIZE\020\020\022\016\n\nIMAGE_"
+    "FEAT\020\021\022!\n\035END_EFFECTOR_POINTS_NO_TARGET\020"
+    "\022\022+\n\'END_EFFECTOR_POINT_VELOCITIES_NO_TA"
+    "RGET\020\023\022\t\n\005NOISE\020\024\022\024\n\020TOTAL_DATA_TYPES\020\025*"
+    "J\n\014ActuatorType\022\r\n\tTRIAL_ARM\020\000\022\021\n\rAUXILI"
+    "ARY_ARM\020\001\022\030\n\024TOTAL_ACTUATOR_TYPES\020\002*_\n\023P"
+    "ositionControlMode\022\016\n\nNO_CONTROL\020\000\022\017\n\013JO"
+    "INT_SPACE\020\001\022\016\n\nTASK_SPACE\020\002\022\027\n\023TOTAL_CON"
+    "TROL_MODES\020\003*o\n\016ControllerType\022\030\n\024LIN_GA"
+    "USS_CONTROLLER\020\000\022\024\n\020CAFFE_CONTROLLER\020\001\022\021"
+    "\n\rTF_CONTROLLER\020\002\022\032\n\026TOTAL_CONTROLLER_TY"
+    "PES\020\003", 1005);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "gps.proto", &protobuf_RegisterTypes);
   Sample::default_instance_ = new Sample();
@@ -158,6 +161,7 @@ bool SampleType_IsValid(int value) {
     case 18:
     case 19:
     case 20:
+    case 21:
       return true;
     default:
       return false;
@@ -218,9 +222,11 @@ bool ControllerType_IsValid(int value) {
 const int Sample::kTFieldNumber;
 const int Sample::kDXFieldNumber;
 const int Sample::kDUFieldNumber;
+const int Sample::kDVFieldNumber;
 const int Sample::kDOFieldNumber;
 const int Sample::kXFieldNumber;
 const int Sample::kUFieldNumber;
+const int Sample::kVFieldNumber;
 const int Sample::kObsFieldNumber;
 const int Sample::kMetaFieldNumber;
 #endif  // !_MSC_VER
@@ -244,6 +250,7 @@ void Sample::SharedCtor() {
   t_ = 100u;
   dx_ = 0u;
   du_ = 0u;
+  dv_ = 0u;
   do__ = 0u;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -283,10 +290,12 @@ void Sample::Clear() {
     t_ = 100u;
     dx_ = 0u;
     du_ = 0u;
+    dv_ = 0u;
     do__ = 0u;
   }
   x_.Clear();
   u_.Clear();
+  v_.Clear();
   obs_.Clear();
   meta_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -342,12 +351,28 @@ bool Sample::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(32)) goto parse_dO;
+        if (input->ExpectTag(32)) goto parse_dV;
         break;
       }
 
-      // optional uint32 dO = 4;
+      // optional uint32 dV = 4;
       case 4: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_dV:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &dv_)));
+          set_has_dv();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(40)) goto parse_dO;
+        break;
+      }
+
+      // optional uint32 dO = 5;
+      case 5: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_dO:
@@ -358,12 +383,12 @@ bool Sample::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(42)) goto parse_X;
+        if (input->ExpectTag(50)) goto parse_X;
         break;
       }
 
-      // repeated float X = 5 [packed = true];
-      case 5: {
+      // repeated float X = 6 [packed = true];
+      case 6: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_X:
@@ -375,16 +400,16 @@ bool Sample::MergePartialFromCodedStream(
                       WIRETYPE_FIXED32) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 1, 42, input, this->mutable_x())));
+                 1, 50, input, this->mutable_x())));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(50)) goto parse_U;
+        if (input->ExpectTag(58)) goto parse_U;
         break;
       }
 
-      // repeated float U = 6 [packed = true];
-      case 6: {
+      // repeated float U = 7 [packed = true];
+      case 7: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_U:
@@ -396,16 +421,37 @@ bool Sample::MergePartialFromCodedStream(
                       WIRETYPE_FIXED32) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 1, 50, input, this->mutable_u())));
+                 1, 58, input, this->mutable_u())));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(58)) goto parse_obs;
+        if (input->ExpectTag(66)) goto parse_V;
         break;
       }
 
-      // repeated float obs = 7 [packed = true];
-      case 7: {
+      // repeated float V = 8 [packed = true];
+      case 8: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_V:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, this->mutable_v())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_FIXED32) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 1, 66, input, this->mutable_v())));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(74)) goto parse_obs;
+        break;
+      }
+
+      // repeated float obs = 9 [packed = true];
+      case 9: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_obs:
@@ -417,16 +463,16 @@ bool Sample::MergePartialFromCodedStream(
                       WIRETYPE_FIXED32) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 1, 58, input, this->mutable_obs())));
+                 1, 74, input, this->mutable_obs())));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(66)) goto parse_meta;
+        if (input->ExpectTag(82)) goto parse_meta;
         break;
       }
 
-      // repeated float meta = 8 [packed = true];
-      case 8: {
+      // repeated float meta = 10 [packed = true];
+      case 10: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_meta:
@@ -438,7 +484,7 @@ bool Sample::MergePartialFromCodedStream(
                       WIRETYPE_FIXED32) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 1, 66, input, this->mutable_meta())));
+                 1, 82, input, this->mutable_meta())));
         } else {
           goto handle_uninterpreted;
         }
@@ -479,14 +525,19 @@ void Sample::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->du(), output);
   }
 
-  // optional uint32 dO = 4;
-  if (has_do_()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->do_(), output);
+  // optional uint32 dV = 4;
+  if (has_dv()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->dv(), output);
   }
 
-  // repeated float X = 5 [packed = true];
+  // optional uint32 dO = 5;
+  if (has_do_()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(5, this->do_(), output);
+  }
+
+  // repeated float X = 6 [packed = true];
   if (this->x_size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteTag(5, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    ::google::protobuf::internal::WireFormatLite::WriteTag(6, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
     output->WriteVarint32(_x_cached_byte_size_);
   }
   for (int i = 0; i < this->x_size(); i++) {
@@ -494,9 +545,9 @@ void Sample::SerializeWithCachedSizes(
       this->x(i), output);
   }
 
-  // repeated float U = 6 [packed = true];
+  // repeated float U = 7 [packed = true];
   if (this->u_size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteTag(6, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    ::google::protobuf::internal::WireFormatLite::WriteTag(7, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
     output->WriteVarint32(_u_cached_byte_size_);
   }
   for (int i = 0; i < this->u_size(); i++) {
@@ -504,9 +555,19 @@ void Sample::SerializeWithCachedSizes(
       this->u(i), output);
   }
 
-  // repeated float obs = 7 [packed = true];
+  // repeated float V = 8 [packed = true];
+  if (this->v_size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteTag(8, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_v_cached_byte_size_);
+  }
+  for (int i = 0; i < this->v_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloatNoTag(
+      this->v(i), output);
+  }
+
+  // repeated float obs = 9 [packed = true];
   if (this->obs_size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteTag(7, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    ::google::protobuf::internal::WireFormatLite::WriteTag(9, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
     output->WriteVarint32(_obs_cached_byte_size_);
   }
   for (int i = 0; i < this->obs_size(); i++) {
@@ -514,9 +575,9 @@ void Sample::SerializeWithCachedSizes(
       this->obs(i), output);
   }
 
-  // repeated float meta = 8 [packed = true];
+  // repeated float meta = 10 [packed = true];
   if (this->meta_size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteTag(8, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    ::google::protobuf::internal::WireFormatLite::WriteTag(10, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
     output->WriteVarint32(_meta_cached_byte_size_);
   }
   for (int i = 0; i < this->meta_size(); i++) {
@@ -547,15 +608,20 @@ void Sample::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->du(), target);
   }
 
-  // optional uint32 dO = 4;
-  if (has_do_()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->do_(), target);
+  // optional uint32 dV = 4;
+  if (has_dv()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->dv(), target);
   }
 
-  // repeated float X = 5 [packed = true];
+  // optional uint32 dO = 5;
+  if (has_do_()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(5, this->do_(), target);
+  }
+
+  // repeated float X = 6 [packed = true];
   if (this->x_size() > 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
-      5,
+      6,
       ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
       target);
     target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
@@ -566,10 +632,10 @@ void Sample::SerializeWithCachedSizes(
       WriteFloatNoTagToArray(this->x(i), target);
   }
 
-  // repeated float U = 6 [packed = true];
+  // repeated float U = 7 [packed = true];
   if (this->u_size() > 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
-      6,
+      7,
       ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
       target);
     target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
@@ -580,10 +646,24 @@ void Sample::SerializeWithCachedSizes(
       WriteFloatNoTagToArray(this->u(i), target);
   }
 
-  // repeated float obs = 7 [packed = true];
+  // repeated float V = 8 [packed = true];
+  if (this->v_size() > 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
+      8,
+      ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
+      _v_cached_byte_size_, target);
+  }
+  for (int i = 0; i < this->v_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteFloatNoTagToArray(this->v(i), target);
+  }
+
+  // repeated float obs = 9 [packed = true];
   if (this->obs_size() > 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
-      7,
+      9,
       ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
       target);
     target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
@@ -594,10 +674,10 @@ void Sample::SerializeWithCachedSizes(
       WriteFloatNoTagToArray(this->obs(i), target);
   }
 
-  // repeated float meta = 8 [packed = true];
+  // repeated float meta = 10 [packed = true];
   if (this->meta_size() > 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
-      8,
+      10,
       ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
       target);
     target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
@@ -640,7 +720,14 @@ int Sample::ByteSize() const {
           this->du());
     }
 
-    // optional uint32 dO = 4;
+    // optional uint32 dV = 4;
+    if (has_dv()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->dv());
+    }
+
+    // optional uint32 dO = 5;
     if (has_do_()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
@@ -648,7 +735,7 @@ int Sample::ByteSize() const {
     }
 
   }
-  // repeated float X = 5 [packed = true];
+  // repeated float X = 6 [packed = true];
   {
     int data_size = 0;
     data_size = 4 * this->x_size();
@@ -662,7 +749,7 @@ int Sample::ByteSize() const {
     total_size += data_size;
   }
 
-  // repeated float U = 6 [packed = true];
+  // repeated float U = 7 [packed = true];
   {
     int data_size = 0;
     data_size = 4 * this->u_size();
@@ -676,7 +763,21 @@ int Sample::ByteSize() const {
     total_size += data_size;
   }
 
-  // repeated float obs = 7 [packed = true];
+  // repeated float V = 8 [packed = true];
+  {
+    int data_size = 0;
+    data_size = 4 * this->v_size();
+    if (data_size > 0) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(data_size);
+    }
+    GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+    _v_cached_byte_size_ = data_size;
+    GOOGLE_SAFE_CONCURRENT_WRITES_END();
+    total_size += data_size;
+  }
+
+  // repeated float obs = 9 [packed = true];
   {
     int data_size = 0;
     data_size = 4 * this->obs_size();
@@ -690,7 +791,7 @@ int Sample::ByteSize() const {
     total_size += data_size;
   }
 
-  // repeated float meta = 8 [packed = true];
+  // repeated float meta = 10 [packed = true];
   {
     int data_size = 0;
     data_size = 4 * this->meta_size();
@@ -731,6 +832,7 @@ void Sample::MergeFrom(const Sample& from) {
   GOOGLE_CHECK_NE(&from, this);
   x_.MergeFrom(from.x_);
   u_.MergeFrom(from.u_);
+  v_.MergeFrom(from.v_);
   obs_.MergeFrom(from.obs_);
   meta_.MergeFrom(from.meta_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
@@ -742,6 +844,9 @@ void Sample::MergeFrom(const Sample& from) {
     }
     if (from.has_du()) {
       set_du(from.du());
+    }
+    if (from.has_dv()) {
+      set_dv(from.dv());
     }
     if (from.has_do_()) {
       set_do_(from.do_());
@@ -772,9 +877,11 @@ void Sample::Swap(Sample* other) {
     std::swap(t_, other->t_);
     std::swap(dx_, other->dx_);
     std::swap(du_, other->du_);
+    std::swap(dv_, other->dv_);
     std::swap(do__, other->do__);
     x_.Swap(&other->x_);
     u_.Swap(&other->u_);
+    v_.Swap(&other->v_);
     obs_.Swap(&other->obs_);
     meta_.Swap(&other->meta_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);

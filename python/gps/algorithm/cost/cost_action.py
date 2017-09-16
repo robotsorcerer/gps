@@ -1,6 +1,5 @@
 """ This file defines the torque (action) cost. """
 import copy, os
-
 import numpy as np
 
 from gps.algorithm.cost.config import COST_ACTION
@@ -87,7 +86,7 @@ class CostAction(Cost):
             sample_adv_lists = kwargs['sample_adv']
             # if sample_prot is not None:
             sample = sample.get_U()
-            sample_adv = sample_adv_lists.get_V()
+            sample_adv = sample_adv_lists.get_V(sample.shape)
 
             # print('sample: ', sample.shape, ' | sample_adv: ', sample_adv.shape) #('sample: ', (100, 7), ' | sample_adv: ', (100, 7))
             l = 0.5 * np.sum(self._hyperparams['wu'] * (sample ** 2), axis=1) - \

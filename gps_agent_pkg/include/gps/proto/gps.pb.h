@@ -38,26 +38,27 @@ class Sample;
 
 enum SampleType {
   ACTION = 0,
-  JOINT_ANGLES = 1,
-  JOINT_VELOCITIES = 2,
-  END_EFFECTOR_POINTS = 3,
-  END_EFFECTOR_POINT_VELOCITIES = 4,
-  END_EFFECTOR_POINT_JACOBIANS = 5,
-  END_EFFECTOR_POINT_ROT_JACOBIANS = 6,
-  END_EFFECTOR_POSITIONS = 7,
-  END_EFFECTOR_ROTATIONS = 8,
-  END_EFFECTOR_JACOBIANS = 9,
-  END_EFFECTOR_HESSIANS = 10,
-  RGB_IMAGE = 11,
-  DEPTH_IMAGE = 12,
-  RGB_IMAGE_SIZE = 13,
-  CONTEXT_IMAGE = 14,
-  CONTEXT_IMAGE_SIZE = 15,
-  IMAGE_FEAT = 16,
-  END_EFFECTOR_POINTS_NO_TARGET = 17,
-  END_EFFECTOR_POINT_VELOCITIES_NO_TARGET = 18,
-  NOISE = 19,
-  TOTAL_DATA_TYPES = 20
+  ACTION_V = 1,
+  JOINT_ANGLES = 2,
+  JOINT_VELOCITIES = 3,
+  END_EFFECTOR_POINTS = 4,
+  END_EFFECTOR_POINT_VELOCITIES = 5,
+  END_EFFECTOR_POINT_JACOBIANS = 6,
+  END_EFFECTOR_POINT_ROT_JACOBIANS = 7,
+  END_EFFECTOR_POSITIONS = 8,
+  END_EFFECTOR_ROTATIONS = 9,
+  END_EFFECTOR_JACOBIANS = 10,
+  END_EFFECTOR_HESSIANS = 11,
+  RGB_IMAGE = 12,
+  DEPTH_IMAGE = 13,
+  RGB_IMAGE_SIZE = 14,
+  CONTEXT_IMAGE = 15,
+  CONTEXT_IMAGE_SIZE = 16,
+  IMAGE_FEAT = 17,
+  END_EFFECTOR_POINTS_NO_TARGET = 18,
+  END_EFFECTOR_POINT_VELOCITIES_NO_TARGET = 19,
+  NOISE = 20,
+  TOTAL_DATA_TYPES = 21
 };
 bool SampleType_IsValid(int value);
 const SampleType SampleType_MIN = ACTION;
@@ -213,17 +214,24 @@ class Sample : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 du() const;
   inline void set_du(::google::protobuf::uint32 value);
 
-  // optional uint32 dO = 4;
+  // optional uint32 dV = 4;
+  inline bool has_dv() const;
+  inline void clear_dv();
+  static const int kDVFieldNumber = 4;
+  inline ::google::protobuf::uint32 dv() const;
+  inline void set_dv(::google::protobuf::uint32 value);
+
+  // optional uint32 dO = 5;
   inline bool has_do_() const;
   inline void clear_do_();
-  static const int kDOFieldNumber = 4;
+  static const int kDOFieldNumber = 5;
   inline ::google::protobuf::uint32 do_() const;
   inline void set_do_(::google::protobuf::uint32 value);
 
-  // repeated float X = 5 [packed = true];
+  // repeated float X = 6 [packed = true];
   inline int x_size() const;
   inline void clear_x();
-  static const int kXFieldNumber = 5;
+  static const int kXFieldNumber = 6;
   inline float x(int index) const;
   inline void set_x(int index, float value);
   inline void add_x(float value);
@@ -232,10 +240,10 @@ class Sample : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedField< float >*
       mutable_x();
 
-  // repeated float U = 6 [packed = true];
+  // repeated float U = 7 [packed = true];
   inline int u_size() const;
   inline void clear_u();
-  static const int kUFieldNumber = 6;
+  static const int kUFieldNumber = 7;
   inline float u(int index) const;
   inline void set_u(int index, float value);
   inline void add_u(float value);
@@ -244,10 +252,22 @@ class Sample : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedField< float >*
       mutable_u();
 
-  // repeated float obs = 7 [packed = true];
+  // repeated float V = 8 [packed = true];
+  inline int v_size() const;
+  inline void clear_v();
+  static const int kVFieldNumber = 8;
+  inline float v(int index) const;
+  inline void set_v(int index, float value);
+  inline void add_v(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      v() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_v();
+
+  // repeated float obs = 9 [packed = true];
   inline int obs_size() const;
   inline void clear_obs();
-  static const int kObsFieldNumber = 7;
+  static const int kObsFieldNumber = 9;
   inline float obs(int index) const;
   inline void set_obs(int index, float value);
   inline void add_obs(float value);
@@ -256,10 +276,10 @@ class Sample : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedField< float >*
       mutable_obs();
 
-  // repeated float meta = 8 [packed = true];
+  // repeated float meta = 10 [packed = true];
   inline int meta_size() const;
   inline void clear_meta();
-  static const int kMetaFieldNumber = 8;
+  static const int kMetaFieldNumber = 10;
   inline float meta(int index) const;
   inline void set_meta(int index, float value);
   inline void add_meta(float value);
@@ -276,6 +296,8 @@ class Sample : public ::google::protobuf::Message {
   inline void clear_has_dx();
   inline void set_has_du();
   inline void clear_has_du();
+  inline void set_has_dv();
+  inline void clear_has_dv();
   inline void set_has_do_();
   inline void clear_has_do_();
 
@@ -284,18 +306,21 @@ class Sample : public ::google::protobuf::Message {
   ::google::protobuf::uint32 t_;
   ::google::protobuf::uint32 dx_;
   ::google::protobuf::uint32 du_;
-  ::google::protobuf::uint32 do__;
+  ::google::protobuf::uint32 dv_;
   ::google::protobuf::RepeatedField< float > x_;
   mutable int _x_cached_byte_size_;
   ::google::protobuf::RepeatedField< float > u_;
   mutable int _u_cached_byte_size_;
+  ::google::protobuf::RepeatedField< float > v_;
+  mutable int _v_cached_byte_size_;
   ::google::protobuf::RepeatedField< float > obs_;
   mutable int _obs_cached_byte_size_;
   ::google::protobuf::RepeatedField< float > meta_;
   mutable int _meta_cached_byte_size_;
+  ::google::protobuf::uint32 do__;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
 
   friend void  protobuf_AddDesc_gps_2eproto();
   friend void protobuf_AssignDesc_gps_2eproto();
@@ -377,15 +402,37 @@ inline void Sample::set_du(::google::protobuf::uint32 value) {
   du_ = value;
 }
 
-// optional uint32 dO = 4;
-inline bool Sample::has_do_() const {
+// optional uint32 dV = 4;
+inline bool Sample::has_dv() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void Sample::set_has_do_() {
+inline void Sample::set_has_dv() {
   _has_bits_[0] |= 0x00000008u;
 }
-inline void Sample::clear_has_do_() {
+inline void Sample::clear_has_dv() {
   _has_bits_[0] &= ~0x00000008u;
+}
+inline void Sample::clear_dv() {
+  dv_ = 0u;
+  clear_has_dv();
+}
+inline ::google::protobuf::uint32 Sample::dv() const {
+  return dv_;
+}
+inline void Sample::set_dv(::google::protobuf::uint32 value) {
+  set_has_dv();
+  dv_ = value;
+}
+
+// optional uint32 dO = 5;
+inline bool Sample::has_do_() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void Sample::set_has_do_() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void Sample::clear_has_do_() {
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void Sample::clear_do_() {
   do__ = 0u;
@@ -399,7 +446,7 @@ inline void Sample::set_do_(::google::protobuf::uint32 value) {
   do__ = value;
 }
 
-// repeated float X = 5 [packed = true];
+// repeated float X = 6 [packed = true];
 inline int Sample::x_size() const {
   return x_.size();
 }
@@ -424,7 +471,7 @@ Sample::mutable_x() {
   return &x_;
 }
 
-// repeated float U = 6 [packed = true];
+// repeated float U = 7 [packed = true];
 inline int Sample::u_size() const {
   return u_.size();
 }
@@ -449,7 +496,32 @@ Sample::mutable_u() {
   return &u_;
 }
 
-// repeated float obs = 7 [packed = true];
+// repeated float V = 8 [packed = true];
+inline int Sample::v_size() const {
+  return v_.size();
+}
+inline void Sample::clear_v() {
+  v_.Clear();
+}
+inline float Sample::v(int index) const {
+  return v_.Get(index);
+}
+inline void Sample::set_v(int index, float value) {
+  v_.Set(index, value);
+}
+inline void Sample::add_v(float value) {
+  v_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< float >&
+Sample::v() const {
+  return v_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+Sample::mutable_v() {
+  return &v_;
+}
+
+// repeated float obs = 9 [packed = true];
 inline int Sample::obs_size() const {
   return obs_.size();
 }
@@ -474,7 +546,7 @@ Sample::mutable_obs() {
   return &obs_;
 }
 
-// repeated float meta = 8 [packed = true];
+// repeated float meta = 10 [packed = true];
 inline int Sample::meta_size() const {
   return meta_.size();
 }

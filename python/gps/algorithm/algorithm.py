@@ -143,8 +143,8 @@ class Algorithm(object):
 
             X = cur_data.get_X()
             U = cur_data.get_U()
-            print('U, :', U)
-            V = cur_data_adv.get_U() # this should be correct. Though we need the gamma term
+            # draw V from a 0-mean unit variance for now
+            V = np.random.normal(0, 1, (U.shape)) # this should be correct. Though we need the gamma term
 
             # Update prior and fit dynamics. #traj_info.dynamics = DynamicsLRPrior
             self.cur[m].traj_info.dynamics.update_prior_robust(cur_data, cur_data_adv) #L18, dynamics_lr_prior
@@ -296,7 +296,7 @@ class Algorithm(object):
             # Adjust for expanding cost around a sample.
             X = sample.get_X()
             U = sample.get_U()
-            V = sample.get_V()
+            V = sample.get_V(U.shape)
 
             yhat = np.c_[X, U, V]
             rdiff = -yhat

@@ -1,7 +1,7 @@
 """ This file defines the sample class. """
 import numpy as np
 
-from gps.proto.gps_pb2 import ACTION
+from gps.proto.gps_pb2 import ACTION, ACTION_V
 
 
 class Sample(object):
@@ -66,9 +66,9 @@ class Sample(object):
         """ Get the action. """
         return self._data[ACTION] if t is None else self._data[ACTION][t, :]
 
-    def get_V(self, t=None):
+    def get_V(self, u_shape, t=None):
         """ Get the action. """
-        return self._data[ACTION] if t is None else self._data[ACTION][t, :]
+        return np.random.normal(0, 1, u_shape)#self._data[ACTION_V] if t is None else self._data[ACTION_V][t, :]
 
     def get_obs(self, t=None):
         """ Get the observation. Put it together if not precomputed. """

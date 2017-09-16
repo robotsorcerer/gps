@@ -122,7 +122,7 @@ class GPSMain(object):
                 ]
 
                 adv_sample_lists = [
-                    self.agent_robust.get_samples_adv(cond, -self._hyperparams['num_samples'])
+                    self.agent.get_samples_adv(cond, -self._hyperparams['num_samples'])
                     for cond in self._train_idx
                     ]
 
@@ -172,6 +172,7 @@ class GPSMain(object):
 
                 # Clear agent samples.
                 self.agent.clear_samples()
+                self.agent.clear_samples_adv()
 
                 #take protagonist and antagonist iterations
                 print("Taking RL and Supervised Learning iterations")
@@ -275,14 +276,14 @@ class GPSMain(object):
             if self.closeloop:
                 pol_protag = self.protag_algorithm.policy_opt.policy
             if self.robust:
-                pol_robust = self.algorithm_robust.policy_opt.policy
+                pol_robust = self.algorithm.policy_opt.policy
 
         else:      # use local policies from iLQG
             pol = self.algorithm.cur[cond].traj_distr # cur is every var in iteration data
             if self.closeloop:
                 pol_protag = self.protag_algorithm.cur[cond].traj_distr
             if self.robust:
-                pol_robust = self.algorithm_robust.cur[cond].traj_distr
+                pol_robust = self.algorithm.cur[cond].traj_distr_adv
 
         if self.gui:
             self.gui.set_image_overlays(cond)   # Must call for each new cond.

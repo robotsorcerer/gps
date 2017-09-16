@@ -25,7 +25,7 @@ class DynamicsLRPrior(Dynamics):
         """ Update dynamics prior. """
         X = samples.get_X()
         U = samples.get_U()
-        V = samples_adv.get_U()
+        V = np.random.normal(0, 1, (U.shape))
         self.prior.update_robust(X, U, V)  #this is calling update in gmm_prior
 
     def get_prior(self):

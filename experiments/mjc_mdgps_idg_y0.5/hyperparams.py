@@ -21,7 +21,7 @@ from gps.algorithm.policy.lin_gauss_init import init_lqr, init_lqr_robust
 from gps.algorithm.policy.policy_prior_gmm import PolicyPriorGMM
 from gps.algorithm.policy.policy_prior import PolicyPrior
 from gps.proto.gps_pb2 import JOINT_ANGLES, JOINT_VELOCITIES, \
-        END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES, ACTION
+        END_EFFECTOR_POINTS, END_EFFECTOR_POINT_VELOCITIES, ACTION, ACTION_V
 from gps.gui.config import generate_experiment_info
 
 
@@ -31,6 +31,7 @@ SENSOR_DIMS = {
     END_EFFECTOR_POINTS: 6,
     END_EFFECTOR_POINT_VELOCITIES: 6,
     ACTION: 7,
+    ACTION_V: 7,
 }
 
 PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
