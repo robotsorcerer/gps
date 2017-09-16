@@ -83,7 +83,7 @@ class Agent(object):
             end: End index of samples to return.
         """
         return (SampleList(self._samples[condition][start:]) if end is None
-                else SampleList(self._samples[condition][start:end]))
+    else SampleList(self._samples[condition][start:end]))
 
     def get_samples_adv(self, condition, start=0, end=None):
         """
@@ -92,8 +92,8 @@ class Agent(object):
             start: Starting index of samples to return.
             end: End index of samples to return.
         """
-        return (SampleList(self._samples_adv[condition][start:]) if end is None
-    else SampleList(self._samples_adv[condition][start:]))
+        return (SampleList(self._samples[condition][start:], self._samples_adv[condition][start:]) if end is None
+    else SampleList(self._samples[condition][start:end], self._samples_adv[condition][start:end]))
 
     def clear_samples(self, condition=None):
         """
@@ -108,7 +108,7 @@ class Agent(object):
 
     def clear_samples_adv(self, condition=None):
         """
-        Reset the samples_adv for a given condition, defaulting to all conditions.
+        Reset the samples for a given condition, defaulting to all conditions.
         Args:
             condition: Condition for which to reset samples.
         """

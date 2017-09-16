@@ -12,8 +12,9 @@ LOGGER = logging.getLogger(__name__)
 
 class SampleList(object):
     """ Class that handles writes and reads to sample data. """
-    def __init__(self, samples, **kwargs):
+    def __init__(self, samples):
         self._samples = samples #will be empty lists
+        # self._samples_adv = samples_adv
 
     def get_X(self, idx=None):
         """ Returns N x T x dX numpy array of states. """
@@ -26,6 +27,12 @@ class SampleList(object):
         if idx is None:
             idx = range(len(self._samples))
         return np.asarray([self._samples[i].get_U() for i in idx])
+
+    def get_V(self, idx=None):
+        """ Returns N x T x dV numpy array of disturbances. """
+        if idx is None:
+            idx = range(len(self._samples))
+        return np.asarray([self._samples[i].get_V() for i in idx])
 
     def get_noise(self, idx=None):
         """ Returns N x T x dU numpy array of noise generated during rollouts. """

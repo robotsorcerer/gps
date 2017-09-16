@@ -108,11 +108,11 @@ class AlgorithmMDGPS(Algorithm):
         # Prepare for next iteration
         self._advance_iteration_variables()
 
-    def iteration_idg(self, sample_lists, sample_lists_adv):
+    def iteration_idg(self, sample_lists):
         # Store the samples and evaluate the costs.
         for m in range(self.M):                       # self.M is the # of the condition number
             self.cur[m].sample_list     = sample_lists[m] # cur is every var in iteration data
-            self.cur[m].sample_list_adv = sample_lists_adv[m]  # will be real adversarial samples
+            # self.cur[m].sample_list_adv = sample_lists_adv[m]  # will be real adversarial samples
             self._eval_cost_idg(m)                    # _eval_cost is defined in algorithm.py line 220
 
         # Update dynamics linearizations.

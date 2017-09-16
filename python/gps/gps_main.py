@@ -121,19 +121,21 @@ class GPSMain(object):
                     for cond in self._train_idx
                 ]
 
-                adv_sample_lists = [
-                    self.agent.get_samples_adv(cond, -self._hyperparams['num_samples'])
-                    for cond in self._train_idx
-                    ]
+                # don't need this, otherwise we have unstable simulation
+                # adv_sample_lists = [
+                #     self.agent.get_samples_adv(cond, -self._hyperparams['num_samples'])
+                #     for cond in self._train_idx
+                #     ]
 
                 print("finished taking traj_sample_lists for u and v")
 
                 # Clear agent samples.
                 self.agent.clear_samples()
-                self.agent_robust.clear_samples()
+                # self.agent_robust.clear_samples()
 
-                self._take_iteration(itr, traj_sample_lists, adv_sample_lists=adv_sample_lists)  #see impl in alg_mdgps.py#L36
-                pol_sample_lists = self._take_policy_samples()
+                # self._take_iteration(itr, traj_sample_lists, adv_sample_lists=adv_sample_lists)  #see impl in alg_mdgps.py#L36
+                self._take_iteration(itr, traj_sample_lists)  #see impl in alg_mdgps.py#L36
+                pol_sample_lists = self._take_robust_policy_samples()
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
 
         except Exception as e:
@@ -275,15 +277,15 @@ class GPSMain(object):
             pol = self.algorithm.policy_opt.policy  # calling alg_mdgps.py.policy_opt
             if self.closeloop:
                 pol_protag = self.protag_algorithm.policy_opt.policy
-            if self.robust:
-                pol_robust = self.algorithm.policy_opt.policy
+            # if self.robust:
+            #     pol_robust = self.algorithm.policy_opt.policy
 
         else:      # use local policies from iLQG
             pol = self.algorithm.cur[cond].traj_distr # cur is every var in iteration data
             if self.closeloop:
                 pol_protag = self.protag_algorithm.cur[cond].traj_distr
-            if self.robust:
-                pol_robust = self.algorithm.cur[cond].traj_distr_adv
+            # if self.robust:
+            #     pol_robust = self.algorithm.cur[cond].traj_distr_adv
 
         if self.gui:
             self.gui.set_image_overlays(cond)   # Must call for each new cond.
@@ -307,10 +309,6 @@ class GPSMain(object):
                     'Sampling: iteration %d, condition %d, sample %d.' %
                     (itr, cond, i)
                 )
-                self.agent.sample(
-                    pol, cond,
-                    verbose=(i < self._hyperparams['verbose_trials'])
-                )
 
                 #take adversary samples if we are in close loop
                 if self.closeloop:
@@ -319,9 +317,16 @@ class GPSMain(object):
                         verbose=(i < self._hyperparams['verbose_trials'])
                     )
 
-                if self.robust:
+                elif self.robust:
+                    # run passive dynamics on control and adversarial actions
                     self.agent.sample_adv(
-                        pol_robust, cond,
+                        pol, cond,
+                        verbose=(i < self._hyperparams['verbose_trials'])
+                    )
+
+                else:
+                    self.agent.sample(
+                        pol, cond,
                         verbose=(i < self._hyperparams['verbose_trials'])
                     )
 
@@ -332,13 +337,21 @@ class GPSMain(object):
                 else:
                     redo = False
         else:
-            self.agent.sample(
-                pol, cond,
-                verbose=(i < self._hyperparams['verbose_trials'])
-            )
             if self.closeloop:
                 self.agent.sample(
                     pol_protag, cond,
+                    verbose=(i < self._hyperparams['verbose_trials'])
+                )
+
+            elif self.robust:
+                # run passive dynamics on control and adversarial actions
+                self.agent.sample_adv(
+                    pol, cond,
+                    verbose=(i < self._hyperparams['verbose_trials'])
+                )
+            else:
+                self.agent.sample(
+                    pol, cond,
                     verbose=(i < self._hyperparams['verbose_trials'])
                 )
 
@@ -358,8 +371,8 @@ class GPSMain(object):
             self.algorithm.iteration_cl(self.protag_traj_sample_lists, sample_lists)
 
         elif self.robust: # do idg
-            adv_sample_lists = kwargs['adv_sample_lists']
-            self.algorithm.iteration_idg(sample_lists, adv_sample_lists)
+            # adv_sample_lists = kwargs['adv_sample_lists']
+            self.algorithm.iteration_idg(sample_lists)
 
         else: # do ordinary optimization
             self.algorithm.iteration(sample_lists)
@@ -397,6 +410,36 @@ class GPSMain(object):
                     self.protag_algorithm.policy_opt.policy, self._test_idx[cond],
                     verbose=verbose, save=False, noisy=False)
             self.protag_pol_samples = [SampleList(samples) for samples in protag_pol_samples]
+
+        return [SampleList(samples) for samples in pol_samples]
+
+    def _take_robust_policy_samples(self, N=None):
+        """
+        Take samples from the policy to see how it's doing.
+        Args:
+            N  : number of policy samples to take per condition
+        Returns: None
+        """
+        if 'verbose_policy_trials' not in self._hyperparams:
+            # AlgorithmTrajOpt
+            return None
+        verbose = self._hyperparams['verbose_policy_trials']
+        if self.gui:
+            self.gui.set_status_text('Taking policy samples.')
+        pol_samples = [[None] for _ in range(len(self._test_idx))]
+        # Since this isn't noisy, just take one sample.
+        # TODO: Make this noisy? Add hyperparam?
+        # TODO: Take at all conditions for GUI?
+        # for cond in range(len(self._test_idx)):
+        #     pol_samples[cond][0] = self.agent.sample(
+        #         self.algorithm.policy_opt.policy, self._test_idx[cond],
+        #         verbose=verbose, save=False, noisy=False)
+
+        if self.robust or self.test:
+            for cond in range(len(self._test_idx)):
+                pol_samples[cond][0] = self.agent.sample_adv(
+                    self.algorithm.policy_opt.policy, self._test_idx[cond],
+                    verbose=verbose, save=False, noisy=False)
 
         return [SampleList(samples) for samples in pol_samples]
 

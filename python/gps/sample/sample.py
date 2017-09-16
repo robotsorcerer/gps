@@ -66,9 +66,9 @@ class Sample(object):
         """ Get the action. """
         return self._data[ACTION] if t is None else self._data[ACTION][t, :]
 
-    def get_V(self, u_shape, t=None):
+    def get_V(self, t=None):
         """ Get the action. """
-        return np.random.normal(0, 1, u_shape)#self._data[ACTION_V] if t is None else self._data[ACTION_V][t, :]
+        return self._data[ACTION_V] if t is None else self._data[ACTION_V][t, :] #np.random.normal(0, 1, u_shape)#
 
     def get_obs(self, t=None):
         """ Get the observation. Put it together if not precomputed. """

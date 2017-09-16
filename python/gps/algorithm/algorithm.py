@@ -139,15 +139,15 @@ class Algorithm(object):
 
         for m in range(self.M):
             cur_data = self.cur[m].sample_list
-            cur_data_adv = self.cur[m].sample_list_adv
+            # cur_data_adv = self.cur[m].sample_list_adv
 
             X = cur_data.get_X()
             U = cur_data.get_U()
             # draw V from a 0-mean unit variance for now
-            V = np.random.normal(0, 1, (U.shape)) # this should be correct. Though we need the gamma term
+            V = cur_data.get_U() #np.random.normal(0, 1, (U.shape)) # this should be correct. Though we need the gamma term
 
             # Update prior and fit dynamics. #traj_info.dynamics = DynamicsLRPrior
-            self.cur[m].traj_info.dynamics.update_prior_robust(cur_data, cur_data_adv) #L18, dynamics_lr_prior
+            self.cur[m].traj_info.dynamics.update_prior_robust(cur_data) #L18, dynamics_lr_prior
             self.cur[m].traj_info.dynamics.fit_robust(X, U, V) #L77 dynamics_lr_prior
 
             # Fit x0mu/x0sigma.
@@ -281,9 +281,9 @@ class Algorithm(object):
 
         for n in range(N):
             sample      = self.cur[cond].sample_list[n] # cur is every var in iteration data
-            sample_adv  = self.cur[cond].sample_list_adv[n]
+            # sample_adv  = self.cur[cond].sample_list_adv[n]
             # Get costs.  Self.cost will be a CostSum object see mdgps/antag/hyperparams#L128
-            l, lx, lu, lv, lxx, luu, lvv, lux, lvx  = self.cost[cond].eval(sample, sample_adv=sample_adv)
+            l, lx, lu, lv, lxx, luu, lvv, lux, lvx  = self.cost[cond].eval(sample, sample_adv=None)
             cc[n, :] = l
             cs[n, :] = l
             cv[n,:,:] = np.c_[lx, lu,  lv]
@@ -296,7 +296,7 @@ class Algorithm(object):
             # Adjust for expanding cost around a sample.
             X = sample.get_X()
             U = sample.get_U()
-            V = sample.get_V(U.shape)
+            V = sample.get_V()
 
             yhat = np.c_[X, U, V]
             rdiff = -yhat
