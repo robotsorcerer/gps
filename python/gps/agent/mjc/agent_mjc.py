@@ -152,64 +152,9 @@ class AgentMuJoCo(Agent):
         new_sample.set(ACTION, U)
         new_sample.set(NOISE, noise)
         new_sample.set(ACTION_V, V)
-        # new_sample_adv.set(ACTION, V)
-        # new_sample_adv.set(NOISE, noise)
         if save:
             self._samples[condition].append(new_sample)
         return new_sample
-
-    # def sample_adv(self, policy, condition, verbose=True, save=True, noisy=True):
-    #     """
-    #     Runs a trial and constructs a new sample containing information
-    #     about the trial.
-    #     Args:
-    #         policy: Policy to be used in the trial.
-    #         condition: Which condition setup to run.
-    #         verbose: Whether or not to plot the trial.
-    #         save: Whether or not to store the trial into the samples.
-    #         noisy: Whether or not to use noise during sampling.
-    #     """
-    #     # Create new sample, populate first time step.
-    #     feature_fn = None
-    #     if 'get_features' in dir(policy):
-    #         feature_fn = policy.get_features
-    #     # new_sample = self._init_sample(condition, feature_fn=feature_fn)
-    #     new_sample = self.new_sample  #self._init_sample_adv(condition, feature_fn=feature_fn)
-    #     mj_X = self._hyperparams['x0'][condition]
-    #     V = np.zeros([self.T, self.dV])
-    #     if noisy:
-    #         noise = generate_noise(self.T, self.dV, self._hyperparams)
-    #     else:
-    #         noise = np.zeros((self.T, self.dV))
-    #     if np.any(self._hyperparams['x0var'][condition] > 0):
-    #         x0n = self._hyperparams['x0var'] * \
-    #                 np.random.randn(self._hyperparams['x0var'].shape)
-    #         mj_X += x0n
-    #     noisy_body_idx = self._hyperparams['noisy_body_idx'][condition]
-    #     if noisy_body_idx.size > 0:
-    #         for i in range(len(noisy_body_idx)):
-    #             idx = noisy_body_idx[i]
-    #             var = self._hyperparams['noisy_body_var'][condition][i]
-    #             self._model[condition]['body_pos'][idx, :] += \
-    #                     var * np.random.randn(1, 3)
-    #     # Take the sample.
-    #     for t in range(self.T):
-    #         X_t = new_sample_adv.get_X(t=t) #see sample.py
-    #         obs_t = new_sample_adv.get_obs(t=t) # note observation is now for adversary
-    #         mj_V = policy.act_v(X_t, obs_t, t, noise[t, :])
-    #         V[t, :] = mj_V
-    #         if verbose:
-    #             self._world[condition].plot(mj_X)
-    #         if (t + 1) < self.T:
-    #             for _ in range(self._hyperparams['substeps']):
-    #                 mj_X, _ = self._world[condition].step(mj_X, mj_V)  # run the passive dynamics
-    #             self._data = self._world[condition].get_data()
-    #             # self._set_sample(new_sample, mj_X, t, condition, feature_fn=feature_fn)
-    #     new_sample_adv.set(ACTION_V, V)
-    #     new_sample_adv.set(NOISE, noise)
-    #     if save:
-    #         self._samples_adv[condition].append(new_sample_adv) # this puts new samples in agent empty list
-    #     return new_sample_adv
 
     def sample_adv(self, policy, condition, verbose=True, save=True, noisy=True):
         """
@@ -346,69 +291,6 @@ class AgentMuJoCo(Agent):
                 # TODO - need better solution than setting this to 0.
                 sample.set(IMAGE_FEAT, np.zeros((self._hyperparams['sensor_dims'][IMAGE_FEAT],)), t=0)
         return sample
-
-    def _init_sample_adv(self, condition, feature_fn=None):
-        """
-        Construct a new sample and fill in the first time step.
-        Args:
-            condition: Which condition to initialize.
-            feature_fn: funciton to comptue image features from the observation.
-        """
-        sample = Sample(self)
-
-        # Initialize world/run kinematics
-        self._init(condition)
-
-        # Initialize sample with stuff from _data
-        data = self._world[condition].get_data()
-        sample.set(JOINT_ANGLES, data['qpos'].flatten(), t=0)
-        sample.set(JOINT_VELOCITIES, data['qvel'].flatten(), t=0)
-        eepts = data['site_xpos'].flatten()
-        sample.set(END_EFFECTOR_POINTS, eepts, t=0)
-        sample.set(END_EFFECTOR_POINT_VELOCITIES, np.zeros_like(eepts), t=0)
-
-        if (END_EFFECTOR_POINTS_NO_TARGET in self._hyperparams['obs_include']):
-            sample.set(END_EFFECTOR_POINTS_NO_TARGET, np.delete(eepts, self._hyperparams['target_idx']), t=0)
-            sample.set(END_EFFECTOR_POINT_VELOCITIES_NO_TARGET, np.delete(np.zeros_like(eepts), self._hyperparams['target_idx']), t=0)
-
-        jac = np.zeros([eepts.shape[0], self._model[condition]['nq']])
-        for site in range(eepts.shape[0] // 3):
-            idx = site * 3
-            jac[idx:(idx+3), :] = self._world[condition].get_jac_site(site)
-        sample.set(END_EFFECTOR_POINT_JACOBIANS, jac, t=0)
-
-        # save initial image to meta data
-        self._world[condition].plot(self._hyperparams['x0'][condition])
-        img = self._world[condition].get_image_scaled(self._hyperparams['image_width'],
-                                                      self._hyperparams['image_height'])
-        # mjcpy image shape is [height, width, channels],
-        # dim-shuffle it for later conv-net processing,
-        # and flatten for storage
-        img_data = np.transpose(img["img"], (2, 1, 0)).flatten()
-        # if initial image is an observation, replicate it for each time step
-        if CONTEXT_IMAGE in self.obs_data_types:
-            sample.set(CONTEXT_IMAGE, np.tile(img_data, (self.T, 1)), t=None)
-        else:
-            sample.set(CONTEXT_IMAGE, img_data, t=None)
-        sample.set(CONTEXT_IMAGE_SIZE, np.array([self._hyperparams['image_channels'],
-                                                self._hyperparams['image_width'],
-                                                self._hyperparams['image_height']]), t=None)
-        # only save subsequent images if image is part of observation
-        if RGB_IMAGE in self.obs_data_types:
-            sample.set(RGB_IMAGE, img_data, t=0)
-            sample.set(RGB_IMAGE_SIZE, [self._hyperparams['image_channels'],
-                                        self._hyperparams['image_width'],
-                                        self._hyperparams['image_height']], t=None)
-            if IMAGE_FEAT in self.obs_data_types:
-                raise ValueError('Image features should not be in observation, just state')
-            if feature_fn is not None:
-                obs = sample.get_obs()  # Assumes that the rest of the sample has been populated
-                sample.set(IMAGE_FEAT, feature_fn(obs), t=0)
-            else:
-                # TODO - need better solution than setting this to 0.
-                sample.set(IMAGE_FEAT, np.zeros((self._hyperparams['sensor_dims'][IMAGE_FEAT],)), t=0)
-        return sample
-
 
     def _set_sample(self, sample, mj_X, t, condition, feature_fn=None):
         """

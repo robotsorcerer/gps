@@ -14,6 +14,17 @@ def logsum(vec, axis=0, keepdims=True):
     maxv[maxv == -float('inf')] = 0
     return np.log(np.sum(np.exp(vec-maxv), axis=axis, keepdims=keepdims)) + maxv
 
+def check_sigma(A):
+    """
+        checks if the sigma matrix is symmetric
+        positive definite before inverting via cholesky decomposition
+    """
+    if np.array_equal(A, A.T) and np.all(np.linalg.eigvals(A)>0):
+        # LOGGER.debug("sigma is pos. def. Computing cholesky factorization")
+        return A
+    else:
+        LOGGER.debug("Regularizing sigma for positive-definiteness")
+        return np.eye(A.shape[0])
 
 class GMM(object):
     """ Gaussian Mixture Model. """
@@ -60,6 +71,7 @@ class GMM(object):
         logobs = -0.5*np.ones((N, K))*D*np.log(2*np.pi)
         for i in range(K):
             mu, sigma = self.mu[i], self.sigma[i]
+            sigma = check_sigma(sigma)
             L = scipy.linalg.cholesky(sigma, lower=True)
             logobs[:, i] -= np.sum(np.log(np.diag(L)))
 

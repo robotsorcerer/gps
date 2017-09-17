@@ -210,6 +210,7 @@ class PolicyOptCaffe(PolicyOpt):
         tgt_wt *= (float(N * T) / np.sum(tgt_wt))
         # Allow weights to be at most twice the robust median.
         mn = np.median(tgt_wt[(tgt_wt > 1e-2).nonzero()])
+        print('N: {}, tgt_wt: {}, mn: {}'.format(N, tgt_wt.shape, mn))
         for n in range(N):
             for t in range(T):
                 tgt_wt[n, t] = min(tgt_wt[n, t], 2 * mn)

@@ -147,6 +147,8 @@ class AlgorithmMDGPS(Algorithm):
             # # update adversary policy
             # self._update_policy_fit_v(m)
             # update global linearization
+            LOGGER.debug("cond: %d:  fitting robust "
+                         "policy to modeled dynamics from GMM", m)
             self._update_policy_fit_robust(m)
 
         # C-step
@@ -253,7 +255,7 @@ class AlgorithmMDGPS(Algorithm):
                     mu_u[i, t, :]  = (traj_u.Gu[t, :, :].dot(X[i, t, :]) + traj_u.gu[t, :])
                     # mu_v[i, t, :]  = (traj_v.Gv[t, :, :].dot(X[i, t, :]) + traj_v.gv[t, :])
                     # mu_uv[i, t, :] = (traj_uv.G[t, :, :].dot(X[i, t, :]) + traj_uv.g[t, :])
-                wt_u[:, t].fill(pol_info.pol_wt[t])
+                wt_u[:, t].fill(pol_info_u.pol_wt[t])
                 # wt_v[:, t].fill(pol_info.pol_wt[t])
                 # wt_uv[:, t].fill(pol_info.pol_wt[t])
 
@@ -265,7 +267,7 @@ class AlgorithmMDGPS(Algorithm):
             # tgt_prc_v = np.concatenate((tgt_prc_v, prc_v))
             # tgt_prc_uv = np.concatenate((tgt_prc_uv, prc_uv))
 
-            tgt_wt_u = np.concatenate((tgt_wt_u, wt_u))
+            tgt_wt_u = np.concatenate((tgt_wt, wt_u))
             # tgt_wt_v = np.concatenate((tgt_wt_v, wt_v))
             # tgt_wt_uv = np.concatenate((tgt_wt_uv, wt_uv))
 

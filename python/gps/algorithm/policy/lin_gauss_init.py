@@ -8,7 +8,6 @@ from gps.algorithm.dynamics.dynamics_utils import guess_dynamics, guess_dynamics
 from gps.algorithm.policy.lin_gauss_policy import LinearGaussianPolicy, LinearGaussianPolicyRobust
 from gps.algorithm.policy.config import INIT_LG_PD, INIT_LG_LQR
 
-
 def init_lqr(hyperparams):
     """
     Return initial gains for a time-varying linear Gaussian controller
@@ -119,15 +118,6 @@ def init_lqr_robust(hyperparams):
     #TODO: Use packing instead of assuming which indices are the joint
     #      angles.
 
-    # Notation notes:
-    # L = loss, Q = q-function (dX+dU+dV dimensional),
-    # V = value function (dX dimensional), F = dynamics
-    # Vectors are lower-case, matrices are upper case.
-    # Derivatives: x = state, u = action, v=disturbance, t = state+action+dist (trajectory).
-    # The time index is denoted by _t after the above.
-    # Ex. Ltt_t = Loss, 2nd derivative (w.r.t. trajectory),
-    # indexed by time t.
-
     # Constants.
     idx_x = slice(dX)  # Slices out state.
     idx_u = slice(dX, dX+dU)  # Slices out actions.
@@ -192,6 +182,19 @@ def init_lqr_robust(hyperparams):
     vx_t = np.zeros(dX)  # Vx = dV/dX. Derivative of value function.
     Vxx_t = np.zeros((dX, dX))  # Vxx = ddV/dXdX.
 
+    def check_pdef(A):
+        """
+            checks if the sigma matrix is symmetric
+            positive definite before inverting via cholesky decomposition
+        """
+        if np.array_equal(A, A.T) and np.all(np.linalg.eigvals(A)>0):
+            # LOGGER.debug("sigma is pos. def. Computing cholesky factorization")
+            return A
+        else:
+            # print("Regularizing inv term for positive-definiteness")
+            return np.eye(A.shape[0])
+
+
     #TODO: A lot of this code is repeated with traj_opt_lqr_python.py
     #      backward pass.
     for t in range(T - 1, -1, -1):
@@ -202,14 +205,8 @@ def init_lqr_robust(hyperparams):
         else:
             Ltt_t = Ltt
             lt_t = lt
-        # Qtt = (dX+dU+dX+dV) by (dX+dU+dX+dV) 2nd Derivative of Q-function with
-        # respect to trajectory (dX+dU+dV).
+
         Qtt_t = Ltt_t + Fd.T.dot(Vxx_t).dot(Fd)
-        # Qt = (dX+dU) 1st Derivative of Q-function with respect to
-        # trajectory (dX+dU).
-        # print('lt_t: {}, Fd: {}, vx_t: {}, Vxx_t: {}, fc: {}'.format( \
-        # lt_t.shape, Fd.shape, vx_t.shape,
-        # Vxx_t.shape, fc.shape))
         qt_t = lt_t + Fd.T.dot(vx_t + Vxx_t.dot(fc))
 
         """
@@ -225,18 +222,12 @@ def init_lqr_robust(hyperparams):
 
         if np.any(np.isnan(Qtt_t[idx_u, idx_u])): # Fix Q function
             Qtt_t[idx_u, idx_u] = np.eye(Qtt_t.shape[-1])
-        # print('Quu: ', Qtt_t[idx_u, idx_u])
-        # print('Qvv: ', Qtt_t[idx_v, idx_v])
-        # print('Quv: ', Qtt_t[idx_u, idx_v])
-        # print('Quu . Qvv: ', Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_v]))
-        # print('Quv.T , Quv', Qtt_t[idx_u, idx_v].T.dot(Qtt_t[idx_u, idx_v]))
-
         try:
             U_inner = Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_v]) - \
                              Qtt_t[idx_u, idx_v].T.dot(Qtt_t[idx_u, idx_v])
-            # print('U_inner shape: ', U_inner)
+            U_inner = check_pdef(U_inner)
             reg_term = 1e-4 * np.eye(dU) # reg term to avoid factorization errors
-            U = sp.linalg.cholesky(U_inner + reg_term)
+            U = sp.linalg.cholesky(U_inner)
             L = U.T
             invPSig[t, :, :] = Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_v]) - \
                                Qtt_t[idx_u, idx_v].T.dot(Qtt_t[idx_u, idx_v]) + reg_term
@@ -246,9 +237,9 @@ def init_lqr_robust(hyperparams):
             cholPSig[t, :, :] = sp.linalg.cholesky(PSig[t, :, :])
 
             # compute additive term to G_tilde in eqn 14
-            V = sp.linalg.cholesky(Qtt_t[idx_v, idx_v] + reg_term)
+            V = sp.linalg.cholesky(check_pdef(Qtt_t[idx_v, idx_v]))
             Lv = V.T
-            invPSigv[t, :, :] = Qtt_t[idx_v, idx_v] + reg_term
+            invPSigv[t, :, :] = Qtt_t[idx_v, idx_v] #+ reg_term
             PSigv[t, :, :]   =  sp.linalg.solve_triangular(
                 V, sp.linalg.solve_triangular(Lv, np.eye(dV), lower=True)
             )

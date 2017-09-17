@@ -137,8 +137,8 @@ class DynamicsPriorGMM(object):
         # Create dataset.
         N = self.X.shape[0]
         xuvx = np.reshape(
-            np.c_[self.X[:, :T, :], self.U[:, :T, :], self.V[:, :T, :], self.X[:, 1:(T+1), :]],
-            [T * N, Do]
+            np.c_[self.X[:, :T, :], self.U[:, :T, :], self.V[:, :T, :], 
+                    self.X[:, 1:(T+1), :]],  [T * N, Do]
         )
         # print('xuvx shape: ', xuvx.shape, 'U: ', U, 'V: ', V)
         # Choose number of clusters.
