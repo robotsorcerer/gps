@@ -84,7 +84,7 @@ class PolicyPriorGMM(object):
         LOGGER.debug('Generating %d clusters for policy prior GMM.', K)
         self.gmm.update(XU, K)
 
-    def update_robust(self, samples, samples_adv, policy_opt, mode='add'):
+    def update_robust(self, samples, policy_opt, mode='add'):
         """
         Update GMM using new samples or policy_opt.
         By default does not replace old samples.
@@ -93,7 +93,7 @@ class PolicyPriorGMM(object):
             samples: SampleList containing new samples
             policy_opt: PolicyOpt containing current policy
         """
-        X, obs, obs_adv = samples.get_X(), samples.get_obs(), samples_adv.get_obs()
+        X, obs, obs_adv = samples.get_X(), samples.get_obs(), samples.get_obs_adv()
 
         if self.X is None or mode == 'replace':
             self.X = X

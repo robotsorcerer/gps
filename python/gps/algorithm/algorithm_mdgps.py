@@ -372,11 +372,12 @@ class AlgorithmMDGPS(Algorithm):
 
         # Update policy prior.
         policy_prior = pol_info.policy_prior
-        samples = SampleList(self.cur[m].sample_list)
-        samples_adv = SampleList(self.cur[m].sample_list_adv)
+        samples = SampleList(self.cur[m].sample_list, self.cur[m].sample_list_adv)
+        # samples_adv = SampleList(self.cur[m].sample_list_adv)
+        print('self.cur[m].sample_list_adv: ', self.cur[m].sample_list_adv)
         mode = self._hyperparams['policy_sample_mode']
         # policy_prior.update(samples, self.policy_opt, mode)
-        policy_prior.update_robust(samples, samples_adv, self.policy_opt, mode)
+        policy_prior.update_robust(samples, self.policy_opt, mode)
 
         # Fit linearization and store in pol_info.
         pol_info.pol_G, pol_info.pol_g, pol_info.pol_Suv = \
