@@ -198,6 +198,7 @@ class PolicyOptCaffe(PolicyOpt):
         Returns:
             A CaffePolicy object with updated weights.
         """
+        # print('obs shape: ', obs.shape, 'tg_mu: ', tgt_mu.shape)
         N, T = obs.shape[:2]
         dU, dO = self._dU, self._dO
 
@@ -205,13 +206,13 @@ class PolicyOptCaffe(PolicyOpt):
 
         # Save original tgt_prc.
         tgt_prc_orig = np.reshape(tgt_prc, [N*T, dU, dU])
-
         # Renormalize weights.
         tgt_wt *= (float(N * T) / np.sum(tgt_wt))
         # Allow weights to be at most twice the robust median.
         mn = np.median(tgt_wt[(tgt_wt > 1e-2).nonzero()])
-        print('N: {}, tgt_wt: {}, mn: {}'.format(N, tgt_wt.shape, mn))
-        for n in range(N):
+        # print('N: {}, tgt_wt: {}, mn: {}'.format(N, tgt_wt.shape, mn))
+        # for n in range(N):
+        for n in range(N): # hacky fix to let the for loop finish running before exit
             for t in range(T):
                 tgt_wt[n, t] = min(tgt_wt[n, t], 2 * mn)
         # Robust median should be around one.

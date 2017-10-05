@@ -28,6 +28,6 @@ find_package(PythonLibs 2.7 REQUIRED)
 find_package(Numpy)
 
 include(${CMAKE_SOURCE_DIR}/cmake/boost-python.cmake)
-
+# message("Python Libs: ${PythonLibs}")
 add_subdirectory(Boost.NumPy)
 add_subdirectory(mjcpy2)

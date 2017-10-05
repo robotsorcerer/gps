@@ -25,8 +25,8 @@ class AlgorithmMDGPS(Algorithm):
         Algorithm.__init__(self, config)
 
         policy_prior = self._hyperparams['policy_prior'] #self._hyperparams is from algorithm.py
-        # print(self._hyperparams)
         for m in range(self.M):  #self.M= # conditions
+            # print('operating in mode: ', self._hyperparams['cost']['mode'])
             if self._hyperparams['cost']['mode'] == 'robust':
                 self.cur[m].pol_info = PolicyInfoRobust(self._hyperparams)
             else:
@@ -228,49 +228,20 @@ class AlgorithmMDGPS(Algorithm):
             traj_u, pol_info_u = self.new_traj_distr[m], self.cur[m].pol_info #from algorithm_utils.py#L15
             mu_u    = np.zeros((N, T, dU))
             prc_u   = np.zeros((N, T, dU, dU))
-            wt_u    = np.zeros((N, T))
-
-            # # for adversary
-            # traj_v, pol_info_v = self.new_traj_distr_adv[m], self.cur[m].pol_info #from algorithm_utils.py#L15
-            # mu_v    = np.zeros((N, T, dV))
-            # prc_v   = np.zeros((N, T, dV, dV))
-            # wt_v      = np.zeros((N, T))
-            #
-            # # for control and adversary
-            # traj_uv, pol_info_uv = self.new_traj_distr_robust[m], self.cur[m].pol_info #from algorithm_utils.py#L15
-            # mu_uv    = np.zeros((N, T, dU or dV))
-            # prc_uv   = np.zeros((N, T, dU or dV, dU or dV))
-            # wt_uv    = np.zeros((N, T))
+            wt    = np.zeros((N, T))
 
             # Get time-indexed actions.
             for t in range(T):
                 # Compute actions along this trajectory.
                 prc_u[:, t, :, :] = np.tile(traj_u.inv_pol_covar_u[t, :, :],
                                           [N, 1, 1])
-                # prc_v[:, t, :, :] = np.tile(traj_v.inv_pol_covar_v[t, :, :],
-                #                           [N, 1, 1])
-                # prc_uv[:, t, :, :] = np.tile(traj_uv.inv_pol_covar_uv[t, :, :],
-                #                           [N, 1, 1])
                 for i in range(N):
                     mu_u[i, t, :]  = (traj_u.Gu[t, :, :].dot(X[i, t, :]) + traj_u.gu[t, :])
-                    # mu_v[i, t, :]  = (traj_v.Gv[t, :, :].dot(X[i, t, :]) + traj_v.gv[t, :])
-                    # mu_uv[i, t, :] = (traj_uv.G[t, :, :].dot(X[i, t, :]) + traj_uv.g[t, :])
-                wt_u[:, t].fill(pol_info_u.pol_wt[t])
-                # wt_v[:, t].fill(pol_info.pol_wt[t])
-                # wt_uv[:, t].fill(pol_info.pol_wt[t])
+                wt[:, t].fill(pol_info_u.pol_wt[t])
 
             tgt_mu_u = np.concatenate((tgt_mu_u, mu_u))
-            # tgt_mu_v = np.concatenate((tgt_mu_v, mu_v))
-            # tgt_mu_uv = np.concatenate((tgt_mu_uv, mu_uv))
-
             tgt_prc_u = np.concatenate((tgt_prc_u, prc_u))
-            # tgt_prc_v = np.concatenate((tgt_prc_v, prc_v))
-            # tgt_prc_uv = np.concatenate((tgt_prc_uv, prc_uv))
-
-            tgt_wt_u = np.concatenate((tgt_wt, wt_u))
-            # tgt_wt_v = np.concatenate((tgt_wt_v, wt_v))
-            # tgt_wt_uv = np.concatenate((tgt_wt_uv, wt_uv))
-
+            tgt_wt = np.concatenate((tgt_wt, wt))
             obs_data = np.concatenate((obs_data, samples.get_obs()))
         """
         Update each policy in turn:
@@ -278,8 +249,8 @@ class AlgorithmMDGPS(Algorithm):
             Second: update antagonist policy
             Third: update conditional of protagonist on antagonist
         """
-        # update pi(u | x)
-        self.policy_opt.update_locals(obs_data, tgt_mu_u, tgt_prc_u, tgt_wt_u)
+
+        self.policy_opt.update_locals(obs_data, tgt_mu_u, tgt_prc_u, tgt_wt)
         # # update pi(v|x)
         # self.policy_opt.update_locals(obs_data, tgt_mu_v, tgt_prc_v, tgt_wt_v)
         # # update pi(u, v | x)
@@ -392,10 +363,11 @@ class AlgorithmMDGPS(Algorithm):
         pol_info = self.cur[m].pol_info
         X = samples.get_X()
         obs = samples.get_obs().copy()
-        obs_adv = samples_adv.get_obs().copy()
+        obs_adv = samples.get_obs().copy()
         pol_mu, pol_sig = self.policy_opt.prob(obs)[:2]
         pol_mu_adv, pol_sig_adv = self.policy_opt.prob(obs_adv)[:2]
-        pol_info.pol_mu_prot, pol_info.pol_sig_prot = pol_mu_prot, pol_sig_prot
+        # print('pol_info class', pol_info, pol_info.__dict__.keys())
+        pol_info.pol_mu_prot, pol_info.pol_sig_prot = pol_mu, pol_sig
         pol_info.pol_mu_adv, pol_info.pol_sig_adv = pol_mu_adv, pol_sig_adv
 
         # Update policy prior.
