@@ -82,8 +82,8 @@ class Agent(object):
             start: Starting index of samples to return.
             end: End index of samples to return.
         """
-        return (SampleList(self._samples[condition][start:], self._samples_adv[condition][start:]) if end is None
-                else SampleList(self._samples[condition][start:end], self._samples_adv[condition][start:end]))
+        return (SampleList(self._samples[condition][start:]) if end is None
+                else SampleList(self._samples[condition][start:end]))
 
     def get_samples_adv(self, condition, start=0, end=None):
         """

@@ -10,9 +10,9 @@ LOGGER = logging.getLogger(__name__)
 
 class SampleList(object):
     """ Class that handles writes and reads to sample data. """
-    def __init__(self, samples, samples_adv):
+    def __init__(self, samples):
         self._samples = samples #will be empty lists
-        self._samples_adv = samples_adv #samples_adv
+        # self._samples = samples_adv #samples_adv
 
     def get_X(self, idx=None):
         """ Returns N x T x dX numpy array of states. """
@@ -47,8 +47,8 @@ class SampleList(object):
     def get_obs_adv(self, idx=None):
         """ Returns N x T x dO numpy array of features. """
         if idx is None:
-            idx = range(len(self._samples_adv))
-        return np.asarray([self._samples_adv[i].get_obs_adv() for i in idx])
+            idx = range(len(self._samples))
+        return np.asarray([self._samples[i].get_obs_adv() for i in idx])
 
     def get_samples(self, idx=None):
         """ Returns N sample objects. """

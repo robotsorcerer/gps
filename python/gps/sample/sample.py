@@ -84,6 +84,20 @@ class Sample(object):
                 self.agent.pack_data_obs(obs, data, data_types=[data_type])
         return obs
 
+    def get_obs_adv(self, t=None):
+        """ Get the observation. Put it together if not precomputed. """
+        obs = self._obs if t is None else self._obs[t, :]
+        if np.any(np.isnan(obs)):
+            for data_type in self._data:
+                if data_type not in self.agent.obs_data_types:
+                    continue
+                if data_type in self.agent.meta_data_types:
+                    continue
+                data = (self._data[data_type] if t is None
+                        else self._data[data_type][t, :])
+                self.agent.pack_data_obs(obs, data, data_types=[data_type])
+        return obs
+
     def get_meta(self):
         """ Get the meta data. Put it together if not precomputed. """
         meta = self._meta
