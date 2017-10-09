@@ -381,8 +381,8 @@ class AlgorithmMDGPS(Algorithm):
 
         # Fit linearization and store in pol_info.
         pol_info.pol_G, pol_info.pol_g, pol_info.pol_Suv = \
-                policy_prior.fit(X, pol_mu, pol_sig)
-                # policy_prior.fit_robust(X, pol_mu, pol_sig, pol_mu,pol_sig_mu)
+                policy_prior.fit_robust(X, pol_mu, pol_sig, pol_mu_adv,pol_sig_adv)
+                        # policy_prior.fit(X, pol_mu, pol_sig)
         for t in range(T):
             pol_info.chol_pol_Suv[t, :, :] = \
                     sp.linalg.cholesky(pol_info.pol_Suv[t, :, :])

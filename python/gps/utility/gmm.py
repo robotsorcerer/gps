@@ -74,8 +74,12 @@ class GMM(object):
             sigma = check_sigma(sigma)
             L = scipy.linalg.cholesky(sigma, lower=True)
             logobs[:, i] -= np.sum(np.log(np.diag(L)))
-            print('data: {}, mu: {}'.format(data.shape, mu.shape))
-            diff = (data - mu).T
+            # print('data: {}, mu: {}'.format(data.shape, mu.shape))
+            if mu.shape[0] == data.shape[1]:
+                diff = (data - mu).T
+            else:
+                diff = data.T
+            # diff = (data - mu).T
             soln = scipy.linalg.solve_triangular(L, diff, lower=True)
             logobs[:, i] -= 0.5*np.sum(soln**2, axis=0)
 
@@ -135,7 +139,7 @@ class GMM(object):
         Do = data.shape[1]
 
         LOGGER.debug('Fitting GMM with %d clusters on %d points', K, N)
-        print('data: {}, K: {}'.format(data.shape, K))
+        # print('data: {}, K: {}'.format(data.shape, K))
         if (not self.warmstart or self.sigma is None or
                 K != self.sigma.shape[0]):
             # Initialization.

@@ -181,3 +181,62 @@ class PolicyPriorGMM(object):
                             mu0, Phi, mm, n0, dwts, dX, dU, sig_reg)
         pol_S += pol_sig
         return pol_K, pol_k, pol_S
+
+    def fit_robust(self, X, pol_mu, pol_sig, pol_mu_adv, pol_sig_adv):
+        """
+        Fit policy linearization.
+
+        Args:
+            X: Samples (N, T, dX)
+            pol_mu: Policy means (N, T, dU)
+            pol_sig: Policy covariance (N, T, dU)
+            pol_mu_adv: Policy means (N, T, dV)
+            pol_sig_adv: Policy covariance (N, T, dV)
+        """
+        N, T, dX = X.shape
+        dU = pol_mu.shape[2]
+        dV = pol_mu.shape[2]
+        if N == 1:
+            raise ValueError("Cannot fit dynamics on 1 sample")
+
+        # Collapse policy covariances. (This is only correct because
+        # the policy doesn't depend on state).
+        pol_sig = np.mean(pol_sig, axis=0)
+
+        # Allocate.
+        pol_Gu = np.zeros([T, dU, dX])
+        pol_gu = np.zeros([T, dU])
+        pol_Su = np.zeros([T, dU, dU])
+
+        pol_Gv = np.zeros([T, dV, dX])
+        pol_gv = np.zeros([T, dV])
+        pol_Sv = np.zeros([T, dV, dV])
+
+        # condition protagonist policy on adversarial policy
+        n1, n2 = pol_mu.shape[0], pol_mu_adv.shape[0]
+        # find weigted mean
+        mu_weighted = (n1 * pol_mu + n2 * pol_mu_adv)/ (n1 + n2)
+        # find pooled variance
+        sigma_pooled = (
+                        (n1 ** 2 * pol_mu) + (n2 ** 2* pol_mu_adv) + \
+                        (n1 * pol_mu + n2 * pol_mu_adv) * (n1 * pol_mu + n2 * pol_mu_adv).T - \
+                        (pol_mu * pol_mu_adv.T)
+                        ) /  (n1 + n2)**2
+
+        # Fit policy linearization with least squares regression.
+        dwts = (1.0 / N) * np.ones(N)
+        for t in range(T):
+            Ts = X[:, t, :]
+            Ps = mu_weighted[:, t, :]
+            Ys = np.concatenate([Ts, Ps], axis=1)
+            # Obtain Normal-inverse-Wishart prior.
+            mu0, Phi, mm, n0 = self.eval(Ts, Ps)
+            sig_reg = np.zeros((dX+dU, dX+dU))
+            # Slightly regularize on first timestep.
+            if t == 0:
+                sig_reg[:dX, :dX] = 1e-8
+            pol_K[t, :, :], pol_k[t, :], pol_S[t, :, :] = \
+                    gauss_fit_joint_prior(Ys,
+                            mu0, Phi, mm, n0, dwts, dX, dU, sig_reg)
+        pol_S += pol_sig
+        return pol_K, pol_k, pol_S
