@@ -219,8 +219,8 @@ class PolicyPriorGMM(object):
         # find pooled variance
         sigma_pooled = (
                         (n1 ** 2 * pol_mu) + (n2 ** 2* pol_mu_adv) + \
-                        (n1 * pol_mu + n2 * pol_mu_adv) * (n1 * pol_mu + n2 * pol_mu_adv).T - \
-                        (pol_mu * pol_mu_adv.T)
+                        (n1 * pol_mu + n2 * pol_mu_adv) ** 2  - \
+                        (pol_mu * pol_mu_adv)
                         ) /  (n1 + n2)**2
 
         # Fit policy linearization with least squares regression.
