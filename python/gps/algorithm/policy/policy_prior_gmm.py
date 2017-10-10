@@ -222,7 +222,8 @@ class PolicyPriorGMM(object):
                         (n1 * pol_mu + n2 * pol_mu_adv) ** 2  - \
                         (pol_mu * pol_mu_adv)
                         ) /  (n1 + n2)**2
-
+        LOGGER.debug('pol_mu, pol_mu_adv, mu_weighted: ', pol_mu.shape, \
+                     pol_mu_adv.shape, mu_weighted.shape)
         # Fit policy linearization with least squares regression.
         dwts = (1.0 / N) * np.ones(N)
         for t in range(T):
