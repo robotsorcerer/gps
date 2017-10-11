@@ -201,12 +201,13 @@ class PolicyPriorGMM(object):
 
         # Collapse policy covariances. (This is only correct because
         # the policy doesn't depend on state).
-        pol_sig = np.mean(pol_sig, axis=0)
+        pol_sig     = np.mean(pol_sig, axis=0)
+        pol_sig_adv = np.mean(pol_sig_adv, axis=0)
 
         # Allocate.
-        pol_Gu = np.zeros([T, dU, dX])
-        pol_gu = np.zeros([T, dU])
-        pol_Su = np.zeros([T, dU, dU])
+        pol_K = np.zeros([T, dU, dX])
+        pol_k = np.zeros([T, dU])
+        pol_S = np.zeros([T, dU, dU])
 
         pol_Gv = np.zeros([T, dV, dX])
         pol_gv = np.zeros([T, dV])
@@ -217,19 +218,19 @@ class PolicyPriorGMM(object):
         # find weigted mean
         mu_weighted = (n1 * pol_mu + n2 * pol_mu_adv)/ (n1 + n2)
         # find pooled variance
-        sigma_pooled = (
-                        (n1 ** 2 * pol_mu) + (n2 ** 2* pol_mu_adv) + \
-                        (n1 * pol_mu + n2 * pol_mu_adv) ** 2  - \
-                        (pol_mu * pol_mu_adv)
-                        ) /  (n1 + n2)**2
-        LOGGER.debug('pol_mu, pol_mu_adv, mu_weighted: ', pol_mu.shape, \
-                     pol_mu_adv.shape, mu_weighted.shape)
+        # sigma_pooled = (
+        #                 (n1 * n1 * pol_sig) + (n2 * n2 * pol_sig_adv) + \
+        #                 ((n1 * pol_mu) + (n2 * pol_mu_adv)) ** 2 - \
+        #                 (pol_mu.dot(pol_mu_adv).T)
+        #                 ) /  (n1 + n2)**2
         # Fit policy linearization with least squares regression.
         dwts = (1.0 / N) * np.ones(N)
         for t in range(T):
             Ts = X[:, t, :]
             Ps = mu_weighted[:, t, :]
             Ys = np.concatenate([Ts, Ps], axis=1)
+            print('pol_mu, pol_mu_adv, mu_weighted: ',pol_mu.shape, pol_mu_adv.shape, mu_weighted.shape)
+            print('pol_sig, pol_sig_adv', pol_sig.shape, pol_sig_adv.shape)
             # Obtain Normal-inverse-Wishart prior.
             mu0, Phi, mm, n0 = self.eval(Ts, Ps)
             sig_reg = np.zeros((dX+dU, dX+dU))

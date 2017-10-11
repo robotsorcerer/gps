@@ -74,12 +74,8 @@ class GMM(object):
             sigma = check_sigma(sigma)
             L = scipy.linalg.cholesky(sigma, lower=True)
             logobs[:, i] -= np.sum(np.log(np.diag(L)))
-            # print('data: {}, mu: {}'.format(data.shape, mu.shape))
-            if mu.shape[0] == data.shape[1]:
-                diff = (data - mu).T
-            else:
-                diff = data.T
-            # diff = (data - mu).T
+            diff = (data - mu).T
+            # print('L: {}, diff: {}'.format(L.shape, diff.shape))
             soln = scipy.linalg.solve_triangular(L, diff, lower=True)
             logobs[:, i] -= 0.5*np.sum(soln**2, axis=0)
 
