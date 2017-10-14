@@ -186,6 +186,7 @@ def gauss_fit_joint_prior(pts, mu0, Phi, m, n0, dwts, dX, dU, sig_reg):
     sigma = (N * empsig + Phi + (N * m) / (N + m) *
              np.outer(mun - mu0, mun - mu0)) / (N + n0)
     sigma = 0.5 * (sigma + sigma.T)
+
     # Add sigma regularization.
     sigma += sig_reg
     # Conditioning to get dynamics.

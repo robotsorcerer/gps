@@ -129,9 +129,9 @@ class AlgorithmMDGPS(Algorithm):
                 self.cur[cond].traj_distr_adv for cond in range(self.M) # defined in algorithm_utils#L18: None
             ]
             # this is for the robust trajectory
-            # self.new_traj_distr_robust = [
-            #     self.cur[cond].traj_distr_robust for cond in range(self.M) # defined in algorithm_utils#L20: None
-            # ]
+            self.new_traj_distr_robust = [
+                self.cur[cond].traj_distr_robust for cond in range(self.M) # defined in algorithm_utils#L20: None
+            ]
             """
             Update each policy in turn:
                 First: update protagonist policy
@@ -142,11 +142,15 @@ class AlgorithmMDGPS(Algorithm):
 
         # Fit  linearized global policy. Step 4 in alg.
         for m in range(self.M):
-            # update protagonist
+            # # update protagonist
+            # LOGGER.debug("cond: %d:  fitting protagonist "
+            #              "policy to modeled dynamics from GMM", m)
             # self._update_policy_fit_u(m)
             # # update adversary policy
+            # LOGGER.debug("cond: %d:  fitting adversarial "
+            #              "policy to modeled dynamics from GMM", m)
             # self._update_policy_fit_v(m)
-            # update global linearization
+            # update global linearization and local linearization of pi_u, pi_v
             LOGGER.debug("cond: %d:  fitting robust "
                          "policy to modeled dynamics from GMM", m)
             self._update_policy_fit_robust(m)
@@ -323,9 +327,9 @@ class AlgorithmMDGPS(Algorithm):
         Args:
             m: Condition
         """
-        dX, dU, T = self.dX, self.dU, self.T
+        dX, dV, T = self.dX, self.dV, self.T
         # Choose samples to use.
-        samples = self.cur[m].sample_list_adv
+        samples = self.cur[m].sample_list
         N = len(samples)
         pol_info = self.cur[m].pol_info  # get robust pol info object
         X = samples.get_X()
@@ -354,7 +358,7 @@ class AlgorithmMDGPS(Algorithm):
         Args:
             m: Condition
         """
-        dX, dU, dV, T = self.dX, self.dU, self.dV, self.T
+        T = self.T
         # Choose samples to use.
         # samples = shuffle(self.cur[m].sample_list + self.cur[m].sample_list_adv)
         samples     = self.cur[m].sample_list
@@ -379,11 +383,25 @@ class AlgorithmMDGPS(Algorithm):
         # policy_prior.update(samples, self.policy_opt, mode)
         policy_prior.update_robust(samples, self.policy_opt, mode)
 
-        # Fit linearization and store in pol_info.
+        # Fit local prot linearization and store in pol_info prot objects.
+        pol_info.pol_Gu, pol_info.pol_gu, pol_info.pol_Su = \
+                        policy_prior.fit(X, pol_mu, pol_sig)
+
+        # Fit local adversarial linearization and store in adv pol_info object
+        pol_info.pol_Gv, pol_info.pol_gv, pol_info.pol_Sv = \
+                        policy_prior.fit(X, pol_mu_adv, pol_sig_adv)
+
+        # Fit global linearization and store in global pol_info objects.
         pol_info.pol_G, pol_info.pol_g, pol_info.pol_Suv = \
                 policy_prior.fit_robust(X, pol_mu, pol_sig, pol_mu_adv,pol_sig_adv)
-                        # policy_prior.fit(X, pol_mu, pol_sig)
+
+        # update the covariance of the protagonist, adversary ...
+        # and robust distribution in turn
         for t in range(T):
+            pol_info.chol_pol_Su[t, :, :] = \
+                    sp.linalg.cholesky(pol_info.pol_Su[t, :, :])
+            pol_info.chol_pol_Sv[t, :, :] = \
+                    sp.linalg.cholesky(pol_info.pol_Sv[t, :, :])
             pol_info.chol_pol_Suv[t, :, :] = \
                     sp.linalg.cholesky(pol_info.pol_Suv[t, :, :])
 

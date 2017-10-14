@@ -122,15 +122,15 @@ class PolicyPriorGMM(object):
         XUV = np.reshape(np.concatenate([self.X, U, V], axis=2), [T * N, dO])
         # Choose number of clusters.
         K = int(max(2, min(self._max_clusters,
-                           np.floor(float(N * T) / self._min_samp))))
+                           np.floor(float(N * T) / self._min_samp)
+                           )))
 
         LOGGER.debug('Generating %d clusters for policy prior robust GMM.', K)
+        # print( 'XUV shape: ', XUV.shape)
         self.gmm.update(XUV, K)
 
-    def eval(self, Ts, Ps):
+    def eval(self, pts):
         """ Evaluate prior. """
-        # Construct query data point.
-        pts = np.concatenate((Ts, Ps), axis=1)
         # Perform query.
         mu0, Phi, m, n0 = self.gmm.inference(pts)
         # Factor in multiplier.
@@ -171,7 +171,7 @@ class PolicyPriorGMM(object):
             Ps = pol_mu[:, t, :]
             Ys = np.concatenate([Ts, Ps], axis=1)
             # Obtain Normal-inverse-Wishart prior.
-            mu0, Phi, mm, n0 = self.eval(Ts, Ps)
+            mu0, Phi, mm, n0 = self.eval(Ys)
             sig_reg = np.zeros((dX+dU, dX+dU))
             # Slightly regularize on first timestep.
             if t == 0:
@@ -188,14 +188,14 @@ class PolicyPriorGMM(object):
 
         Args:
             X: Samples (N, T, dX)
-            pol_mu: Policy means (N, T, dU)
+            pol_mu: Policy means (N, T, dU) --protagonist
             pol_sig: Policy covariance (N, T, dU)
-            pol_mu_adv: Policy means (N, T, dV)
+            pol_mu_adv: Policy means (N, T, dV)  -- antagonist
             pol_sig_adv: Policy covariance (N, T, dV)
         """
         N, T, dX = X.shape
         dU = pol_mu.shape[2]
-        dV = pol_mu.shape[2]
+        dV = pol_mu_adv.shape[2]
         if N == 1:
             raise ValueError("Cannot fit dynamics on 1 sample")
 
@@ -228,13 +228,15 @@ class PolicyPriorGMM(object):
         dwts = (1.0 / N) * np.ones(N)
         for t in range(T):
             Ts = X[:, t, :]
-            Ps = mu_weighted[:, t, :]
-            Ys = np.concatenate([Ts, Ps], axis=1)
-            print('pol_mu, pol_mu_adv, mu_weighted: ',pol_mu.shape, pol_mu_adv.shape, mu_weighted.shape)
-            print('pol_sig, pol_sig_adv', pol_sig.shape, pol_sig_adv.shape)
+            Ps = pol_mu[:, t, :]
+            Ps_adv = pol_mu_adv[:, t, :]
+            Ys = np.concatenate([Ts, Ps, Ps_adv], axis=1)
+            # print('X, pol_mu, pol_mu_adv, mu_weighted: ', X.shape, pol_mu.shape, pol_mu_adv.shape, mu_weighted.shape)
+            # print('pol_sig, pol_sig_adv', pol_sig.shape, pol_sig_adv.shape)
+            # print('Ts: {}, Ps: {}, Ys: {}'.format(Ts.shape, Ps.shape, Ys.shape))
             # Obtain Normal-inverse-Wishart prior.
-            mu0, Phi, mm, n0 = self.eval(Ts, Ps)
-            sig_reg = np.zeros((dX+dU, dX+dU))
+            mu0, Phi, mm, n0 = self.eval(Ys)
+            sig_reg = np.zeros((dX+dU+dV, dX+dU+dV))
             # Slightly regularize on first timestep.
             if t == 0:
                 sig_reg[:dX, :dX] = 1e-8

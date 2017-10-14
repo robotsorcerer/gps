@@ -55,6 +55,24 @@ class GMM(object):
         n0 = float(n0) / self.N
         return mu0, Phi, m, n0
 
+    def clusterwts(self, data):
+        """
+        Compute cluster weights for specified points under GMM.
+        Args:
+            data: An N x D array of points
+        Returns:
+            A K x 1 array of average cluster log probabilities.
+        """
+        # Compute probability of each point under each cluster.
+        logobs = self.estep(data)
+
+        # Renormalize to get cluster weights.
+        logwts = logobs - logsum(logobs, axis=1)
+
+        # Average the cluster probabilities.
+        logwts = logsum(logwts, axis=0) - np.log(data.shape[0])
+        return logwts.T
+
     def estep(self, data):
         """
         Compute log observation probabilities under GMM.
@@ -74,10 +92,7 @@ class GMM(object):
             sigma = check_sigma(sigma)
             L = scipy.linalg.cholesky(sigma, lower=True)
             logobs[:, i] -= np.sum(np.log(np.diag(L)))
-            if (data.shape[1] != mu.shape[0]):
-                diff = data - np.mean(data[i,:], axis=0)
-            else:
-                diff = (data - mu).T
+            diff = (data - mu).T
             soln = scipy.linalg.solve_triangular(L, diff, lower=True)
             logobs[:, i] -= 0.5*np.sum(soln**2, axis=0)
 
@@ -107,24 +122,6 @@ class GMM(object):
         sigma = np.sum((self.sigma + diff_expand) * wts_expand, axis=0)
         return mu, sigma
 
-    def clusterwts(self, data):
-        """
-        Compute cluster weights for specified points under GMM.
-        Args:
-            data: An N x D array of points
-        Returns:
-            A K x 1 array of average cluster log probabilities.
-        """
-        # Compute probability of each point under each cluster.
-        logobs = self.estep(data)
-
-        # Renormalize to get cluster weights.
-        logwts = logobs - logsum(logobs, axis=1)
-
-        # Average the cluster probabilities.
-        logwts = logsum(logwts, axis=0) - np.log(data.shape[0])
-        return logwts.T
-
     def update(self, data, K, max_iterations=100):
         """
         Run EM to update clusters.
@@ -136,8 +133,8 @@ class GMM(object):
         N = data.shape[0]
         Do = data.shape[1]
 
-        LOGGER.debug('Fitting GMM with %d clusters on %d points', K, N)
-        # print('data: {}, K: {}'.format(data.shape, K))
+        LOGGER.debug('Fitting GMM with %d clusters on %d points.', K, N)
+        
         if (not self.warmstart or self.sigma is None or
                 K != self.sigma.shape[0]):
             # Initialization.
