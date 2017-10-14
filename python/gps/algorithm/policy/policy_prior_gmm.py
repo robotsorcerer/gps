@@ -169,10 +169,95 @@ class PolicyPriorGMM(object):
         for t in range(T):
             Ts = X[:, t, :]
             Ps = pol_mu[:, t, :]
+            # Note, now, we have to pad the new state since dynamics has changed to XUV
             Ys = np.concatenate([Ts, Ps], axis=1)
             # Obtain Normal-inverse-Wishart prior.
             mu0, Phi, mm, n0 = self.eval(Ys)
+            sig_reg = np.zeros((dX+dU+dV, dX+dU+dV))
+            # Slightly regularize on first timestep.
+            if t == 0:
+                sig_reg[:dX, :dX] = 1e-8
+            pol_K[t, :, :], pol_k[t, :], pol_S[t, :, :] = \
+                    gauss_fit_joint_prior(Ys,
+                            mu0, Phi, mm, n0, dwts, dX, dU, sig_reg)
+        pol_S += pol_sig
+        return pol_K, pol_k, pol_S
+
+    def fit_u(self, X, pol_mu, pol_sig):
+        """
+        Fit protagonist policy linearization.
+
+        Args:
+            X: Samples (N, T, dX)
+            pol_mu: Policy means (N, T, dU)
+            pol_sig: Policy covariance (N, T, dU)
+        """
+        N, T, dX = X.shape
+        dU = pol_mu.shape[2]
+        if N == 1:
+            raise ValueError("Cannot fit dynamics on 1 sample")
+
+        # Collapse policy covariances. (This is only correct because
+        # the policy doesn't depend on state).
+        pol_sig = np.mean(pol_sig, axis=0)
+
+        # Allocate.
+        pol_K = np.zeros([T, dU, dX])
+        pol_k = np.zeros([T, dU])
+        pol_S = np.zeros([T, dU, dU])
+
+        # Fit policy linearization with least squares regression.
+        dwts = (1.0 / N) * np.ones(N)
+        for t in range(T):
+            Ts = X[:, t, :]
+            Ps = pol_mu[:, t, :]
+            # Note, now, we have to pad the new state since dynamics has changed to XUV
+            Ys = np.concatenate([Ts, Ps, np.zeros_like(Ps)], axis=1)
+            # Obtain Normal-inverse-Wishart prior.
+            mu0, Phi, mm, n0 = self.eval(Ys)
             sig_reg = np.zeros((dX+dU, dX+dU))
+            # Slightly regularize on first timestep.
+            if t == 0:
+                sig_reg[:dX, :dX] = 1e-8
+            pol_K[t, :, :], pol_k[t, :], pol_S[t, :, :] = \
+                    gauss_fit_joint_prior(Ys,
+                            mu0, Phi, mm, n0, dwts, dX, dU, sig_reg)
+        pol_S += pol_sig
+        return pol_K, pol_k, pol_S
+
+    def fit_v(self, X, pol_mu, pol_sig):
+        """
+        Fit protagonist policy linearization.
+
+        Args:
+            X: Samples (N, T, dX)
+            pol_mu: Policy means (N, T, dU)
+            pol_sig: Policy covariance (N, T, dU)
+        """
+        N, T, dX = X.shape
+        dV = pol_mu.shape[2]
+        if N == 1:
+            raise ValueError("Cannot fit dynamics on 1 sample")
+
+        # Collapse policy covariances. (This is only correct because
+        # the policy doesn't depend on state).
+        pol_sig = np.mean(pol_sig, axis=0)
+
+        # Allocate.
+        pol_K = np.zeros([T, dV, dX])
+        pol_k = np.zeros([T, dV])
+        pol_S = np.zeros([T, dV, dV])
+
+        # Fit policy linearization with least squares regression.
+        dwts = (1.0 / N) * np.ones(N)
+        for t in range(T):
+            Ts = X[:, t, :]
+            Ps = pol_mu[:, t, :]
+            # Note, now, we have to pad the new state since dynamics has changed to XUV
+            Ys = np.concatenate([Ts, np.zeros_like(Ps), Ps], axis=1)
+            # Obtain Normal-inverse-Wishart prior.
+            mu0, Phi, mm, n0 = self.eval(Ys)
+            sig_reg = np.zeros((dX+dU+dV, dX+dU+dV))
             # Slightly regularize on first timestep.
             if t == 0:
                 sig_reg[:dX, :dX] = 1e-8
@@ -209,10 +294,6 @@ class PolicyPriorGMM(object):
         pol_k = np.zeros([T, dU])
         pol_S = np.zeros([T, dU, dU])
 
-        pol_Gv = np.zeros([T, dV, dX])
-        pol_gv = np.zeros([T, dV])
-        pol_Sv = np.zeros([T, dV, dV])
-
         # condition protagonist policy on adversarial policy
         n1, n2 = pol_mu.shape[0], pol_mu_adv.shape[0]
         # find weigted mean
@@ -231,9 +312,6 @@ class PolicyPriorGMM(object):
             Ps = pol_mu[:, t, :]
             Ps_adv = pol_mu_adv[:, t, :]
             Ys = np.concatenate([Ts, Ps, Ps_adv], axis=1)
-            # print('X, pol_mu, pol_mu_adv, mu_weighted: ', X.shape, pol_mu.shape, pol_mu_adv.shape, mu_weighted.shape)
-            # print('pol_sig, pol_sig_adv', pol_sig.shape, pol_sig_adv.shape)
-            # print('Ts: {}, Ps: {}, Ys: {}'.format(Ts.shape, Ps.shape, Ys.shape))
             # Obtain Normal-inverse-Wishart prior.
             mu0, Phi, mm, n0 = self.eval(Ys)
             sig_reg = np.zeros((dX+dU+dV, dX+dU+dV))

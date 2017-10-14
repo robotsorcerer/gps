@@ -385,11 +385,11 @@ class AlgorithmMDGPS(Algorithm):
 
         # Fit local prot linearization and store in pol_info prot objects.
         pol_info.pol_Gu, pol_info.pol_gu, pol_info.pol_Su = \
-                        policy_prior.fit(X, pol_mu, pol_sig)
+                        policy_prior.fit_u(X, pol_mu, pol_sig)
 
         # Fit local adversarial linearization and store in adv pol_info object
         pol_info.pol_Gv, pol_info.pol_gv, pol_info.pol_Sv = \
-                        policy_prior.fit(X, pol_mu_adv, pol_sig_adv)
+                        policy_prior.fit_v(X, pol_mu_adv, pol_sig_adv)
 
         # Fit global linearization and store in global pol_info objects.
         pol_info.pol_G, pol_info.pol_g, pol_info.pol_Suv = \
