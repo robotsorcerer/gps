@@ -215,7 +215,7 @@ class PolicyPriorGMM(object):
             Ys = np.concatenate([Ts, Ps, np.zeros_like(Ps)], axis=1)
             # Obtain Normal-inverse-Wishart prior.
             mu0, Phi, mm, n0 = self.eval(Ys)
-            sig_reg = np.zeros((dX+dU, dX+dU))
+            sig_reg = np.zeros((dX+dU+dU, dX+dU+dU))
             # Slightly regularize on first timestep.
             if t == 0:
                 sig_reg[:dX, :dX] = 1e-8
@@ -257,13 +257,13 @@ class PolicyPriorGMM(object):
             Ys = np.concatenate([Ts, np.zeros_like(Ps), Ps], axis=1)
             # Obtain Normal-inverse-Wishart prior.
             mu0, Phi, mm, n0 = self.eval(Ys)
-            sig_reg = np.zeros((dX+dU+dV, dX+dU+dV))
+            sig_reg = np.zeros((dX+dV+dV, dX+dV+dV))
             # Slightly regularize on first timestep.
             if t == 0:
                 sig_reg[:dX, :dX] = 1e-8
             pol_K[t, :, :], pol_k[t, :], pol_S[t, :, :] = \
                     gauss_fit_joint_prior(Ys,
-                            mu0, Phi, mm, n0, dwts, dX, dU, sig_reg)
+                            mu0, Phi, mm, n0, dwts, dX, dV, sig_reg)
         pol_S += pol_sig
         return pol_K, pol_k, pol_S
 
