@@ -508,7 +508,6 @@ class AlgorithmMDGPS(Algorithm):
 
         return fCm, fcv
 
-
     def compute_costs_protagonist(self, m, eta, augment=True):
         """ Compute cost estimates used in the LQR backward pass. """
         traj_info, traj_distr = self.cur[m].traj_info, self.cur[m].traj_distr
@@ -530,16 +529,56 @@ class AlgorithmMDGPS(Algorithm):
                 np.linalg.solve(pol_info.chol_pol_Su[t, :, :].T, np.eye(dU))
             )
             KB, kB = pol_info.pol_Gu[t, :, :], pol_info.pol_gu[t, :]
-            print('KB: {}, inv_pol_Su: {}'.format(KB.shape, inv_pol_Su.shape))
+            # here I augment the coeffs pertaining to v with zeros
             PKLm[t, :, :] = np.vstack([
-                np.hstack([KB.T.dot(inv_pol_Su).dot(KB), -KB.T.dot(inv_pol_Su)]),
-                np.hstack([-inv_pol_Su.dot(KB), inv_pol_Su])
+                np.hstack([KB.T.dot(inv_pol_Su).dot(KB), -KB.T.dot(inv_pol_Su), np.zeros((dX, dV))]),
+                np.hstack([-inv_pol_Su.dot(KB), inv_pol_Su, np.zeros_like(inv_pol_Su)]),
+                np.zeros((dV, dX + dV + dU))
             ])
             PKLv[t, :] = np.concatenate([
-                KB.T.dot(inv_pol_Su).dot(kB), -inv_pol_Su.dot(kB)
+                KB.T.dot(inv_pol_Su).dot(kB), -inv_pol_Su.dot(kB),
+                np.zeros_like(inv_pol_Su.dot(kB))
             ])
-            print('fCm: {}, Cm: {}, PKLm: {}', fCm.shape, Cm.shape, PKLm.shape)
             fCm[t, :, :] = (Cm[t, :, :] + PKLm[t, :, :] * eta) / (eta + multiplier)
+            fcv[t, :] = (cv[t, :] + PKLv[t, :] * eta) / (eta + multiplier)
+
+        return fCm, fcv
+
+    def compute_costs_adversary(self, m, eta, augment=True):
+        """ Compute cost estimates used in the LQR backward pass. """
+        traj_info, traj_distr = self.cur[m].traj_info, self.cur[m].traj_distr
+        if not augment:  # Whether to augment cost with term to penalize KL
+            return traj_info.Cm, traj_info.cv
+
+        pol_info = self.cur[m].pol_info
+        multiplier = self._hyperparams['max_ent_traj']
+        T, dU, dV, dX = traj_distr.T, traj_distr.dU, traj_distr.dV, traj_distr.dX
+        Cm, cv = np.copy(traj_info.Cm), np.copy(traj_info.cv)
+
+        PKLm = np.zeros((T, dX+dU+dV, dX+dU+dV))
+        PKLv = np.zeros((T, dX+dU+dV))
+        fCm, fcv = np.zeros(Cm.shape), np.zeros(cv.shape)
+        for t in range(T):
+            # Policy KL-divergence terms.
+            inv_pol_Sv = np.linalg.solve(
+                pol_info.chol_pol_Sv[t, :, :],
+                np.linalg.solve(pol_info.chol_pol_Sv[t, :, :].T, np.eye(dV))
+            )
+            KB, kB = pol_info.pol_Gv[t, :, :], pol_info.pol_gv[t, :]
+            # print('KB: {}, inv_pol_Su: {}, dX: {}'.format(KB.shape, inv_pol_Su.shape, dX))
+            # here I augment the coeffs pertaining to v with zeros
+            PKLm[t, :, :] = np.vstack([
+                np.hstack([KB.T.dot(inv_pol_Sv).dot(KB),  np.zeros((dX, dV)), -KB.T.dot(inv_pol_Sv)]),
+                np.hstack([-inv_pol_Sv.dot(KB),  np.zeros_like(inv_pol_Sv), inv_pol_Sv]),
+                np.zeros((dV, dX + dV + dU))
+            ])
+            PKLv[t, :] = np.concatenate([
+                KB.T.dot(inv_pol_Sv).dot(kB), np.zeros_like(inv_pol_Sv.dot(kB)),
+                -inv_pol_Sv.dot(kB),
+            ])
+            # print('fCm: {}, Cm: {}, PKLm: {}', fCm.shape, Cm.shape, PKLm.shape, PKLv.shape)
+            fCm[t, :, :] = (Cm[t, :, :] + PKLm[t, :, :] * eta) / (eta + multiplier)
+            # print('cv: {}, PKLv: {}: ', cv.shape, PKLv.shape)
             fcv[t, :] = (cv[t, :] + PKLv[t, :] * eta) / (eta + multiplier)
 
         return fCm, fcv

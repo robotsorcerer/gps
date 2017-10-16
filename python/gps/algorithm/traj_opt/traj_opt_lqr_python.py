@@ -891,6 +891,18 @@ class TrajOptLQRPython(TrajOpt):
                             reasonably well conditioned)!')
         return traj_distr, eta
 
+    def check_pdef(self, A):
+        """
+            checks if the invertible matrix is symmetric
+            positive definite before cholesky LU decomposition
+        """
+        if np.array_equal(A, A.T) and np.all(np.linalg.eigvals(A)>0):
+            # LOGGER.debug("sigma is pos. def. Computing cholesky factorization")
+            return A
+        else:
+            # print("Regularizing inv term for positive-definiteness")
+            return np.eye(A.shape[0])
+
     def backward_protagonist(self, prev_traj_distr, traj_info, eta, algorithm, m):
         """
         Perform LQR backward pass. This computes a new linear Gaussian
@@ -944,8 +956,8 @@ class TrajOptLQRPython(TrajOpt):
             # Allocate.
             Vxx = np.zeros((T, dX, dX))
             Vx = np.zeros((T, dX))
-            Qtt = np.zeros((T, dX+dU, dX+dU))
-            Qt = np.zeros((T, dX+dU))
+            Qtt = np.zeros((T, dX+dU+dV, dX+dU+dV))
+            Qt = np.zeros((T, dX+dU+dV))
             Kv = np.zeros((T, dU, dV))
             Kv_inner = np.zeros((T, dU, dV))
 
@@ -961,8 +973,8 @@ class TrajOptLQRPython(TrajOpt):
             # Compute state-action-state function at each time step.
             for t in range(T - 1, -1, -1):
                 # Add in the cost.
-                Qtt[t] = fCm[t, :, :]   # (X+U) x (X+U)
-                Qt[t]  = fcv[t, :]      # (X+U) x 1
+                Qtt[t] = fCm[t, :, :]   # (X+U+V) x (X+U+V)
+                Qt[t]  = fcv[t, :]      # (X+U+V) x 1
 
                 # Add in the value function from the next time step.
                 if t < T - 1:
@@ -987,13 +999,17 @@ class TrajOptLQRPython(TrajOpt):
                     inv_term = (Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v, idx_v]) - \
                             Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_v]))
                     try:
-                        U = sp.linalg.cholesky(inv_term)
+                        U = sp.linalg.cholesky(self.check_pdef(inv_term))
                         L = U.T
                         Kstar = sp.linalg.solve_triangular(
                             U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
                         )
+                        print('Kstar: {}, Qu: {}, Qvv: {}, Qv: {}, Quv: {}'.format(Kstar.shape, \
+                            Qtt[t, idx_u].shape, \
+                            Qtt[t, idx_v, idx_v].shape, Qtt[t, idx_v].shape, \
+                            Qtt[t, idx_u, idx_v].shape))
                         gu_term = - Kstar.dot(Qtt[t, idx_u].dot(Qtt[t, idx_v, idx_v])
-                                            - Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_v]) )
+                                            - Qtt[t, idx_v].dot(Qtt[t, idx_u, idx_v]) )
                         Gu_term = - Kstar.dot(Qtt[t, idx_u, idx_x].dot(Qtt[t, idx_v, idx_v])
                                             - Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_v, idx_x]) )
                     except LinAlgError as e:
@@ -1007,7 +1023,7 @@ class TrajOptLQRPython(TrajOpt):
                             Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_v])) + \
                             prev_traj_distr.inv_pol_covar_u[t]
                     try:
-                        U = sp.linalg.cholesky(inv_term)
+                        U = sp.linalg.cholesky(self.check_pdef(inv_term))
                         L = U.T
                         Kstar = sp.linalg.solve_triangular(
                             U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
@@ -1100,10 +1116,6 @@ class TrajOptLQRPython(TrajOpt):
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v]).dot(Qtt[t, idx_v, idx_x])) - \
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v, idx_v]).dot(Qtt[t, idx_x]))
                                 )
-                    # Vxx[t, :, :] = Qtt[t, idx_x, idx_x] + \
-                    #         Qtt[t, idx_x, idx_u].dot(traj_distr.K[t, :, :])
-                    # Vx[t, :] = Qt[t, idx_x] + \
-                    #         Qtt[t, idx_x, idx_u].dot(traj_distr.k[t, :])
                 Vxx[t, :, :] = 0.5 * (Vxx[t, :, :] + Vxx[t, :, :].T)
 
             if not self._hyperparams['update_in_bwd_pass']:
@@ -1190,8 +1202,8 @@ class TrajOptLQRPython(TrajOpt):
             # Allocate.
             Vxx = np.zeros((T, dX, dX))
             Vx = np.zeros((T, dX))
-            Qtt = np.zeros((T, dX+dU, dX+dU))
-            Qt = np.zeros((T, dX+dU))
+            Qtt = np.zeros((T, dX+dU+dV, dX+dU+dV))
+            Qt = np.zeros((T, dX+dU+dV))
             Kv = np.zeros((T, dU, dV))
             Kv_inner = np.zeros((T, dU, dV))
 
@@ -1200,15 +1212,15 @@ class TrajOptLQRPython(TrajOpt):
                 new_pS = np.zeros((T, dU, dU))
                 new_ipS, new_cpS = np.zeros((T, dU, dU)), np.zeros((T, dU, dU))
 
-            fCm, fcv = algorithm.compute_costs_protagonist(  #from algorithm_mdgps.py#L204
+            fCm, fcv = algorithm.compute_costs_adversary(  #from algorithm_mdgps.py#L204
                     m, eta, augment=(not self.cons_per_step)
             )
 
             # Compute state-action-state function at each time step.
             for t in range(T - 1, -1, -1):
                 # Add in the cost.
-                Qtt[t] = fCm[t, :, :]   # (X+U) x (X+U)
-                Qt[t]  = fcv[t, :]      # (X+U) x 1
+                Qtt[t] = fCm[t, :, :]   # (X+U+V) x (X+U+V)
+                Qt[t]  = fcv[t, :]      # (X+U+V) x 1
 
                 # Add in the value function from the next time step.
                 if t < T - 1:
@@ -1346,10 +1358,6 @@ class TrajOptLQRPython(TrajOpt):
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v]).dot(Qtt[t, idx_v, idx_x])) - \
                                 2*(Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_v, idx_v]).dot(Qtt[t, idx_x]))
                                 )
-                    # Vxx[t, :, :] = Qtt[t, idx_x, idx_x] + \
-                    #         Qtt[t, idx_x, idx_u].dot(traj_distr.K[t, :, :])
-                    # Vx[t, :] = Qt[t, idx_x] + \
-                    #         Qtt[t, idx_x, idx_u].dot(traj_distr.k[t, :])
                 Vxx[t, :, :] = 0.5 * (Vxx[t, :, :] + Vxx[t, :, :].T)
 
             if not self._hyperparams['update_in_bwd_pass']:
