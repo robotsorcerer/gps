@@ -992,8 +992,8 @@ class TrajOptLQRPython(TrajOpt):
                 Qtt[t] = 0.5 * (Qtt[t] + Qtt[t].T)
 
                 # print('Qtt[t]: ', Qtt[t])
-                if np.any(np.isnan(Qtt[t, idx_u, idx_u])): # Fix Q function
-                    Qtt[t, idx_u, idx_u] = np.eye(Qtt[t].shape[-1])
+                # if np.any(np.isnan(Qtt[t, idx_u, idx_u])): # Fix Q function
+                #     Qtt[t, idx_u, idx_u] = np.eye(Qtt[t].shape[-1])
 
                 if not self.cons_per_step:
                     inv_term = (Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v, idx_v]) - \
@@ -1008,9 +1008,9 @@ class TrajOptLQRPython(TrajOpt):
                             Qtt[t, idx_u].shape, \
                             Qtt[t, idx_v, idx_v].shape, Qtt[t, idx_v].shape, \
                             Qtt[t, idx_u, idx_v].shape))
-                        gu_term = - Kstar.dot(Qtt[t, idx_u].dot(Qtt[t, idx_v, idx_v])
+                        gu_term = - (1.0 / eta[t] ) * Kstar.dot(Qtt[t, idx_u].dot(Qtt[t, idx_v, idx_v])
                                             - Qtt[t, idx_v].dot(Qtt[t, idx_u, idx_v]) )
-                        Gu_term = - Kstar.dot(Qtt[t, idx_u, idx_x].dot(Qtt[t, idx_v, idx_v])
+                        Gu_term = - (1.0 / eta[t] ) * Kstar.dot(Qtt[t, idx_u, idx_x].dot(Qtt[t, idx_v, idx_v])
                                             - Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_v, idx_x]) )
                     except LinAlgError as e:
                         # Error thrown when Qtt[idx_u, idx_u] is not
