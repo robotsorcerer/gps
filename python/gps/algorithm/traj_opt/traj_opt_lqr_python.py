@@ -492,168 +492,15 @@ class TrajOptLQRPython(TrajOpt):
             )
         return traj_distr, eta
 
-    def update_robust(self, m, algorithm, traj_prot, traj_adv):
+    def update_robust(self, m, algorithm):
         # obtain protagonist trajectory  and eta
-        LOGGER.debug("updating protagonist trajectory")
-        traj_prot, eta_prot = self.update_protagonist(m, algorithm)
-
-        LOGGER.debug("updating adversary trajectory")
-        traj_adv, eta_adv = self.update_adversary(m, algorithm)
+        # LOGGER.debug("updating protagonist trajectory")
+        # traj_prot, eta_prot = self.update_protagonist(m, algorithm)
+        #
+        # LOGGER.debug("updating adversary trajectory")
+        # traj_adv, eta_adv = self.update_adversary(m, algorithm)
 
         LOGGER.debug("Computing conditional of protagonist on adversary")
-
-    def update_adversary(self, m, algorithm):
-        """ Run dual gradient decent to optimize trajectories. """
-        T = algorithm.T
-        eta = algorithm.cur[m].eta
-        if self.cons_per_step and type(eta) in (int, float):
-            eta = np.ones(T) * eta
-        step_mult = algorithm.cur[m].step_mult
-        traj_info = algorithm.cur[m].traj_info
-
-        if isinstance(algorithm, AlgorithmMDGPS):
-            # For MDGPS, constrain to previous NN linearization
-            prev_traj_distr = algorithm.cur[m].pol_info.traj_distr_adv()
-        else:
-            # For BADMM/trajopt, constrain to previous LG controller
-            prev_traj_distr = algorithm.cur[m].traj_distr_adv
-
-        # Set KL-divergence step size (epsilon).
-        kl_step = algorithm.base_kl_step * step_mult
-        if not self.cons_per_step:
-            kl_step *= T
-
-        # We assume at min_eta, kl_div > kl_step, opposite for max_eta.
-        if not self.cons_per_step:
-            min_eta = self._hyperparams['min_eta']
-            max_eta = self._hyperparams['max_eta']
-            LOGGER.debug("Running DGD for trajectory %d, eta: %f", m, eta)
-        else:
-            min_eta = np.ones(T) * self._hyperparams['min_eta']
-            max_eta = np.ones(T) * self._hyperparams['max_eta']
-            LOGGER.debug("Running DGD for trajectory %d, avg eta: %f", m,
-                         np.mean(eta[:-1]))
-
-        max_itr = (DGD_MAX_LS_ITER if self.cons_per_step else
-                   DGD_MAX_ITER)
-        for itr in range(max_itr):
-            if not self.cons_per_step:
-                LOGGER.debug("Adversarial Iteration %d, bracket: (%.2e , %.2e , %.2e)", itr,
-                             min_eta, eta, max_eta)
-
-            # Run fwd/bwd pass, note that eta may be updated.
-            # Compute KL divergence constraint violation.
-            traj_distr, eta = self.backward_adversary(prev_traj_distr, traj_info,
-                                            eta, algorithm, m)
-
-            if not self._use_prev_distr:
-                new_mu, new_sigma = self.forward_adversary(traj_distr, traj_info)
-                kl_div = traj_distr_kl(
-                        new_mu, new_sigma, traj_distr, prev_traj_distr,
-                        tot=(not self.cons_per_step)
-                )
-            else:
-                prev_mu, prev_sigma = self.forward_adversary(prev_traj_distr, traj_info)
-                kl_div = traj_distr_kl_alt(
-                        prev_mu, prev_sigma, traj_distr, prev_traj_distr,
-                        tot=(not self.cons_per_step)
-                )
-
-            con = kl_div - kl_step
-
-            # Convergence check - constraint satisfaction.
-            if self._conv_check(con, kl_step):
-                if not self.cons_per_step:
-                    LOGGER.debug("KL adversary: %f / %f, converged iteration %d", kl_div,
-                                 kl_step, itr)
-                else:
-                    LOGGER.debug(
-                            "KL adversary: %f / %f, converged iteration %d",
-                            np.mean(kl_div[:-1]), np.mean(kl_step[:-1]), itr
-                    )
-                break
-
-            if not self.cons_per_step:
-                # Choose new eta (bisect bracket or multiply by constant)
-                if con < 0: # Eta was too big.
-                    max_eta = eta
-                    geom = np.sqrt(min_eta*max_eta)  # Geometric mean.
-                    new_eta = max(geom, 0.1*max_eta)
-                    LOGGER.debug("KL adversary: %f / %f, eta too big, new eta: %f",
-                                 kl_div, kl_step, new_eta)
-                else: # Eta was too small.
-                    min_eta = eta
-                    geom = np.sqrt(min_eta*max_eta)  # Geometric mean.
-                    new_eta = min(geom, 10.0*min_eta)
-                    LOGGER.debug("KL adversary: %f / %f, eta too small, new eta: %f",
-                                 kl_div, kl_step, new_eta)
-                # Logarithmic mean: log_mean(x,y) = (y - x)/(log(y) - log(x))
-                eta = new_eta
-            else:
-                for t in range(T):
-                    if con[t] < 0:
-                        max_eta[t] = eta[t]
-                        geom = np.sqrt(min_eta[t]*max_eta[t])
-                        eta[t] = max(geom, 0.1*max_eta[t])
-                    else:
-                        min_eta[t] = eta[t]
-                        geom = np.sqrt(min_eta[t]*max_eta[t])
-                        eta[t] = min(geom, 10.0*min_eta[t])
-                if itr % 10 == 0:
-                    LOGGER.debug("avg KL: %f / %f, avg new eta: %f",
-                                 np.mean(kl_div[:-1]), np.mean(kl_step[:-1]),
-                                 np.mean(eta[:-1]))
-
-        if (self.cons_per_step and not self._conv_check(con, kl_step)):
-            m_b, v_b = np.zeros(T-1), np.zeros(T-1)
-
-            for itr in range(DGD_MAX_GD_ITER):
-                traj_distr, eta = self.backward_adversary(prev_traj_distr, traj_info,
-                                                eta, algorithm, m)
-
-                if not self._use_prev_distr:
-                    new_mu, new_sigma = self.forward_adversary(traj_distr, traj_info)
-                    kl_div = traj_distr_kl(
-                            new_mu, new_sigma, traj_distr, prev_traj_distr,
-                            tot=False
-                    )
-                else:
-                    prev_mu, prev_sigma = self.forward_adversary(prev_traj_distr,
-                                                       traj_info)
-                    kl_div = traj_distr_kl_alt(
-                            prev_mu, prev_sigma, traj_distr, prev_traj_distr,
-                            tot=False
-                    )
-
-                con = kl_div - kl_step
-                if self._conv_check(con, kl_step):
-                    LOGGER.debug(
-                            "KL: %f / %f, converged iteration %d",
-                            np.mean(kl_div[:-1]), np.mean(kl_step[:-1]), itr
-                    )
-                    break
-
-                m_b = (BETA1 * m_b + (1-BETA1) * con[:-1])
-                m_u = m_b / (1 - BETA1 ** (itr+1))
-                v_b = (BETA2 * v_b + (1-BETA2) * np.square(con[:-1]))
-                v_u = v_b / (1 - BETA2 ** (itr+1))
-                eta[:-1] = np.minimum(
-                        np.maximum(eta[:-1] + ALPHA * m_u / (np.sqrt(v_u) + EPS),
-                                   self._hyperparams['min_eta']),
-                        self._hyperparams['max_eta']
-                )
-
-                if itr % 10 == 0:
-                    LOGGER.debug("avg KL: %f / %f, avg new eta: %f",
-                                 np.mean(kl_div[:-1]), np.mean(kl_step[:-1]),
-                                 np.mean(eta[:-1]))
-
-        if (np.mean(kl_div) > np.mean(kl_step) and
-            not self._conv_check(con, kl_step)):
-            LOGGER.warning(
-                    "Final KL divergence after DGD convergence is too high."
-            )
-        return traj_distr, eta
 
     def estimate_cost(self, traj_distr, traj_info):
         """ Compute Laplace approximation to expected cost. """
@@ -1063,7 +910,7 @@ class TrajOptLQRPython(TrajOpt):
         # Constants.
         T = prev_traj_distr.T
         dU = prev_traj_distr.dU
-        dU = prev_traj_distr.dV
+        dV = prev_traj_distr.dV
         dX = prev_traj_distr.dX
 
         if self._update_in_bwd_pass:

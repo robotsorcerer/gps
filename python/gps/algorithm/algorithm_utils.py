@@ -98,10 +98,10 @@ class PolicyInfoRobust(BundleType):
             'pol_sig_prot': None,  # Covariance of the current policy output
             'pol_mu_adv': None,  # Mean of the current policy output.
             'pol_sig_adv': None,  # Covariance of the current policy output
-            'pol_K': np.zeros((T, dU, dX)),  # Policy linearization.
-            'pol_k': np.zeros((T, dU)),  # Policy linearization.
-            'pol_S': np.zeros((T, dU, dU)),  # Policy linearization covariance.
-            'chol_pol_S': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
+            # 'pol_K': np.zeros((T, dU, dX)),  # Policy linearization.
+            # 'pol_k': np.zeros((T, dU)),  # Policy linearization.
+            # 'pol_S': np.zeros((T, dU, dU)),  # Policy linearization covariance.
+            # 'chol_pol_S': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
             'pol_Gu': np.zeros((T, dU, dX)),  # Policy linearization.
             'pol_gu': np.zeros((T, dU)),  # Policy linearization.
             'pol_Su': np.zeros((T, dU, dU)),  # Policy linearization covariance.
@@ -112,8 +112,8 @@ class PolicyInfoRobust(BundleType):
             'chol_pol_Sv': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
             'pol_G': np.zeros((T, dU, dX)),  # Policy linearization.
             'pol_g': np.zeros((T, dU)),  # Policy linearization.
-            'pol_Suv': np.zeros((T, dU, dU)),  # Policy linearization covariance.
-            'chol_pol_Suv': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
+            'pol_S': np.zeros((T, dU, dU)),  # Policy linearization covariance.
+            'chol_pol_S': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
             'pol_G_tilde': np.zeros((T, dU+dV, dX)),  # Policy linearization.
             'pol_g_tilde': np.zeros((T, dU+dV)),  # Policy linearization.
             'pol_S_tilde': np.zeros((T, dU+dV, dU+dV)),  # Policy linearization covariance.
@@ -131,7 +131,7 @@ class PolicyInfoRobust(BundleType):
         # Compute inverse policy covariances.
         inv_pol_Su = np.empty_like(self.chol_pol_Su)
         inv_pol_Sv = np.empty_like(self.chol_pol_Sv)
-        inv_pol_Suv = np.empty_like(self.chol_pol_Suv)
+        inv_pol_S  = np.empty_like(self.chol_pol_S)
         for t in range(T):
             inv_pol_Su[t, :, :] = np.linalg.solve(
                 self.chol_pol_Su[t, :, :],
@@ -141,17 +141,17 @@ class PolicyInfoRobust(BundleType):
                 self.chol_pol_Sv[t, :, :],
                 np.linalg.solve(self.chol_pol_Sv[t, :, :].T, np.eye(dU))
             )
-            inv_pol_Suv[t, :, :] = np.linalg.solve(
-                self.chol_pol_Suv[t, :, :],
-                np.linalg.solve(self.chol_pol_Suv[t, :, :].T, np.eye(dU))
+            inv_pol_S[t, :, :] = np.linalg.solve(
+                self.chol_pol_S[t, :, :],
+                np.linalg.solve(self.chol_pol_S[t, :, :].T, np.eye(dU))
             )
 
         return LinearGaussianPolicyRobust(self.pol_Gu, self.pol_gu, self.pol_Su,
                                             self.chol_pol_Su, inv_pol_Su,
                                         self.pol_Gv, self.pol_gv, self.pol_Sv,
                                             self.chol_pol_Sv, inv_pol_Sv,
-                                        self.pol_Guv, self.pol_guv, self.pol_Suv,
-                                            self.chol_pol_Suv, inv_pol_Suv)
+                                        self.pol_G, self.pol_g, self.pol_S,
+                                            self.chol_pol_S, inv_pol_S)
 
 def estimate_moments(X, mu, covar):
     """ Estimate the moments for a given linearized policy. """
@@ -175,6 +175,7 @@ def gauss_fit_joint_prior(pts, mu0, Phi, m, n0, dwts, dX, dU, sig_reg):
     """ Perform Gaussian fit to data with a prior. """
     # Build weights matrix.
     D = np.diag(dwts)
+    dV = dU
     # Compute empirical mean and covariance.
     mun = np.sum((pts.T * dwts).T, axis=0)
     diff = pts - mun
@@ -193,5 +194,32 @@ def gauss_fit_joint_prior(pts, mu0, Phi, m, n0, dwts, dX, dU, sig_reg):
     fd = np.linalg.solve(sigma[:dX, :dX], sigma[:dX, dX:dX+dU]).T
     fc = mu[dX:dX+dU] - fd.dot(mu[:dX])
     dynsig = sigma[dX:dX+dU, dX:dX+dU] - fd.dot(sigma[:dX, :dX]).dot(fd.T)
+    dynsig = 0.5 * (dynsig + dynsig.T)
+    return fd, fc, dynsig
+
+# computes the normal inverse Wishart prior as described in A.3
+def gauss_fit_joint_prior_u(pts, mu0, Phi, m, n0, dwts, dX, dU, sig_reg):
+    """ Perform Gaussian fit to data with a prior. """
+    # Build weights matrix.
+    D = np.diag(dwts)
+    dV = dU
+    # Compute empirical mean and covariance.
+    mun = np.sum((pts.T * dwts).T, axis=0)
+    diff = pts - mun
+    empsig = diff.T.dot(D).dot(diff)
+    empsig = 0.5 * (empsig + empsig.T)
+    # MAP estimate of joint distribution.
+    N = dwts.shape[0]
+    mu = mun
+    sigma = (N * empsig + Phi + (N * m) / (N + m) *
+             np.outer(mun - mu0, mun - mu0)) / (N + n0)
+    sigma = 0.5 * (sigma + sigma.T)
+
+    # Add sigma regularization.
+    sigma += sig_reg
+    # Conditioning to get dynamics.
+    fd = np.linalg.solve(sigma[:dX, :dX], sigma[:dX, dX:dX+dU+dV]).T
+    fc = mu[dX:dX+dU+dV] - fd.dot(mu[:dX])
+    dynsig = sigma[dX:dX+dU+dV, dX:dX+dU+dV] - fd.dot(sigma[:dX, :dX]).dot(fd.T)
     dynsig = 0.5 * (dynsig + dynsig.T)
     return fd, fc, dynsig

@@ -377,10 +377,7 @@ class AlgorithmMDGPS(Algorithm):
         # Update policy prior.
         policy_prior = pol_info.policy_prior
         samples = SampleList(self.cur[m].sample_list)
-        # samples_adv = SampleList(self.cur[m].sample_list_adv)
-        # print('self.cur[m].sample_list_adv: ', self.cur[m].sample_list_adv)
         mode = self._hyperparams['policy_sample_mode']
-        # policy_prior.update(samples, self.policy_opt, mode)
         policy_prior.update_robust(samples, self.policy_opt, mode)
 
         # Fit local prot linearization and store in pol_info prot objects.
@@ -392,7 +389,7 @@ class AlgorithmMDGPS(Algorithm):
                         policy_prior.fit_v(X, pol_mu_adv, pol_sig_adv)
 
         # Fit global linearization and store in global pol_info objects.
-        pol_info.pol_G, pol_info.pol_g, pol_info.pol_Suv = \
+        pol_info.pol_G, pol_info.pol_g, pol_info.pol_S = \
                 policy_prior.fit_robust(X, pol_mu, pol_sig, pol_mu_adv,pol_sig_adv)
 
         # update the covariance of the protagonist, adversary ...
@@ -402,8 +399,8 @@ class AlgorithmMDGPS(Algorithm):
                     sp.linalg.cholesky(pol_info.pol_Su[t, :, :])
             pol_info.chol_pol_Sv[t, :, :] = \
                     sp.linalg.cholesky(pol_info.pol_Sv[t, :, :])
-            pol_info.chol_pol_Suv[t, :, :] = \
-                    sp.linalg.cholesky(pol_info.pol_Suv[t, :, :])
+            pol_info.chol_pol_S[t, :, :] = \
+                    sp.linalg.cholesky(pol_info.pol_S[t, :, :])
 
     def _advance_iteration_variables(self):
         """
@@ -520,11 +517,11 @@ class AlgorithmMDGPS(Algorithm):
 
         pol_info = self.cur[m].pol_info
         multiplier = self._hyperparams['max_ent_traj']
-        T, dU, dX = traj_distr.T, traj_distr.dU, traj_distr.dX
+        T, dU, dV, dX = traj_distr.T, traj_distr.dU, traj_distr.dV, traj_distr.dX
         Cm, cv = np.copy(traj_info.Cm), np.copy(traj_info.cv)
 
-        PKLm = np.zeros((T, dX+dU, dX+dU))
-        PKLv = np.zeros((T, dX+dU))
+        PKLm = np.zeros((T, dX+dU+dV, dX+dU+dV))
+        PKLv = np.zeros((T, dX+dU+dV))
         fCm, fcv = np.zeros(Cm.shape), np.zeros(cv.shape)
         for t in range(T):
             # Policy KL-divergence terms.
@@ -533,6 +530,7 @@ class AlgorithmMDGPS(Algorithm):
                 np.linalg.solve(pol_info.chol_pol_Su[t, :, :].T, np.eye(dU))
             )
             KB, kB = pol_info.pol_Gu[t, :, :], pol_info.pol_gu[t, :]
+            print('KB: {}, inv_pol_Su: {}'.format(KB.shape, inv_pol_Su.shape))
             PKLm[t, :, :] = np.vstack([
                 np.hstack([KB.T.dot(inv_pol_Su).dot(KB), -KB.T.dot(inv_pol_Su)]),
                 np.hstack([-inv_pol_Su.dot(KB), inv_pol_Su])
@@ -540,6 +538,7 @@ class AlgorithmMDGPS(Algorithm):
             PKLv[t, :] = np.concatenate([
                 KB.T.dot(inv_pol_Su).dot(kB), -inv_pol_Su.dot(kB)
             ])
+            print('fCm: {}, Cm: {}, PKLm: {}', fCm.shape, Cm.shape, PKLm.shape)
             fCm[t, :, :] = (Cm[t, :, :] + PKLm[t, :, :] * eta) / (eta + multiplier)
             fcv[t, :] = (cv[t, :] + PKLv[t, :] * eta) / (eta + multiplier)
 

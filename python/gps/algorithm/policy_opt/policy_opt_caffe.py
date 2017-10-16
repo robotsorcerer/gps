@@ -13,9 +13,7 @@ from gps.algorithm.policy.caffe_policy import CaffePolicy
 from gps.algorithm.policy_opt.policy_opt import PolicyOpt
 from gps.algorithm.policy_opt.config import POLICY_OPT_CAFFE
 
-
 LOGGER = logging.getLogger(__name__)
-
 
 class PolicyOptCaffe(PolicyOpt):
     """ Policy optimization using Caffe neural network library. """
