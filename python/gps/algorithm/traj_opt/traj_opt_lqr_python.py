@@ -991,10 +991,6 @@ class TrajOptLQRPython(TrajOpt):
                 # Symmetrize quadratic component.
                 Qtt[t] = 0.5 * (Qtt[t] + Qtt[t].T)
 
-                # print('Qtt[t]: ', Qtt[t])
-                # if np.any(np.isnan(Qtt[t, idx_u, idx_u])): # Fix Q function
-                #     Qtt[t, idx_u, idx_u] = np.eye(Qtt[t].shape[-1])
-
                 if not self.cons_per_step:
                     inv_term = (Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v, idx_v]) - \
                             Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_v]))
@@ -1004,14 +1000,14 @@ class TrajOptLQRPython(TrajOpt):
                         Kstar = sp.linalg.solve_triangular(
                             U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
                         )
-                        print('Kstar: {}, Qu: {}, Qvv: {}, Qv: {}, Quv: {}'.format(Kstar.shape, \
-                            Qtt[t, idx_u].shape, \
-                            Qtt[t, idx_v, idx_v].shape, Qtt[t, idx_v].shape, \
-                            Qtt[t, idx_u, idx_v].shape))
-                        gu_term = - (1.0 / eta[t] ) * Kstar.dot(Qtt[t, idx_u].dot(Qtt[t, idx_v, idx_v])
-                                            - Qtt[t, idx_v].dot(Qtt[t, idx_u, idx_v]) )
-                        Gu_term = - (1.0 / eta[t] ) * Kstar.dot(Qtt[t, idx_u, idx_x].dot(Qtt[t, idx_v, idx_v])
-                                            - Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_v, idx_x]) )
+                        gu_term = - Kstar.dot(
+                                              Qt[t, idx_u].T.dot(Qtt[t, idx_v, idx_v])
+                                            - Qt[t, idx_v].T.dot(Qtt[t, idx_u, idx_v])
+                                            )
+                        Gu_term = - Kstar.dot(
+                                              Qtt[t, idx_v, idx_v].T.dot(Qtt[t, idx_u, idx_x])
+                                            - Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_v, idx_x])
+                                            )
                     except LinAlgError as e:
                         # Error thrown when Qtt[idx_u, idx_u] is not
                         # symmetric positive definite.
@@ -1019,27 +1015,28 @@ class TrajOptLQRPython(TrajOpt):
                         fail = t if self.cons_per_step else True
                         break
                 else:
-                    inv_term = (1.0 / eta[t]) * (Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v, idx_v]) - \
-                            Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_v])) + \
-                            prev_traj_distr.inv_pol_covar_u[t]
-                    try:
-                        U = sp.linalg.cholesky(self.check_pdef(inv_term))
-                        L = U.T
-                        Kstar = sp.linalg.solve_triangular(
-                            U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
-                        )
-                        gu_term = (1.0 / eta[t]) * - Kstar.dot(Qtt[t, idx_u].dot(Qtt[t, idx_v, idx_v])
-                                            - Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_v]) ) - \
-                                prev_traj_distr.inv_pol_covar_u[t].dot(prev_traj_distr.gu[t])
-                        Gu_term = (1.0 / eta[t]) * - Kstar.dot(Qtt[t, idx_u, idx_x].dot(Qtt[t, idx_v, idx_v])
-                                            - Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_v, idx_x]) ) - \
-                                prev_traj_distr.inv_pol_covar_u[t].dot(prev_traj_distr.Gu[t])
-                    except LinAlgError as e:
-                        # Error thrown when Qtt[idx_u, idx_u] is not
-                        # symmetric positive definite.
-                        LOGGER.debug('LinAlgError in prot backward pass w/o cons per step: %s', e)
-                        fail = t if self.cons_per_step else True
-                        break
+                    # inv_term = (1.0 / eta[t]) * (Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v, idx_v]) - \
+                    #         Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_v])) + \
+                    #         prev_traj_distr.inv_pol_covar_u[t]
+                    # try:
+                    #     U = sp.linalg.cholesky(self.check_pdef(inv_term))
+                    #     L = U.T
+                    #     Kstar = sp.linalg.solve_triangular(
+                    #         U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
+                    #     )
+                    #     gu_term = (1.0 / eta[t]) * - Kstar.dot(Qtt[t, idx_u].dot(Qtt[t, idx_v, idx_v])
+                    #                         - Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_v]) ) - \
+                    #             prev_traj_distr.inv_pol_covar_u[t].dot(prev_traj_distr.gu[t])
+                    #     Gu_term = (1.0 / eta[t]) * - Kstar.dot(Qtt[t, idx_u, idx_x].dot(Qtt[t, idx_v, idx_v])
+                    #                         - Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_v, idx_x]) ) - \
+                    #             prev_traj_distr.inv_pol_covar_u[t].dot(prev_traj_distr.Gu[t])
+                    # except LinAlgError as e:
+                    #     # Error thrown when Qtt[idx_u, idx_u] is not
+                    #     # symmetric positive definite.
+                    #     LOGGER.debug('LinAlgError in prot backward pass w/o cons per step: %s', e)
+                    #     fail = t if self.cons_per_step else True
+                    #     break
+                    raise NotImplementedError("cons per step is not implemented for robust gps algorithm")
 
                 if self._hyperparams['update_in_bwd_pass']:
                     # Store conditional covariance, inverse, and Cholesky.
@@ -1050,6 +1047,8 @@ class TrajOptLQRPython(TrajOpt):
                     )
 
                     # Compute mean terms.
+                    # print('L: {}, gu: {}, traj_distr.gu: {}'.format(L.shape, \
+                    #                     gu_term.shape, traj_distr.gu.shape))
                     traj_distr.gu[t, :] = -sp.linalg.solve_triangular(
                         U, sp.linalg.solve_triangular(L, gu_term, lower=True)
                     )
@@ -1059,9 +1058,7 @@ class TrajOptLQRPython(TrajOpt):
                 else:
                     # Store conditional covariance, inverse, and Cholesky.
                     new_ipS[t, :, :] = inv_term
-                    new_pS[t, :, :] = sp.linalg.solve_triangular(
-                        U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
-                    )
+                    new_pS[t, :, :] = Kstar
                     new_cpS[t, :, :] = sp.linalg.cholesky(
                         new_pS[t, :, :]
                     )
