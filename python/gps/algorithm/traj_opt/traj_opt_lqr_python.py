@@ -1070,16 +1070,16 @@ class TrajOptLQRPython(TrajOpt):
                     new_Gu[t, :, :] = -sp.linalg.solve_triangular(
                         U, sp.linalg.solve_triangular(L, Gu_term, lower=True)
                     )
-
+                Kv_inner[t, :, :]  = Qtt[t, idx_u, idx_u].T.dot(Qtt[t, idx_u, idx_v]) - \
+                                     Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_v])
+                U_kv = sp.linalg.cholesky(Kv_inner[t, :, :])
+                L_kv = U_kv.T
+                Kv[t, :, :]   =  sp.linalg.solve_triangular(
+                    U_kv, sp.linalg.solve_triangular(L_kv, np.eye(dU), lower=True)
+                )
                 # Compute value function.
                 if (self.cons_per_step or \
                     not self._hyperparams['update_in_bwd_pass']):
-                    Kv_inner[t, :, :]  = (Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_x, idx_x]).dot(Qtt[t, idx_u, idx_v]))
-                    U_kv = sp.linalg.cholesky(Kv_inner[t, :, :])
-                    L_kv = U_kv.T
-                    Kv[t, :, :]   =  sp.linalg.solve_triangular(
-                        U_kv, sp.linalg.solve_triangular(L_kv, np.eye(dU), lower=True)
-                    )
                     Vxx[t, :, :] = -Kv[t,:,:].dot(
                                     (Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_x, idx_x]).dot(Qtt[t, idx_u, idx_v])) - \
                                     (2 * Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_x]).dot(Qtt[t, idx_v, idx_x])) + \
