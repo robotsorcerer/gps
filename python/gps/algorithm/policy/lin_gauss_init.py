@@ -154,8 +154,8 @@ def init_lqr_robust(hyperparams):
     lt = -Ltt.dot(np.r_[x0, np.zeros(dU), x0, np.zeros(dV)])  # Cost function - linear term.
 
     # Perform dynamic programming.
-    gu = np.zeros((T, dU))  # local open loop control
-    gv = np.zeros((T, dV))  # local open loop control adversary
+    gu = np.zeros((T, dU, dU))  # local open loop control
+    gv = np.zeros((T, dV, dV))  # local open loop control adversary
     Gu = np.zeros((T, dU, dX))  # local state feedback gain
     Gv = np.zeros((T, dV, dX))  # local state feedback gain adversary
 
@@ -182,17 +182,21 @@ def init_lqr_robust(hyperparams):
     vx_t = np.zeros(dX)  # Vx = dV/dX. Derivative of value function.
     Vxx_t = np.zeros((dX, dX))  # Vxx = ddV/dXdX.
 
-    def check_pdef(A):
+    def make_pdef(A):
         """
             checks if the sigma matrix is symmetric
             positive definite before inverting via cholesky decomposition
         """
-        if np.array_equal(A, A.T) and np.all(np.linalg.eigvals(A)>0):
+        eigval = np.linalg.eigh(A)[0]
+        if np.array_equal(A, A.T) and np.all(eigval>0):
             # LOGGER.debug("sigma is pos. def. Computing cholesky factorization")
             return A
         else:
-            # print("Regularizing inv term for positive-definiteness")
-            return np.eye(A.shape[0])
+            # find lowest eigen value
+            eta = 1e-6  # regularizer for matrix multiplier
+            low = np.amin(np.sort(eigval))
+            Anew = low * A + eta * np.eye(A.shape[0])
+            return Anew
 
 
     #TODO: A lot of this code is repeated with traj_opt_lqr_python.py
@@ -225,7 +229,7 @@ def init_lqr_robust(hyperparams):
         try:
             U_inner = Qtt_t[idx_u, idx_u].dot(Qtt_t[idx_v, idx_v]) - \
                              Qtt_t[idx_u, idx_v].T.dot(Qtt_t[idx_u, idx_v])
-            U_inner = check_pdef(U_inner)
+            U_inner = make_pdef(U_inner)
             reg_term = 1e-4 * np.eye(dU) # reg term to avoid factorization errors
             U = sp.linalg.cholesky(U_inner)
             L = U.T
@@ -237,7 +241,7 @@ def init_lqr_robust(hyperparams):
             cholPSig[t, :, :] = sp.linalg.cholesky(PSig[t, :, :])
 
             # compute additive term to G_tilde in eqn 14
-            V = sp.linalg.cholesky(check_pdef(Qtt_t[idx_v, idx_v]))
+            V = sp.linalg.cholesky(make_pdef(Qtt_t[idx_v, idx_v]))
             Lv = V.T
             invPSigv[t, :, :] = Qtt_t[idx_v, idx_v] #+ reg_term
             PSigv[t, :, :]   =  sp.linalg.solve_triangular(
