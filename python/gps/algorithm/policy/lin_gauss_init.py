@@ -170,8 +170,8 @@ def init_lqr_robust(hyperparams):
     lt = -Ltt.dot(np.r_[x0, np.zeros(dU), x0, np.zeros(dV)])  # Cost function - linear term.
 
     # Perform dynamic programming.
-    gu = np.zeros((T, dU, dU))  # local open loop control
-    gv = np.zeros((T, dV, dV))  # local open loop control adversary
+    gu = np.zeros((T, dU))  # local open loop control
+    gv = np.zeros((T, dV))  # local open loop control adversary
 
     Gu = np.zeros((T, dU, dX))  # local state feedback gain
     Gv = np.zeros((T, dV, dX))  # local state feedback gain adversary

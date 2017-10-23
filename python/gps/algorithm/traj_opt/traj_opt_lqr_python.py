@@ -968,7 +968,7 @@ class TrajOptLQRPython(TrajOpt):
             invPSig_v = np.zeros((T, dV, dV))  # Inverse of covariance.
 
             if not self._update_in_bwd_pass:
-                new_Gu, new_gu = np.zeros((T, dU, dX)), np.zeros((T, dU, dU))
+                new_Gu, new_gu = np.zeros((T, dU, dX)), np.zeros((T, dU))
                 new_pS = np.zeros((T, dU, dU))
                 new_ipS, new_cpS = np.zeros((T, dU, dU)), np.zeros((T, dU, dU))
 
@@ -1206,15 +1206,21 @@ class TrajOptLQRPython(TrajOpt):
             Vx = np.zeros((T, dX))
             Qtt = np.zeros((T, dX+dU+dV, dX+dU+dV))
             Qt = np.zeros((T, dX+dU+dV))
-            Kv = np.zeros((T, dU, dV))
-            Kv_inner = np.zeros((T, dU, dV))
+
+            PSig_u = np.zeros((T, dU, dV))  # Covariance of noise.
+            cholPSig_u = np.zeros((T, dU, dU))  # Cholesky decomposition.
+            invPSig_u = np.zeros((T, dU, dU))  # Inverse of covariance.
+
+            PSig_v = np.zeros((T, dV, dV))  # Covariance of noise.
+            cholPSig_v = np.zeros((T, dV, dV))  # Cholesky decomposition.
+            invPSig_v = np.zeros((T, dV, dV))  # Inverse of covariance.
 
             if not self._update_in_bwd_pass:
-                new_K, new_k = np.zeros((T, dU, dX)), np.zeros((T, dU))
+                new_Gv, new_gv = np.zeros((T, dV, dX)), np.zeros((T, dV))
                 new_pS = np.zeros((T, dU, dU))
-                new_ipS, new_cpS = np.zeros((T, dU, dU)), np.zeros((T, dU, dU))
+                new_ipS, new_cpS = np.zeros((T, dV, dV)), np.zeros((T, dV, dV))
 
-            fCm, fcv = algorithm.compute_costs_adversary(  #from algorithm_mdgps.py#L204
+            fCm, fcv = algorithm.compute_costs_protagonist(  #from algorithm_mdgps.py#L204
                     m, eta, augment=(not self.cons_per_step)
             )
 
@@ -1239,94 +1245,92 @@ class TrajOptLQRPython(TrajOpt):
                 # Symmetrize quadratic component.
                 Qtt[t] = 0.5 * (Qtt[t] + Qtt[t].T)
 
-                # print('Qtt[t]: ', Qtt[t])
-                if np.any(np.isnan(Qtt[t, idx_u, idx_u])): # Fix Q function
-                    Qtt[t, idx_u, idx_u] = np.eye(Qtt[t].shape[-1])
+                # first find Qvv inverse and Quu inverse
+                U_u = sp.linalg.cholesky(Qtt[idx_u, idx_u])
+                L_u = U_u.T
+
+                # factorize Qvv
+                U_v = sp.linalg.cholesky(Qtt[idx_v, idx_v])
+                L_v = U_v.T
+
+                invPSig_u[t, :, :] = Qtt[idx_u, idx_u]
+                PSig_u[t, :, :] = sp.linalg.solve_triangular(
+                    U_u, sp.linalg.solve_triangular(L_u, np.eye(dU), lower=True) )
+                cholPSig_u[t, :, :] = sp.linalg.cholesky(PSig_u[t, :, :])
+
+                invPSig_v[t, :, :] = Qtt[idx_v, idx_v]
+                PSig_v[t, :, :] = sp.linalg.solve_triangular(
+                    U_v, sp.linalg.solve_triangular(L_v, np.eye(dV), lower=True) )
+                cholPSig_v[t, :, :] = sp.linalg.cholesky(PSig_v[t, :, :])
+
+                inv_term = np.eye(dV) - PSig_v[t, :, :].dot(Qtt[idx_v, idx_u] \
+                                ).dot(PSig_u[t, :, :]).dot(Qtt[idx_u, idx_v].T).dot(\
+                                Qtt[idx_v, idx_v])
+
+                # Compute Cholesky decomposition of Q function action
+                # component.
+                try:
+                    inv_term_U = sp.linalg.cholesky(inv_term)
+                    inv_term_L = inv_term_U.T
+                except LinAlgError as e:
+                    # Error thrown when Qtt[idx_u, idx_u] is not
+                    # symmetric positive definite.
+                    LOGGER.debug('LinAlgError: %s', e)
+                    fail = t if self.cons_per_step else True
+                    break
 
                 if not self.cons_per_step:
-                    inv_term = (Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v, idx_v]) - \
-                            Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_v]))
-                    try:
-                        U = sp.linalg.cholesky(inv_term)
-                        L = U.T
-                        Kstar = sp.linalg.solve_triangular(
-                            U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
-                        )
-                        gv_term = Kstar.dot(Qtt[t, idx_u].dot(Qtt[t, idx_u, idx_v])
-                                            - Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v]) )
-                        Gv_term = - Kstar.dot(Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_u, idx_x])
-                                            - Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v, idx_x]) )
-                    except LinAlgError as e:
-                        # Error thrown when Qtt[idx_u, idx_u] is not
-                        # symmetric positive definite.
-                        LOGGER.debug('LinAlgError in prot cons per step: %s', e)
-                        fail = t if self.cons_per_step else True
-                        break
+                    # invert inv_term now via solve_triangular
+                    inv_termp   = sp.linalg.solve_triangular(inv_term_U, \
+                                sp.linalg.solve_triangular(inv_term_L, np.eye(dV), lower=True))
+                    gv_term = inv_termp.dot(Qtt[idx_v, idx_u].dot(PSig_u[t,:,:]).dot(Qt[idx_u]) - \
+                                        Qt[idx_v].T)
+                    Gv_term = inv_termp.dot(Qtt[idx_v, idx_u].dot(PSig_u[t,:,:]).dot(Qtt[idx_u, idx_x]) - \
+                                        Qtt[idx_v, idx_x])
                 else:
-                    inv_term = (1.0 / eta[t]) * (Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v, idx_v]) - \
-                            Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_v])) + \
-                            prev_traj_distr.inv_pol_covar_u[t]
-                    try:
-                        U = sp.linalg.cholesky(inv_term)
-                        L = U.T
-                        Kstar = sp.linalg.solve_triangular(
-                            U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
-                        )
-                        gv_term = (1.0 / eta[t]) * Kstar.dot(Qtt[t, idx_u].dot(Qtt[t, idx_u, idx_v])
-                                            - Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v]) ) - \
+                    # invert inv_term now via solve_triangular
+                    inv_termp   = (1.0 / eta[t]) * sp.linalg.solve_triangular(inv_term_U, \
+                                sp.linalg.solve_triangular(inv_term_L, np.eye(dV), lower=True)) + \
+                                prev_traj_distr.inv_pol_covar_v[t]
+                    gv_term = (1.0 / eta[t]) * inv_termp.dot(Qtt[idx_v, idx_u].dot(PSig_u[t,:,:]).dot(Qt[idx_u]) - \
+                                        Qt[idx_v].T) - \
                                 prev_traj_distr.inv_pol_covar_v[t].dot(prev_traj_distr.gv[t])
-                        Gv_term = (1.0 / eta[t]) * Kstar.dot(Qtt[t, idx_u, idx_v].dot(Qtt[t, idx_u, idx_x])
-                                            - Qtt[t, idx_u, idx_u].dot(Qtt[t, idx_v, idx_x]) ) - \
+                    Gv_term = (1.0 / eta[t]) * inv_termp.dot(Qtt[idx_v, idx_u].dot(PSig_u[t,:,:]).dot(Qtt[idx_u, idx_x]) - \
+                                        Qtt[idx_v, idx_x]) - \
                                 prev_traj_distr.inv_pol_covar_v[t].dot(prev_traj_distr.Gv[t])
-                    except LinAlgError as e:
-                        # Error thrown when Qtt[idx_u, idx_u] is not
-                        # symmetric positive definite.
-                        LOGGER.debug('LinAlgError in prot backward pass w/o cons per step: %s', e)
-                        fail = t if self.cons_per_step else True
-                        break
 
                 if self._hyperparams['update_in_bwd_pass']:
                     # Store conditional covariance, inverse, and Cholesky.
                     traj_distr.inv_pol_covar_v[t, :, :] = inv_term
-                    traj_distr.pol_covar_v[t, :, :] = Kstar
+                    traj_distr.pol_covar_v[t, :, :] = sp.linalg.solve_triangular(inv_term_U, \
+                                sp.linalg.solve_triangular(inv_term_L, np.eye(dU), lower=True))
                     traj_distr.chol_pol_covar_v[t, :, :] = sp.linalg.cholesky(
                         traj_distr.pol_covar_v[t, :, :]
                     )
 
                     # Compute mean terms.
                     traj_distr.gv[t, :] = sp.linalg.solve_triangular(
-                        U, sp.linalg.solve_triangular(L, gu_term, lower=True)
-                    )
+                        inv_term_U, sp.linalg.solve_triangular(inv_term_L, gv_term, lower=True))
                     traj_distr.Gv[t, :, :] = sp.linalg.solve_triangular(
-                        U, sp.linalg.solve_triangular(L, Gu_term, lower=True)
-                    )
+                        inv_term_U, sp.linalg.solve_triangular(inv_term_L, Gv_term, lower=True))
                 else:
                     # Store conditional covariance, inverse, and Cholesky.
                     new_ipS[t, :, :] = inv_term
                     new_pS[t, :, :] = sp.linalg.solve_triangular(
-                        U, sp.linalg.solve_triangular(L, np.eye(dU), lower=True)
-                    )
+                        inv_term_U, sp.linalg.solve_triangular(inv_term_L, gv_term, lower=True))
                     new_cpS[t, :, :] = sp.linalg.cholesky(
                         new_pS[t, :, :]
                     )
 
                     # Compute mean terms.
                     new_gv[t, :] = sp.linalg.solve_triangular(
-                        U, sp.linalg.solve_triangular(L, gv_term, lower=True)
-                    )
-                    new_Gv[t, :, :] = -sp.linalg.solve_triangular(
-                        U, sp.linalg.solve_triangular(L, Gv_term, lower=True)
-                    )
+                        inv_term_U, sp.linalg.solve_triangular(inv_term_L, gv_term, lower=True) )
+                    new_Gv[t, :, :] = sp.linalg.solve_triangular(
+                        inv_term_U, sp.linalg.solve_triangular(inv_term_L, Gv_term, lower=True) )
 
                 # Compute value function.
-                if (self.cons_per_step or
+                if (self.cons_per_step or \
                     not self._hyperparams['update_in_bwd_pass']):
-                    Kv_inner[t, :, :]  = (Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_x, idx_x]).dot(Qtt[t, idx_u, idx_v]))
-                    U_kv = sp.linalg.cholesky(Kv_inner[t, :, :])
-                    L_kv = U_kv.T
-                    Kv[t, :, :]   =  sp.linalg.solve_triangular(
-                        U_kv, sp.linalg.solve_triangular(L_kv, np.eye(dU), lower=True)
-                    )
                     Vxx[t, :, :] = -Kv[t,:,:].dot(
                                     (Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_x, idx_x]).dot(Qtt[t, idx_u, idx_v])) - \
                                     (2 * Qtt[t, idx_u, idx_v].T.dot(Qtt[t, idx_u, idx_x]).dot(Qtt[t, idx_v, idx_x])) + \
@@ -1363,10 +1367,10 @@ class TrajOptLQRPython(TrajOpt):
                 Vxx[t, :, :] = 0.5 * (Vxx[t, :, :] + Vxx[t, :, :].T)
 
             if not self._hyperparams['update_in_bwd_pass']:
-                traj_distr.Gv, traj_distr.gv = new_Gv, new_gv
-                traj_distr.pol_covar_v = new_pS
-                traj_distr.inv_pol_covar_v = new_ipS
-                traj_distr.chol_pol_covar_v = new_cpS
+                traj_distr.Gu, traj_distr.gu = new_Gu, new_gu
+                traj_distr.pol_covar_u = new_pS
+                traj_distr.inv_pol_covar_u = new_ipS
+                traj_distr.chol_pol_covar_u = new_cpS
 
             # Increment eta on non-SPD Q-function.
             if fail:
@@ -1392,6 +1396,7 @@ class TrajOptLQRPython(TrajOpt):
                             large eta (check that dynamics and cost are \
                             reasonably well conditioned)!')
         return traj_distr, eta
+
 
     def backward_robust(self, prev_traj_distr, traj_info, eta, algorithm, m):
         """
