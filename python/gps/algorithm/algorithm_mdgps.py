@@ -29,6 +29,7 @@ class AlgorithmMDGPS(Algorithm):
             # print('operating in mode: ', self._hyperparams['cost']['mode'])
             if self._hyperparams['cost']['mode'] == 'robust':
                 self.cur[m].pol_info = PolicyInfoRobust(self._hyperparams)
+                # self.cur[m].pol_info_v = PolicyInfoRobust(self._hyperparams) # not needed
             else:
                 self.cur[m].pol_info = PolicyInfo(self._hyperparams) # from algorithm_utils.py
             self.cur[m].pol_info.policy_prior = \
@@ -142,14 +143,9 @@ class AlgorithmMDGPS(Algorithm):
 
         # Fit  linearized global policy. Step 4 in alg.
         for m in range(self.M):
-            # # update protagonist
-            # LOGGER.debug("cond: %d:  fitting protagonist "
-            #              "policy to modeled dynamics from GMM", m)
-            # self._update_policy_fit_u(m)
-            # # update adversary policy
-            # LOGGER.debug("cond: %d:  fitting adversarial "
-            #              "policy to modeled dynamics from GMM", m)
-            # self._update_policy_fit_v(m)
+            """
+            we've folded the update of protagonist and antagonist into robust
+            """
             # update global linearization and local linearization of pi_u, pi_v
             LOGGER.debug("cond: %d:  fitting robust "
                          "policy to modeled dynamics from GMM", m)
@@ -213,13 +209,11 @@ class AlgorithmMDGPS(Algorithm):
         dU, dV, dO, T = self.dU, self.dV, self.dO, self.T
         # Compute target mean, cov, and weight for each sample.
         obs_data, tgt_mu_u = np.zeros((0, T, dO)), np.zeros((0, T, dU))
-        tgt_prc_u, tgt_wt = np.zeros((0, T, dU, dU)), np.zeros((0, T))
+        tgt_prc_u, tgt_wt_u = np.zeros((0, T, dU, dU)), np.zeros((0, T))
 
         # # Compute target mean, and cov for adv sample.
-        # tgt_mu_v, tgt_prc_v = np.zeros((0, T, dV)), np.zeros((0, T, dV, dV))
-        #
-        # # Compute target mean, and cov for both trajectories sample.
-        # tgt_mu_uv, tgt_prc_uv = np.zeros((0, T, dU or dV)), np.zeros((0, T, dU or dV, dU or dV))
+        tgt_mu_v, tgt_prc_v = np.zeros((0, T, dV)), np.zeros((0, T, dV, dV))
+        tgt_wt_v = np.zeros((0, T))
 
         for m in range(self.M):
             samples = self.cur[m].sample_list
@@ -229,24 +223,38 @@ class AlgorithmMDGPS(Algorithm):
             #      traj_v is the trajectory distribution for the adversary only
             #      traj_uv is the trajectory distribution for the control conditioned on the adversary
             # for control
-            traj_u, pol_info_u = self.new_traj_distr[m], self.cur[m].pol_info #from algorithm_utils.py#L15
+            traj_u, pol_info = self.new_traj_distr[m], self.cur[m].pol_info #from algorithm_utils.py#L15
+            # pol_info_v = self.cur[m].pol_info_v
             mu_u    = np.zeros((N, T, dU))
             prc_u   = np.zeros((N, T, dU, dU))
-            wt    = np.zeros((N, T))
+
+            mu_v    = np.zeros((N, T, dV))
+            prc_v   = np.zeros((N, T, dV, dV))
+            wt_u    = np.zeros((N, T))
+            wt_v    = np.zeros((N, T))
 
             # Get time-indexed actions.
             for t in range(T):
                 # Compute actions along this trajectory.
                 prc_u[:, t, :, :] = np.tile(traj_u.inv_pol_covar_u[t, :, :],
                                           [N, 1, 1])
+                prc_v[:, t, :, :] = np.tile(traj_v.inv_pol_covar_v[t, :, :],
+                                          [N, 1, 1])
                 for i in range(N):
-                    mu_u[i, t, :]  = (traj_u.Gu[t, :, :].dot(X[i, t, :]) + traj_u.gu[t, :])
-                wt[:, t].fill(pol_info_u.pol_wt[t])
+                    mu_v[i, t, :]  = (traj_v.Gv[t, :, :].dot(X[i, t, :]) + traj_v.gv[t, :])
+                wt_u[:, t].fill(pol_info.pol_wt[t])
+                wt_v[:, t].fill(pol_info.pol_wt[t])
 
             tgt_mu_u = np.concatenate((tgt_mu_u, mu_u))
             tgt_prc_u = np.concatenate((tgt_prc_u, prc_u))
-            tgt_wt = np.concatenate((tgt_wt, wt))
+
+            tgt_mu_v = np.concatenate((tgt_mu_v, mu_v))
+            tgt_prc_v = np.concatenate((tgt_prc_v, prc_v))
+
+            tgt_wt_u = np.concatenate((tgt_wt_u, wt_u))
+            tgt_wt_v = np.concatenate((tgt_wt_v, wt_v))
             obs_data = np.concatenate((obs_data, samples.get_obs()))
+
         """
         Update each policy in turn:
             First: update protagonist policy
@@ -254,9 +262,10 @@ class AlgorithmMDGPS(Algorithm):
             Third: update conditional of protagonist on antagonist
         """
 
-        self.policy_opt.update_locals(obs_data, tgt_mu_u, tgt_prc_u, tgt_wt)
+        # will update policy_chol_pol_covar_u if prot==true
+        self.policy_opt.update_locals(obs_data, tgt_mu_u, tgt_prc_u, tgt_wt_u, prot=True)
         # # update pi(v|x)
-        # self.policy_opt.update_locals(obs_data, tgt_mu_v, tgt_prc_v, tgt_wt_v)
+        self.policy_opt.update_locals(obs_data, tgt_mu_v, tgt_prc_v, tgt_wt_v, prot=False)
         # # update pi(u, v | x)
         # # self.policy_opt.update_locals(obs_data, tgt_mu_uv, tgt_prc_uv, tgt_wt_uv)
 
@@ -292,6 +301,8 @@ class AlgorithmMDGPS(Algorithm):
 
     def _update_policy_fit_u(self, m):
         """
+        Deprecated. This is now collapsed into update_policy_fit_robust
+
         Re-estimate the local policy values in the neighborhood of the
         trajectory.
         Args:
@@ -322,6 +333,8 @@ class AlgorithmMDGPS(Algorithm):
 
     def _update_policy_fit_v(self, m):
         """
+        Deprecated. This is now collapsed into update_policy_fit_robust
+
         Re-estimate the local policy values in the neighborhood of the
         trajectory.
         Args:
@@ -331,7 +344,7 @@ class AlgorithmMDGPS(Algorithm):
         # Choose samples to use.
         samples = self.cur[m].sample_list
         N = len(samples)
-        pol_info = self.cur[m].pol_info  # get robust pol info object
+        pol_info = self.cur[m].pol_info_v  # get robust pol info object
         X = samples.get_X()
         obs = samples.get_obs().copy()
         pol_mu, pol_sig = self.policy_opt.prob(obs)[:2]
@@ -360,9 +373,7 @@ class AlgorithmMDGPS(Algorithm):
         """
         T = self.T
         # Choose samples to use.
-        # samples = shuffle(self.cur[m].sample_list + self.cur[m].sample_list_adv)
         samples     = self.cur[m].sample_list
-        # samples_adv =  self.cur[m].sample_list_adv
         N = len(samples)
         pol_info = self.cur[m].pol_info
         X = samples.get_X()
@@ -370,7 +381,7 @@ class AlgorithmMDGPS(Algorithm):
         obs_adv = samples.get_obs().copy()
         pol_mu, pol_sig = self.policy_opt.prob(obs)[:2]
         pol_mu_adv, pol_sig_adv = self.policy_opt.prob(obs_adv)[:2]
-        # print('pol_info class', pol_info, pol_info.__dict__.keys())
+
         pol_info.pol_mu_prot, pol_info.pol_sig_prot = pol_mu, pol_sig
         pol_info.pol_mu_adv, pol_info.pol_sig_adv = pol_mu_adv, pol_sig_adv
 
@@ -389,8 +400,8 @@ class AlgorithmMDGPS(Algorithm):
                         policy_prior.fit_v(X, pol_mu_adv, pol_sig_adv)
 
         # Fit global linearization and store in global pol_info objects.
-        pol_info.pol_G, pol_info.pol_g, pol_info.pol_S = \
-                policy_prior.fit_robust(X, pol_mu, pol_sig, pol_mu_adv,pol_sig_adv)
+        # pol_info.pol_G, pol_info.pol_g, pol_info.pol_S = \
+        #         policy_prior.fit_robust(X, pol_mu, pol_sig, pol_mu_adv,pol_sig_adv)
 
         # update the covariance of the protagonist, adversary ...
         # and robust distribution in turn
@@ -399,8 +410,8 @@ class AlgorithmMDGPS(Algorithm):
                     sp.linalg.cholesky(pol_info.pol_Su[t, :, :])
             pol_info.chol_pol_Sv[t, :, :] = \
                     sp.linalg.cholesky(pol_info.pol_Sv[t, :, :])
-            pol_info.chol_pol_S[t, :, :] = \
-                    sp.linalg.cholesky(pol_info.pol_S[t, :, :])
+            # pol_info.chol_pol_S[t, :, :] = \
+            #         sp.linalg.cholesky(pol_info.pol_S[t, :, :])
 
     def _advance_iteration_variables(self):
         """

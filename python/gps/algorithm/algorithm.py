@@ -143,12 +143,11 @@ class Algorithm(object):
 
             X = cur_data.get_X()
             U = cur_data.get_U()
-            # draw V from a 0-mean unit variance for now
-            V = cur_data.get_U() #np.random.normal(0, 1, (U.shape)) # this should be correct. Though we need the gamma term
+            V = cur_data.get_V()
 
             # Update prior and fit dynamics. #traj_info.dynamics = DynamicsLRPrior
             self.cur[m].traj_info.dynamics.update_prior_robust(cur_data) #L18, dynamics_lr_prior
-            self.cur[m].traj_info.dynamics.fit_robust(X, U, V) #L77 dynamics_lr_prior
+            self.cur[m].traj_info.dynamics.fit_robust(X, U, V) #L65 dynamics_lr_prior
 
             # Fit x0mu/x0sigma.
             x0 = X[:, 0, :]
@@ -158,8 +157,8 @@ class Algorithm(object):
                             np.maximum(np.var(x0, axis=0),
                            self._hyperparams['initial_state_var'])
             )
-
-            prior = self.cur[m].traj_info.dynamics.get_prior()
+            # this is calling DynamicsPriorGMM from dynamics_lr_prior
+            prior = self.cur[m].traj_info.dynamics.get_prior() # this is in dynamics_lr_prior #L31
             if prior:
                 mu0, Phi, priorm, n0 = prior.initial_state()
                 N = len(cur_data)

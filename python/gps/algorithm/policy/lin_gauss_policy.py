@@ -83,8 +83,7 @@ class LinearGaussianPolicyRobust(Policy):
     U   = g  + G  * x + noise,   where noise ~ N(0, chol_pol_covar)             # joint global policy
     """
     def __init__(self, Gu, gu, pol_covar_u, chol_pol_covar_u, inv_pol_covar_u, \
-                       Gv, gv, pol_covar_v, chol_pol_covar_v, inv_pol_covar_v, \
-                       G,  g,  pol_covar,   chol_pol_covar,   inv_pol_covar):
+                       Gv, gv, pol_covar_v, chol_pol_covar_v, inv_pol_covar_v):
         Policy.__init__(self)
 
         # Assume G has the correct shape, and make sure others match.
@@ -93,17 +92,12 @@ class LinearGaussianPolicyRobust(Policy):
         self.dV = Gv.shape[1]
         self.dX = G.shape[2]
 
-        check_shape(g, (self.T, self.dU))
-        check_shape(pol_covar, (self.T, self.dU, self.dU))
-        check_shape(chol_pol_covar, (self.T, self.dU, self.dU))
-        check_shape(inv_pol_covar, (self.T, self.dU, self.dU))
-
-        check_shape(gu, (self.T, self.dU))
+        check_shape(gu, (self.T, self.dU, self.dU))
         check_shape(pol_covar_u, (self.T, self.dU, self.dU))
         check_shape(chol_pol_covar_u, (self.T, self.dU, self.dU))
         check_shape(inv_pol_covar_u, (self.T, self.dU, self.dU))
 
-        check_shape(gv, (self.T, self.dV))
+        check_shape(gv, (self.T, self.dV, self.dV))
         check_shape(pol_covar_v, (self.T, self.dV, self.dV))
         check_shape(chol_pol_covar_v, (self.T, self.dV, self.dV))
         check_shape(inv_pol_covar_v, (self.T, self.dV, self.dV))
@@ -120,25 +114,6 @@ class LinearGaussianPolicyRobust(Policy):
         self.chol_pol_covar_v = chol_pol_covar_v
         self.inv_pol_covar_v = inv_pol_covar_v
 
-        self.G = G
-        self.g = g
-        self.pol_covar = pol_covar
-        self.chol_pol_covar = chol_pol_covar
-        self.inv_pol_covar = inv_pol_covar
-
-    def act(self, x, obs, t, noise=None):
-        """
-        Return an action for a state.
-        Args:
-            x: State vector.
-            obs: Observation vector.
-            t: Time step.
-            noise: Action noise. This will be scaled by the variance.
-        """
-        u = self.K[t].dot(x) + self.k[t]
-        u += self.chol_pol_covar[t].T.dot(noise)
-        return u
-        
     def act_u(self, x, obs, t, noise=None):
         """
         Return an action for a state.
@@ -148,7 +123,7 @@ class LinearGaussianPolicyRobust(Policy):
             t: Time step.
             noise: Action noise. This will be scaled by the variance.
         """
-        u = self.Gu[t].dot(x) + self.g[t]
+        u = self.Gu[t].dot(x) + self.gu[t]
         u += self.chol_pol_covar_u[t].T.dot(noise)
         return u
 
@@ -161,36 +136,9 @@ class LinearGaussianPolicyRobust(Policy):
             t: Time step.
             noise: Action noise. This will be scaled by the variance.
         """
-        v = self.Gv[t].dot(x) + self.g[t]
+        v = self.Gv[t].dot(x) + self.gv[t]
         v += self.chol_pol_covar_v[t].T.dot(noise)
         return v
-
-    def act_global(self, x, obs, t, noise=None):
-        """
-        Return an action for a state.
-        Args:
-            x: State vector.
-            obs: Observation vector.
-            t: Time step.
-            noise: Action noise. This will be scaled by the variance.
-        """
-        u = self.G[t].dot(x) + self.g[t]
-        u += self.chol_pol_covar[t].T.dot(noise)
-        return u
-
-    def fold_k(self, noise):
-        """
-        Fold noise into k.
-        Args:
-            noise: A T x Du noise vector with mean 0 and variance 1.
-        Returns:
-            k: A T x dU bias vector.
-        """
-        k = np.zeros_like(self.k)
-        for i in range(self.T):
-            scaled_noise = self.chol_pol_covar[i].T.dot(noise[i])
-            k[i] = scaled_noise + self.k[i]
-        return k
 
     def fold_gu(self, noise):
         """
@@ -202,7 +150,7 @@ class LinearGaussianPolicyRobust(Policy):
         """
         gu = np.zeros_like(self.gu)
         for i in range(self.T):
-            scaled_noise = self.chol_pol_covar[i].T.dot(noise[i])
+            scaled_noise = self.chol_pol_covar_u[i].T.dot(noise[i])
             gu[i] = scaled_noise + self.gu[i]
         return gu
 
@@ -216,23 +164,9 @@ class LinearGaussianPolicyRobust(Policy):
         """
         gv = np.zeros_like(self.gv)
         for i in range(self.T):
-            scaled_noise = self.chol_pol_covar[i].T.dot(noise[i])
+            scaled_noise = self.chol_pol_covar_v[i].T.dot(noise[i])
             gv[i] = scaled_noise + self.gv[i]
         return gv
-
-    def fold_g(self, noise):
-        """
-        Fold noise into g.
-        Args:
-            noise: A T x Du noise vector with mean 0 and variance 1.
-        Returns:
-            g: A T x dU bias vector.
-        """
-        g = np.zeros_like(self.g)
-        for i in range(self.T):
-            scaled_noise = self.chol_pol_covar[i].T.dot(noise[i])
-            g[i] = scaled_noise + self.g[i]
-        return g
 
     def nans_like(self):
         """
@@ -247,9 +181,6 @@ class LinearGaussianPolicyRobust(Policy):
             np.zeros_like(self.Gv), np.zeros_like(self.gv),
             np.zeros_like(self.pol_covar_v), np.zeros_like(self.chol_pol_covar_v),
             np.zeros_like(self.inv_pol_covar_v),
-            np.zeros_like(self.G), np.zeros_like(self.g),
-            np.zeros_like(self.pol_covar), np.zeros_like(self.chol_pol_covar),
-            np.zeros_like(self.inv_pol_covar),
         )
         policy.Gu.fill(np.nan)
         policy.gu.fill(np.nan)
@@ -263,9 +194,4 @@ class LinearGaussianPolicyRobust(Policy):
         policy.chol_pol_covar_v.fill(np.nan)
         policy.inv_pol_covar_v.fill(np.nan)
 
-        policy.G.fill(np.nan)
-        policy.g.fill(np.nan)
-        policy.pol_covar.fill(np.nan)
-        policy.chol_pol_covar.fill(np.nan)
-        policy.inv_pol_covar.fill(np.nan)
         return policy

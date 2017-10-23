@@ -20,6 +20,8 @@ class CaffePolicy(Policy):
         self.net = test_net
         self.deploy_net = deploy_net
         self.chol_pol_covar = np.diag(np.sqrt(var))
+        self.chol_pol_covar_u = np.diag(np.sqrt(var))
+        self.chol_pol_covar_v = np.diag(np.sqrt(var))
         self.dU = var.shape[-1]
         self.scale = None  # must be set from elsewhere based on observations
         self.bias = None

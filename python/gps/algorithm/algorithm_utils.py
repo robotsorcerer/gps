@@ -131,7 +131,6 @@ class PolicyInfoRobust(BundleType):
         # Compute inverse policy covariances.
         inv_pol_Su = np.empty_like(self.chol_pol_Su)
         inv_pol_Sv = np.empty_like(self.chol_pol_Sv)
-        inv_pol_S  = np.empty_like(self.chol_pol_S)
         for t in range(T):
             inv_pol_Su[t, :, :] = np.linalg.solve(
                 self.chol_pol_Su[t, :, :],
@@ -141,17 +140,11 @@ class PolicyInfoRobust(BundleType):
                 self.chol_pol_Sv[t, :, :],
                 np.linalg.solve(self.chol_pol_Sv[t, :, :].T, np.eye(dU))
             )
-            inv_pol_S[t, :, :] = np.linalg.solve(
-                self.chol_pol_S[t, :, :],
-                np.linalg.solve(self.chol_pol_S[t, :, :].T, np.eye(dU))
-            )
 
         return LinearGaussianPolicyRobust(self.pol_Gu, self.pol_gu, self.pol_Su,
                                             self.chol_pol_Su, inv_pol_Su,
                                         self.pol_Gv, self.pol_gv, self.pol_Sv,
-                                            self.chol_pol_Sv, inv_pol_Sv,
-                                        self.pol_G, self.pol_g, self.pol_S,
-                                            self.chol_pol_S, inv_pol_S)
+                                            self.chol_pol_Sv, inv_pol_Sv)
 
 def estimate_moments(X, mu, covar):
     """ Estimate the moments for a given linearized policy. """

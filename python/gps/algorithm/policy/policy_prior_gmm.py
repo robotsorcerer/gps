@@ -202,9 +202,9 @@ class PolicyPriorGMM(object):
         pol_sig = np.mean(pol_sig, axis=0)
 
         # Allocate.
-        pol_K = np.zeros([T, dU, dX])
-        pol_k = np.zeros([T, dU])
-        pol_S = np.zeros([T, dU, dU])
+        pol_Gu = np.zeros([T, dU, dX])
+        pol_gu = np.zeros([T, dU])
+        pol_Su = np.zeros([T, dU, dU])
 
         # Fit policy linearization with least squares regression.
         dwts = (1.0 / N) * np.ones(N)
@@ -219,11 +219,11 @@ class PolicyPriorGMM(object):
             # Slightly regularize on first timestep.
             if t == 0:
                 sig_reg[:dX, :dX] = 1e-8
-            pol_K[t, :, :], pol_k[t, :], pol_S[t, :, :] = \
+            pol_Gu[t, :, :], pol_gu[t, :], pol_Su[t, :, :] = \
                     gauss_fit_joint_prior(Ys,
                             mu0, Phi, mm, n0, dwts, dX, dU, sig_reg)
-        pol_S += pol_sig
-        return pol_K, pol_k, pol_S
+        pol_Su += pol_sig
+        return pol_Gu, pol_gu, pol_Su
 
     def fit_v(self, X, pol_mu, pol_sig):
         """
@@ -244,9 +244,9 @@ class PolicyPriorGMM(object):
         pol_sig = np.mean(pol_sig, axis=0)
 
         # Allocate.
-        pol_K = np.zeros([T, dV, dX])
-        pol_k = np.zeros([T, dV])
-        pol_S = np.zeros([T, dV, dV])
+        pol_Gv = np.zeros([T, dV, dX])
+        pol_gv = np.zeros([T, dV])
+        pol_Sv = np.zeros([T, dV, dV])
 
         # Fit policy linearization with least squares regression.
         dwts = (1.0 / N) * np.ones(N)
@@ -261,11 +261,11 @@ class PolicyPriorGMM(object):
             # Slightly regularize on first timestep.
             if t == 0:
                 sig_reg[:dX, :dX] = 1e-8
-            pol_K[t, :, :], pol_k[t, :], pol_S[t, :, :] = \
+            pol_Gv[t, :, :], pol_gv[t, :], pol_Sv[t, :, :] = \
                     gauss_fit_joint_prior(Ys,
                             mu0, Phi, mm, n0, dwts, dX, dV, sig_reg)
-        pol_S += pol_sig
-        return pol_K, pol_k, pol_S
+        pol_Sv += pol_sig
+        return pol_Gv, pol_gv, pol_Sv
 
     def fit_robust(self, X, pol_mu, pol_sig, pol_mu_adv, pol_sig_adv):
         """

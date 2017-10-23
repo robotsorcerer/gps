@@ -185,9 +185,9 @@ class PolicyOptCaffe(PolicyOpt):
         self.policy.chol_pol_covar = np.diag(np.sqrt(self.var))
         return self.policy
 
-    def update_locals(self, obs, tgt_mu, tgt_prc, tgt_wt):
+    def update_locals(self, obs, tgt_mu, tgt_prc, tgt_wt, prot):
         """
-        Updates the local protagonistic or adversarial policies.
+        Updates the local protagonistic policies.
         Args:
             obs: Numpy array of observations, N x T x dO.
             tgt_mu: Numpy array of mean controller outputs, N x T x dU.
@@ -196,7 +196,6 @@ class PolicyOptCaffe(PolicyOpt):
         Returns:
             A CaffePolicy object with updated weights.
         """
-        # print('obs shape: ', obs.shape, 'tg_mu: ', tgt_mu.shape)
         N, T = obs.shape[:2]
         dU, dO = self._dU, self._dO
 
@@ -208,8 +207,6 @@ class PolicyOptCaffe(PolicyOpt):
         tgt_wt *= (float(N * T) / np.sum(tgt_wt))
         # Allow weights to be at most twice the robust median.
         mn = np.median(tgt_wt[(tgt_wt > 1e-2).nonzero()])
-        # print('N: {}, tgt_wt: {}, mn: {}'.format(N, tgt_wt.shape, mn))
-        # for n in range(N):
         for n in range(N): # hacky fix to let the for loop finish running before exit
             for t in range(T):
                 tgt_wt[n, t] = min(tgt_wt[n, t], 2 * mn)
@@ -275,7 +272,10 @@ class PolicyOptCaffe(PolicyOpt):
         self.var = 1 / np.diag(A)
 
         self.policy.net.share_with(self.solver.net)
-        self.policy.chol_pol_covar = np.diag(np.sqrt(self.var))
+        if prot:
+            self.policy.chol_pol_covar_u = np.diag(np.sqrt(self.var))
+        else:
+            self.policy.chol_pol_covar_v = np.diag(np.sqrt(self.var))
         return self.policy
 
     def update_robust(self, obs, tgt_mu, tgt_prc, tgt_wt):
