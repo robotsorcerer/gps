@@ -113,6 +113,9 @@ class LinearGaussianPolicyRobust(Policy):
         self.pol_covar_v = pol_covar_v
         self.chol_pol_covar_v = chol_pol_covar_v
         self.inv_pol_covar_v = inv_pol_covar_v
+        
+    def act(self, x, obs, t, noise=None):
+        raise NotImplementedError("act method is not implemented in the robust version")
 
     def act_u(self, x, obs, t, noise=None):
         """

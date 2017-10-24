@@ -154,6 +154,19 @@ def init_lqr_robust(hyperparams):
             Anew = low * A + eta * np.eye(A.shape[0])
             return Anew
 
+    def make_identity(A):
+        """
+            checks if the sigma matrix is symmetric
+            positive definite before inverting via cholesky decomposition
+        """
+        eigval = np.linalg.eigh(A)[0]
+        if np.array_equal(A, A.T) and np.all(eigval>0):
+            # LOGGER.debug("sigma is pos. def. Computing cholesky factorization")
+            return A
+        else:
+            Anew = np.eye(A.shape[0])
+            return Anew
+
     # Setup a cost function based on stiffness.
     # Ltt = (dX+dU+dV) by (dX+dU+dV) - Hessian of loss with respect to
     # trajectory at a single timestep.
@@ -188,11 +201,11 @@ def init_lqr_robust(hyperparams):
     invPSig_v = np.zeros((T, dV, dV))  # Inverse of covariance.
 
     # parameters to be transmitted
-    Psig_ut = np.zeros((T, dU, dU))
+    PSig_ut = np.zeros((T, dU, dU))
     invPSig_ut = np.zeros((T, dU, dU))  # Overall Inverse of covariance.
     cholPSig_ut = np.zeros((T, dU, dU))  # Overall Cholesky decomposition.
 
-    cholPSig_ut = np.zeros((T, dV, dV))
+    PSig_vt = np.zeros((T, dV, dV))
     invPSig_vt = np.zeros((T, dV, dV))  # Overall Inverse of covariance.
     cholPSig_vt = np.zeros((T, dV, dV))  # Overall Cholesky decomposition.
 
@@ -224,15 +237,17 @@ def init_lqr_robust(hyperparams):
         PSigu = inverse of covariance term for local controllers
         """
 
-        if np.any(np.isnan(Qtt_t[idx_u, idx_u])): # Fix Q function
+        if np.any(np.isnan(Qtt_t[idx_u, idx_u])): # Fix Quu/Qvv function
             Qtt_t[idx_u, idx_u] = np.eye(Qtt_t.shape[-1])
+        if  np.any(np.isnan(Qtt_t[idx_v, idx_v])):
+            Qtt_t[idx_v, idx_v] = np.eye(Qtt_t.shape[-1])
         try:
             # first find Qvv inverse and Quu inverse
-            U_u = sp.linalg.cholesky(Qtt_t[idx_u, idx_u])
+            U_u = sp.linalg.cholesky(make_pdef(Qtt_t[idx_u, idx_u]))
             L_u = U_u.T
 
             # factorize Qvv
-            U_v = sp.linalg.cholesky(Qtt_t[idx_v, idx_v])
+            U_v = sp.linalg.cholesky(make_pdef(Qtt_t[idx_v, idx_v]))
             L_v = U_v.T
 
             invPSig_u[t, :, :] = Qtt_t[idx_u, idx_u]
@@ -245,31 +260,31 @@ def init_lqr_robust(hyperparams):
                 U_v, sp.linalg.solve_triangular(L_v, np.eye(dV), lower=True) )
             cholPSig_v[t, :, :] = sp.linalg.cholesky(PSig_v[t, :, :])
 
-            # invert Ku now
-            Ku[t, :, :] = np.eye(dU) - PSig_u[t, :, :].dot(Qtt_t[idx_u, idx_v] \
-                            ).dot(PSig_v[t, :, :]).dot(Qtt_t[idx_u, idx_v].T)
-            # compute the chol_pol_covar to be transmitted
-            invPSig_ut[t,:,:] = Ku[t, :, :].dot(invPSig_u[t, :, :])
-
-            Ku_U = sp.linalg.cholesky(Ku[t, :, :])
-            Ku_L = Ku_U.T
-            Ku[t, :, :] = sp.linalg.solve_triangular(Ku_U, \
-                            sp.linalg.solve_triangular(Ku_L, np.eye(dU), lower=True))
-
             # invert Kv now
             Kv[t, :, :] = np.eye(dV) - PSig_v[t, :, :].dot(Qtt_t[idx_v, idx_u] \
                             ).dot(PSig_u[t, :, :]).dot(Qtt_t[idx_u, idx_v])
             # compute the chol_pol_covar to be transmitted
             invPSig_vt[t,:,:] = Kv[t, :, :].dot(invPSig_v[t, :, :])
             # factorize Kv
-            Kv_U = sp.linalg.cholesky(Kv[t, :, :])
+            Kv_U = sp.linalg.cholesky(make_identity(Kv[t, :, :]))
             Kv_L = Kv_U.T
             Kv[t, :, :] = sp.linalg.solve_triangular(Kv_U, \
                             sp.linalg.solve_triangular(Kv_L, np.eye(dV), lower=True))
 
-            gu[t, :, :] = PSig_u[t,:,:].dot(Ku[t,:,:]).dot(Qtt_t[idx_u, idx_v].dot(PSig_v[t,:,:]).dot(qt_t[idx_v]) - \
+            # invert Ku now
+            Ku[t, :, :] = np.eye(dU) - PSig_u[t, :, :].dot(Qtt_t[idx_u, idx_v] \
+                            ).dot(PSig_v[t, :, :]).dot(Qtt_t[idx_u, idx_v].T)
+            # compute the chol_pol_covar to be transmitted
+            invPSig_ut[t,:,:] = Ku[t, :, :].dot(invPSig_u[t, :, :])
+
+            Ku_U = sp.linalg.cholesky(make_identity(Ku[t, :, :]))
+            Ku_L = Ku_U.T
+            Ku[t, :, :] = sp.linalg.solve_triangular(Ku_U, \
+                            sp.linalg.solve_triangular(Ku_L, np.eye(dU), lower=True))
+
+            gu[t, :] = PSig_u[t,:,:].dot(Ku[t,:,:]).dot(Qtt_t[idx_u, idx_v].dot(PSig_v[t,:,:]).dot(qt_t[idx_v]) - \
                                 qt_t[idx_u].T)
-            gv[t, :, :] = PSig_v[t,:,:].dot(Kv[t,:,:]).dot(Qtt_t[idx_v, idx_u].dot(PSig_u[t,:,:]).dot(qt_t[idx_u]) - \
+            gv[t, :] = PSig_v[t,:,:].dot(Kv[t,:,:]).dot(Qtt_t[idx_v, idx_u].dot(PSig_u[t,:,:]).dot(qt_t[idx_u]) - \
                                 qt_t[idx_v].T)
             Gu[t,:,:] = PSig_u[t,:,:].dot(Ku[t,:,:]).dot(Qtt_t[idx_u, idx_v].dot(PSig_v[t,:,:]).dot(Qtt_t[idx_v, idx_x]) - \
                                 Qtt_t[idx_u, idx_x])
@@ -277,11 +292,11 @@ def init_lqr_robust(hyperparams):
                                 Qtt_t[idx_v, idx_x])
 
             # compute the chol_pol_covar to be transmitted
-            Psig_ut[t,:,:] = Ku[t, :, :]
-            PSig_vt[t,:,:] = Kv[t,:,:]
+            PSig_ut[t,:,:] = Ku[t, :, :]
+            PSig_vt[t,:,:] = Kv[t, :, :]
 
-            cholPSig_ut[t,:,:] = sp.linalg.cholesky(Psig_ut[t,:,:])
-            cholPSig_vt[t,:,:] = sp.linalg.cholesky(Psig_vt[t,:,:])
+            cholPSig_ut[t,:,:] = sp.linalg.cholesky(PSig_ut[t,:,:])
+            cholPSig_vt[t,:,:] = sp.linalg.cholesky(PSig_vt[t,:,:])
 
         except LinAlgError as e:
             # Error thrown when Qtt[idx_u, idx_u] is not

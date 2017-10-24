@@ -179,9 +179,10 @@ def gauss_fit_joint_prior(pts, mu0, Phi, m, n0, dwts, dX, dU, sig_reg):
     # Add sigma regularization.
     sigma += sig_reg
     # Conditioning to get dynamics.
-    fd = np.linalg.solve(sigma[:dX, :dX], sigma[:dX, dX:dX+dU]).T
-    fc = mu[dX:dX+dU] - fd.dot(mu[:dX])
-    dynsig = sigma[dX:dX+dU, dX:dX+dU] - fd.dot(sigma[:dX, :dX]).dot(fd.T)
+    print('sigma[:dX, :dX]: {}, sigma[:dX, dX:dX+dU]: {}'.format(sigma[:dX, :dX].shape, sigma[:dX, dX:dX+dU].shape))
+    fd = np.linalg.solve(sigma[:dX, :dX], sigma[:dX, dX:dX+dU+dU]).T
+    fc = mu[dX:dX+dU+dU] - fd.dot(mu[:dX])
+    dynsig = sigma[dX:dX+dU+dU, dX:dX+dU+dU] - fd.dot(sigma[:dX, :dX]).dot(fd.T)
     dynsig = 0.5 * (dynsig + dynsig.T)
     return fd, fc, dynsig
 

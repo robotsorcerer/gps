@@ -600,6 +600,19 @@ class TrajOptLQRPython(TrajOpt):
             Anew = low * A + eta * np.eye(A.shape[0])
             return Anew
 
+    def make_identity(A):
+        """
+            checks if the sigma matrix is symmetric
+            positive definite before inverting via cholesky decomposition
+        """
+        eigval = np.linalg.eigh(A)[0]
+        if np.array_equal(A, A.T) and np.all(eigval>0):
+            # LOGGER.debug("sigma is pos. def. Computing cholesky factorization")
+            return A
+        else:
+            Anew = np.eye(A.shape[0])
+            return Anew
+
     def forward_robust(self, traj_distr, traj_info):
         """
         Perform LQR forward pass. Computes state-action marginals from
@@ -753,7 +766,7 @@ class TrajOptLQRPython(TrajOpt):
             invPSig_v = np.zeros((T, dV, dV))  # Inverse of covariance.
 
             if not self._update_in_bwd_pass:
-                new_Gu, new_gu = np.zeros((T, dU, dX)), np.zeros((T, dU))                new_pS = np.zeros((T, dU, dU))
+                new_Gu, new_gu = np.zeros((T, dU, dX)), np.zeros((T, dU))
                 new_ipS, new_cpS = np.zeros((T, dU, dU)), np.zeros((T, dU, dU))
                 new_pS = np.zeros((T, dU, dU))
 
@@ -786,11 +799,11 @@ class TrajOptLQRPython(TrajOpt):
                 Qtt[t] = 0.5 * (Qtt[t] + Qtt[t].T)
 
                 # first find Qvv inverse and Quu inverse
-                U_u = sp.linalg.cholesky(Qtt[idx_u, idx_u])
+                U_u = sp.linalg.cholesky(self.make_pdef(self, Qtt[idx_u, idx_u]))
                 L_u = U_u.T
 
                 # factorize Qvv
-                U_v = sp.linalg.cholesky(Qtt[idx_v, idx_v])
+                U_v = sp.linalg.cholesky(self.make_pdef(self, Qtt[idx_v, idx_v]))
                 L_v = U_v.T
 
                 invPSig_u[t, :, :] = Qtt[idx_u, idx_u]

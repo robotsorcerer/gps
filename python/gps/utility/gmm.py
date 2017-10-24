@@ -23,7 +23,7 @@ def check_sigma(A):
         # LOGGER.debug("sigma is pos. def. Computing cholesky factorization")
         return A
     else:
-        LOGGER.debug("Regularizing sigma for positive-definiteness")
+        # LOGGER.debug("Regularizing sigma for positive-definiteness")
         return np.eye(A.shape[0])
 
 class GMM(object):
@@ -134,7 +134,7 @@ class GMM(object):
         Do = data.shape[1]
 
         LOGGER.debug('Fitting GMM with %d clusters on %d points.', K, N)
-        
+
         if (not self.warmstart or self.sigma is None or
                 K != self.sigma.shape[0]):
             # Initialization.
