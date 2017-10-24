@@ -87,17 +87,17 @@ class LinearGaussianPolicyRobust(Policy):
         Policy.__init__(self)
 
         # Assume G has the correct shape, and make sure others match.
-        self.T = G.shape[0]
-        self.dU = G.shape[1]
+        self.T = Gu.shape[0]
+        self.dU = Gu.shape[1]
         self.dV = Gv.shape[1]
-        self.dX = G.shape[2]
+        self.dX = Gu.shape[2]
 
-        check_shape(gu, (self.T, self.dU, self.dU))
+        check_shape(gu, (self.T, self.dU))
         check_shape(pol_covar_u, (self.T, self.dU, self.dU))
         check_shape(chol_pol_covar_u, (self.T, self.dU, self.dU))
         check_shape(inv_pol_covar_u, (self.T, self.dU, self.dU))
 
-        check_shape(gv, (self.T, self.dV, self.dV))
+        check_shape(gv, (self.T, self.dV))
         check_shape(pol_covar_v, (self.T, self.dV, self.dV))
         check_shape(chol_pol_covar_v, (self.T, self.dV, self.dV))
         check_shape(inv_pol_covar_v, (self.T, self.dV, self.dV))
@@ -180,8 +180,7 @@ class LinearGaussianPolicyRobust(Policy):
             np.zeros_like(self.inv_pol_covar_u),
             np.zeros_like(self.Gv), np.zeros_like(self.gv),
             np.zeros_like(self.pol_covar_v), np.zeros_like(self.chol_pol_covar_v),
-            np.zeros_like(self.inv_pol_covar_v),
-        )
+            np.zeros_like(self.inv_pol_covar_v)   )
         policy.Gu.fill(np.nan)
         policy.gu.fill(np.nan)
         policy.pol_covar_u.fill(np.nan)

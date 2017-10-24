@@ -192,13 +192,8 @@ class Algorithm(object):
                 self.cur[cond].traj_distr_adv for cond in range(self.M)
             ]
 
-        if not hasattr(self, 'new_traj_distr_robust'):
-            self.new_traj_distr_robust = [
-                self.cur[cond].traj_distr_robust for cond in range(self.M)
-            ]
-
         for cond in range(self.M):
-            LOGGER.debug("Computing local control laws.")
+            LOGGER.debug("C-Step: Computing local control laws.")
             self.traj_opt.update_robust(cond, self)
 
     def _eval_cost(self, cond):

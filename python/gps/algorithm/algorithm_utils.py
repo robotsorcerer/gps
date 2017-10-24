@@ -98,10 +98,6 @@ class PolicyInfoRobust(BundleType):
             'pol_sig_prot': None,  # Covariance of the current policy output
             'pol_mu_adv': None,  # Mean of the current policy output.
             'pol_sig_adv': None,  # Covariance of the current policy output
-            # 'pol_K': np.zeros((T, dU, dX)),  # Policy linearization.
-            # 'pol_k': np.zeros((T, dU)),  # Policy linearization.
-            # 'pol_S': np.zeros((T, dU, dU)),  # Policy linearization covariance.
-            # 'chol_pol_S': np.zeros((T, dU, dU)),  # Cholesky decomp of covar.
             'pol_Gu': np.zeros((T, dU, dX)),  # Policy linearization.
             'pol_gu': np.zeros((T, dU)),  # Policy linearization.
             'pol_Su': np.zeros((T, dU, dU)),  # Policy linearization covariance.
@@ -168,7 +164,6 @@ def gauss_fit_joint_prior(pts, mu0, Phi, m, n0, dwts, dX, dU, sig_reg):
     """ Perform Gaussian fit to data with a prior. """
     # Build weights matrix.
     D = np.diag(dwts)
-    dV = dU
     # Compute empirical mean and covariance.
     mun = np.sum((pts.T * dwts).T, axis=0)
     diff = pts - mun
@@ -191,11 +186,10 @@ def gauss_fit_joint_prior(pts, mu0, Phi, m, n0, dwts, dX, dU, sig_reg):
     return fd, fc, dynsig
 
 # computes the normal inverse Wishart prior as described in A.3
-def gauss_fit_joint_prior_u(pts, mu0, Phi, m, n0, dwts, dX, dU, sig_reg):
+def gauss_fit_joint_prior_v(pts, mu0, Phi, m, n0, dwts, dX, dV, sig_reg):
     """ Perform Gaussian fit to data with a prior. """
     # Build weights matrix.
     D = np.diag(dwts)
-    dV = dU
     # Compute empirical mean and covariance.
     mun = np.sum((pts.T * dwts).T, axis=0)
     diff = pts - mun
@@ -211,8 +205,8 @@ def gauss_fit_joint_prior_u(pts, mu0, Phi, m, n0, dwts, dX, dU, sig_reg):
     # Add sigma regularization.
     sigma += sig_reg
     # Conditioning to get dynamics.
-    fd = np.linalg.solve(sigma[:dX, :dX], sigma[:dX, dX:dX+dU+dV]).T
+    fd = np.linalg.solve(sigma[:dX, :dX], sigma[:dX, dX:dX+dV]).T
     fc = mu[dX:dX+dU+dV] - fd.dot(mu[:dX])
-    dynsig = sigma[dX:dX+dU+dV, dX:dX+dU+dV] - fd.dot(sigma[:dX, :dX]).dot(fd.T)
+    dynsig = sigma[dX:dX+dV, dX:dX+dV] - fd.dot(sigma[:dX, :dX]).dot(fd.T)
     dynsig = 0.5 * (dynsig + dynsig.T)
     return fd, fc, dynsig

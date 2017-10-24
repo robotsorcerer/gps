@@ -46,16 +46,7 @@ class GPSMain(object):
 
         self._data_files_dir = config['common']['data_files_dir']
 
-        # print('robust in class init: ', self.robust)
         self.agent = config['agent']['type'](config['agent']) #will be AgentMujoCo object
-
-        # run iDG algorithm
-        # print('post robust in class init: ', self.robust)
-        if self.robust:
-            # somehow this is better than creating a new instance of agent mujoco
-            self.agent_robust = copy.copy(self.agent) #config['agent_adv']['type'](config['agent_adv'])
-
-        # print('post robust in class init: ', self.robust)
 
         self.data_logger = DataLogger()
         self.gui = GPSTrainingGUI(config['common']) if config['gui_on'] else None
@@ -90,7 +81,7 @@ class GPSMain(object):
 
                 # Clear agent samples.
                 self.agent.clear_samples()
-                # print('close loop in run: ', self.closeloop)
+
                 self._take_iteration(itr, traj_sample_lists)  #see impl in alg_mdgps.py#L36
                 pol_sample_lists = self._take_policy_samples()
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
@@ -102,7 +93,8 @@ class GPSMain(object):
 
     def run_robust(self, itr_load=None):
         """
-        Run training by iteratively sampling and taking an iteration.
+        Run iterative dynamic game by iteratively sampling and
+        taking an iteration.
         Args:
             itr_load: If specified, loads algorithm state from that
                 iteration, and resumes training at the next iteration.
@@ -120,20 +112,11 @@ class GPSMain(object):
                     self.agent.get_samples(cond, -self._hyperparams['num_samples'])
                     for cond in self._train_idx
                 ]
-
-                # don't need this, otherwise we have unstable simulation
-                # adv_sample_lists = [
-                #     self.agent.get_samples_adv(cond, -self._hyperparams['num_samples'])
-                #     for cond in self._train_idx
-                #     ]
-
-                print("finished taking traj_sample_lists for u and v")
+                print("finished taking traj_sample_lists")
 
                 # Clear agent samples.
                 self.agent.clear_samples()
-                # self.agent_robust.clear_samples()
 
-                # self._take_iteration(itr, traj_sample_lists, adv_sample_lists=adv_sample_lists)  #see impl in alg_mdgps.py#L36
                 self._take_iteration(itr, traj_sample_lists)  #see impl in alg_mdgps.py#L36
                 pol_sample_lists = self._take_robust_policy_samples()
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
@@ -144,7 +127,6 @@ class GPSMain(object):
             self._end()
 
     def run_cl(self, itr, itr_load=None):
-
         protag_algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
         self.protag_algorithm = self.data_logger.unpickle(protag_algorithm_file)
 
@@ -366,12 +348,10 @@ class GPSMain(object):
             self.gui.set_status_text('Calculating.')
             self.gui.start_display_calculating()
         # see corresponding alg being used e.g. algorithm_mdgps
-        if self.closeloop:
-            # do block alternating optimization
+        if self.closeloop: # do block alternating optimization
             self.algorithm.iteration_cl(self.protag_traj_sample_lists, sample_lists)
 
         elif self.robust: # do idg
-            # adv_sample_lists = kwargs['adv_sample_lists']
             self.algorithm.iteration_idg(sample_lists)
 
         else: # do ordinary optimization
@@ -430,10 +410,6 @@ class GPSMain(object):
         # Since this isn't noisy, just take one sample.
         # TODO: Make this noisy? Add hyperparam?
         # TODO: Take at all conditions for GUI?
-        # for cond in range(len(self._test_idx)):
-        #     pol_samples[cond][0] = self.agent.sample(
-        #         self.algorithm.policy_opt.policy, self._test_idx[cond],
-        #         verbose=verbose, save=False, noisy=False)
 
         if self.robust or self.test:
             for cond in range(len(self._test_idx)):

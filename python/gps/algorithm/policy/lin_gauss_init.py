@@ -219,7 +219,7 @@ def init_lqr_robust(hyperparams):
         U and L are the cholesky lower and upper Hermitian matrices
         of the invertible term in best and worst controllers
 
-        we then repeatthe algorithm for gv and Gv for the adversary
+        we then repeat the algorithm for gv and Gv for the adversary
 
         PSigu = inverse of covariance term for local controllers
         """

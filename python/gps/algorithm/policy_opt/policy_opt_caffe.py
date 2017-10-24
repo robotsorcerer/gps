@@ -96,7 +96,7 @@ class PolicyOptCaffe(PolicyOpt):
     #        (won't work with images or multimodal networks)
     def update(self, obs, tgt_mu, tgt_prc, tgt_wt):
         """
-        Update policy.
+        Update policy. This is for Vanilla gps
         Args:
             obs: Numpy array of observations, N x T x dO.
             tgt_mu: Numpy array of mean controller outputs, N x T x dU.
@@ -190,19 +190,23 @@ class PolicyOptCaffe(PolicyOpt):
         Updates the local protagonistic policies.
         Args:
             obs: Numpy array of observations, N x T x dO.
-            tgt_mu: Numpy array of mean controller outputs, N x T x dU.
-            tgt_prc: Numpy array of precision matrices, N x T x dU x dU.
+            tgt_mu: Numpy array of mean controller outputs, N x T x dU/dV.
+            tgt_prc: Numpy array of precision matrices, N x T x dU/dV x dU/dV.
             tgt_wt: Numpy array of weights, N x T.
         Returns:
             A CaffePolicy object with updated weights.
         """
         N, T = obs.shape[:2]
-        dU, dO = self._dU, self._dO
+        dU, dV, dO = self._dU, self._dV, self._dO
 
         # TODO - Make sure all weights are nonzero?
 
         # Save original tgt_prc.
-        tgt_prc_orig = np.reshape(tgt_prc, [N*T, dU, dU])
+        if prot:
+            tgt_prc_orig = np.reshape(tgt_prc, [N*T, dU, dU])
+        else:
+            tgt_prc_orig = np.reshape(tgt_prc, [N*T, dV, dV])
+
         # Renormalize weights.
         tgt_wt *= (float(N * T) / np.sum(tgt_wt))
         # Allow weights to be at most twice the robust median.
@@ -215,8 +219,12 @@ class PolicyOptCaffe(PolicyOpt):
 
         # Reshape inputs.
         obs = np.reshape(obs, (N*T, dO))
-        tgt_mu = np.reshape(tgt_mu, (N*T, dU))
-        tgt_prc = np.reshape(tgt_prc, (N*T, dU, dU))
+        if prot:
+            tgt_mu = np.reshape(tgt_mu, (N*T, dU))
+            tgt_prc = np.reshape(tgt_prc, (N*T, dU, dU))
+        else:
+            tgt_mu = np.reshape(tgt_mu, (N*T, dV))
+            tgt_prc = np.reshape(tgt_prc, (N*T, dV, dV))
         tgt_wt = np.reshape(tgt_wt, (N*T, 1, 1))
 
         # Fold weights into tgt_prc.
@@ -264,8 +272,12 @@ class PolicyOptCaffe(PolicyOpt):
         self.caffe_iter += self._hyperparams['iterations']
 
         # Optimize variance.
-        A = np.sum(tgt_prc_orig, 0) + 2 * N * T * \
-                self._hyperparams['ent_reg'] * np.ones((dU, dU))
+        if prot:
+            A = np.sum(tgt_prc_orig, 0) + 2 * N * T * \
+                    self._hyperparams['ent_reg'] * np.ones((dU, dU))
+        else:
+            A = np.sum(tgt_prc_orig, 0) + 2 * N * T * \
+                    self._hyperparams['ent_reg'] * np.ones((dV, dV))
         A = A / np.sum(tgt_wt)
 
         # TODO - Use dense covariance?
@@ -277,98 +289,6 @@ class PolicyOptCaffe(PolicyOpt):
         else:
             self.policy.chol_pol_covar_v = np.diag(np.sqrt(self.var))
         return self.policy
-
-    def update_robust(self, obs, tgt_mu, tgt_prc, tgt_wt):
-        """
-        Updates the local protagonistic or adversarial policies.
-        Args:
-            obs: Numpy array of observations, N x T x dO.
-            tgt_mu: Numpy array of mean controller outputs, N x T x dU.
-            tgt_prc: Numpy array of precision matrices, N x T x dU x dU.
-            tgt_wt: Numpy array of weights, N x T.
-        Returns:
-            A CaffePolicy object with updated weights.
-        """
-        N, T = obs.shape[:2]
-        dU, dV, dO = self._dU, self._dV, self._dO
-
-        # TODO - Make sure all weights are nonzero?
-
-        # Save original tgt_prc.
-        tgt_prc_orig = np.reshape(tgt_prc, [N*T, dU, dU])
-
-        # Renormalize weights.
-        tgt_wt *= (float(N * T) / np.sum(tgt_wt))
-        # Allow weights to be at most twice the robust median.
-        mn = np.median(tgt_wt[(tgt_wt > 1e-2).nonzero()])
-        for n in range(N):
-            for t in range(T):
-                tgt_wt[n, t] = min(tgt_wt[n, t], 2 * mn)
-        # Robust median should be around one.
-        tgt_wt /= mn
-
-        # Reshape inputs.
-        obs = np.reshape(obs, (N*T, dO))
-        tgt_mu = np.reshape(tgt_mu, (N*T, dU+dV))
-        tgt_prc = np.reshape(tgt_prc, (N*T, dU, dU))
-        tgt_wt = np.reshape(tgt_wt, (N*T, 1, 1))
-
-        # Fold weights into tgt_prc.
-        tgt_prc = tgt_wt * tgt_prc
-
-        #TODO: Find entries with very low weights?
-
-        # Normalize obs, but only the first time update is called.
-        if self.policy.scale is None or self.policy.bias is None:
-            # 1e-3 to avoid infs if some state dimensions don't change in the
-            # first batch of samples
-            self.policy.scale = np.diag(1.0 / np.maximum(np.std(obs, axis=0),
-                                                         1e-3))
-            # self.policy.scale = np.diag(1.0 / np.std(obs, axis=0))
-            self.policy.bias = -np.mean(obs.dot(self.policy.scale), axis=0)
-        obs = obs.dot(self.policy.scale) + self.policy.bias
-
-        blob_names = self.solver.net.blobs.keys()
-
-        # Assuming that N*T >= self.batch_size.
-        batches_per_epoch = np.floor(N*T / self.batch_size)
-        idx = range(N*T)
-        average_loss = 0
-        np.random.shuffle(idx)
-        for i in range(self._hyperparams['iterations']):
-            # Load in data for this batch.
-            start_idx = int(i * self.batch_size %
-                            (batches_per_epoch * self.batch_size))
-            idx_i = idx[start_idx:start_idx+self.batch_size]
-            self.solver.net.blobs[blob_names[0]].data[:] = obs[idx_i]
-            self.solver.net.blobs[blob_names[1]].data[:] = tgt_mu[idx_i]
-            self.solver.net.blobs[blob_names[2]].data[:] = tgt_prc[idx_i]
-
-            self.solver.step(1)
-
-            # To get the training loss:
-            train_loss = self.solver.net.blobs[blob_names[-1]].data
-            average_loss += train_loss
-            if (i+1) % 500 == 0:
-                LOGGER.debug('Caffe iteration %d, average loss %f',
-                             i+1, average_loss / 500)
-                average_loss = 0
-
-        # Keep track of Caffe iterations for loading solver states.
-        self.caffe_iter += self._hyperparams['iterations']
-
-        # Optimize variance.
-        A = np.sum(tgt_prc_orig, 0) + 2 * N * T * \
-                self._hyperparams['ent_reg'] * np.ones((dU, dU))
-        A = A / np.sum(tgt_wt)
-
-        # TODO - Use dense covariance?
-        self.var = 1 / np.diag(A)
-
-        self.policy.net.share_with(self.solver.net)
-        self.policy.chol_pol_covar = np.diag(np.sqrt(self.var))
-        return self.policy
-
 
     def prob(self, obs):
         """
@@ -387,6 +307,44 @@ class PolicyOptCaffe(PolicyOpt):
                         self.policy.bias
 
         output = np.zeros((N, T, dU))
+        blob_names = self.solver.test_nets[0].blobs.keys()
+
+        self.solver.test_nets[0].share_with(self.solver.net)
+
+        for i in range(N):
+            for t in range(T):
+                # Feed in data.
+                self.solver.test_nets[0].blobs[blob_names[0]].data[:] = \
+                        obs[i, t]
+
+                # Assume that the first output blob is what we want.
+                output[i, t, :] = \
+                        self.solver.test_nets[0].forward().values()[0][0]
+
+        pol_sigma = np.tile(np.diag(self.var), [N, T, 1, 1])
+        pol_prec = np.tile(np.diag(1.0 / self.var), [N, T, 1, 1])
+        pol_det_sigma = np.tile(np.prod(self.var), [N, T])
+
+        return output, pol_sigma, pol_prec, pol_det_sigma
+
+
+    def prob_v(self, obs):
+        """
+        Run policy forward.
+        Args:
+            obs: Numpy array of observations that is N x T x dO.
+        """
+        dV = self._dV
+        N, T = obs.shape[:2]
+
+        # Normalize obs.
+        if self.policy.scale is not None:
+            # TODO: Should prob be called before update?
+            for n in range(N):
+                obs[n, :, :] = obs[n, :, :].dot(self.policy.scale) + \
+                        self.policy.bias
+
+        output = np.zeros((N, T, dV))
         blob_names = self.solver.test_nets[0].blobs.keys()
 
         self.solver.test_nets[0].share_with(self.solver.net)

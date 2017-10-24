@@ -112,8 +112,7 @@ class AlgorithmMDGPS(Algorithm):
     def iteration_idg(self, sample_lists):
         # Store the samples and evaluate the costs.
         for m in range(self.M):                       # self.M is the # of the condition number
-            self.cur[m].sample_list     = sample_lists[m] # cur is every var in iteration data
-            # self.cur[m].sample_list_adv = sample_lists_adv[m]  # will be real adversarial samples
+            self.cur[m].sample_list = sample_lists[m] # cur is every var in iteration data
             self._eval_cost_idg(m)                    # _eval_cost is defined in algorithm.py line 220
 
         # Update dynamics linearizations.
@@ -129,26 +128,20 @@ class AlgorithmMDGPS(Algorithm):
             self.new_traj_distr_adv = [
                 self.cur[cond].traj_distr_adv for cond in range(self.M) # defined in algorithm_utils#L18: None
             ]
-            # this is for the robust trajectory
-            self.new_traj_distr_robust = [
-                self.cur[cond].traj_distr_robust for cond in range(self.M) # defined in algorithm_utils#L20: None
-            ]
             """
             Update each policy in turn:
-                First: update protagonist policy
-                Second: update antagonist policy
-                Third: update conditional of protagonist on antagonist
+                update local p_u and p_v controller linear gaussian distributions
             """
             self._update_policy_robust() # update p(v|x)
 
-        # Fit  linearized global policy. Step 4 in alg.
+        # Fit  linearized global policy. Step 5 in alg.
         for m in range(self.M):
             """
             we've folded the update of protagonist and antagonist into robust
             """
             # update global linearization and local linearization of pi_u, pi_v
-            LOGGER.debug("cond: %d:  fitting robust "
-                         "policy to modeled dynamics from GMM", m)
+            LOGGER.debug("cond: %d:  fitting p_u and p_v "
+                         "policies to modeled dynamics from GMM", m)
             self._update_policy_fit_robust(m)
 
         # C-step
@@ -203,8 +196,6 @@ class AlgorithmMDGPS(Algorithm):
             Steps:
                 1. Compute the policy for the protagonist:  \pi(u | x)
                 2. Compute the policy for the protagonist:  \pi(v | x)
-                3. Update the conditional of the protagonist
-                            on the adversary \pi(u | v, x)
         """
         dU, dV, dO, T = self.dU, self.dV, self.dO, self.T
         # Compute target mean, cov, and weight for each sample.
@@ -221,9 +212,8 @@ class AlgorithmMDGPS(Algorithm):
             N = len(samples)
             # Note traj_u is the trajectory distribution for the control only
             #      traj_v is the trajectory distribution for the adversary only
-            #      traj_uv is the trajectory distribution for the control conditioned on the adversary
-            # for control
             traj_u, pol_info = self.new_traj_distr[m], self.cur[m].pol_info #from algorithm_utils.py#L15
+            traj_v = self.new_traj_distr_adv[m] #from algorithm_utils.py#L15
             # pol_info_v = self.cur[m].pol_info_v
             mu_u    = np.zeros((N, T, dU))
             prc_u   = np.zeros((N, T, dU, dU))
@@ -235,7 +225,10 @@ class AlgorithmMDGPS(Algorithm):
 
             # Get time-indexed actions.
             for t in range(T):
-                # Compute actions along this trajectory.
+                """
+                    Compute actions along this trajectory.
+                    inv_pol_covar_u is in alg/policy/lin_gauss_policy.py
+                """
                 prc_u[:, t, :, :] = np.tile(traj_u.inv_pol_covar_u[t, :, :],
                                           [N, 1, 1])
                 prc_v[:, t, :, :] = np.tile(traj_v.inv_pol_covar_v[t, :, :],
@@ -263,11 +256,10 @@ class AlgorithmMDGPS(Algorithm):
         """
 
         # will update policy_chol_pol_covar_u if prot==true
+        # update pi(u|x)
         self.policy_opt.update_locals(obs_data, tgt_mu_u, tgt_prc_u, tgt_wt_u, prot=True)
-        # # update pi(v|x)
+        # update pi(v|x)
         self.policy_opt.update_locals(obs_data, tgt_mu_v, tgt_prc_v, tgt_wt_v, prot=False)
-        # # update pi(u, v | x)
-        # # self.policy_opt.update_locals(obs_data, tgt_mu_uv, tgt_prc_uv, tgt_wt_uv)
 
     def _update_policy_fit(self, m):
         """
@@ -380,13 +372,13 @@ class AlgorithmMDGPS(Algorithm):
         obs = samples.get_obs().copy()
         obs_adv = samples.get_obs().copy()
         pol_mu, pol_sig = self.policy_opt.prob(obs)[:2]
-        pol_mu_adv, pol_sig_adv = self.policy_opt.prob(obs_adv)[:2]
+        pol_mu_adv, pol_sig_adv = self.policy_opt.prob_v(obs_adv)[:2]
 
         pol_info.pol_mu_prot, pol_info.pol_sig_prot = pol_mu, pol_sig
         pol_info.pol_mu_adv, pol_info.pol_sig_adv = pol_mu_adv, pol_sig_adv
 
         # Update policy prior.
-        policy_prior = pol_info.policy_prior
+        policy_prior = pol_info.policy_prior #PolicyPriorGMM
         samples = SampleList(self.cur[m].sample_list)
         mode = self._hyperparams['policy_sample_mode']
         policy_prior.update_robust(samples, self.policy_opt, mode)
@@ -399,10 +391,6 @@ class AlgorithmMDGPS(Algorithm):
         pol_info.pol_Gv, pol_info.pol_gv, pol_info.pol_Sv = \
                         policy_prior.fit_v(X, pol_mu_adv, pol_sig_adv)
 
-        # Fit global linearization and store in global pol_info objects.
-        # pol_info.pol_G, pol_info.pol_g, pol_info.pol_S = \
-        #         policy_prior.fit_robust(X, pol_mu, pol_sig, pol_mu_adv,pol_sig_adv)
-
         # update the covariance of the protagonist, adversary ...
         # and robust distribution in turn
         for t in range(T):
@@ -410,8 +398,6 @@ class AlgorithmMDGPS(Algorithm):
                     sp.linalg.cholesky(pol_info.pol_Su[t, :, :])
             pol_info.chol_pol_Sv[t, :, :] = \
                     sp.linalg.cholesky(pol_info.pol_Sv[t, :, :])
-            # pol_info.chol_pol_S[t, :, :] = \
-            #         sp.linalg.cholesky(pol_info.pol_S[t, :, :])
 
     def _advance_iteration_variables(self):
         """
