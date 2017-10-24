@@ -91,7 +91,119 @@ def traj_distr_kl(new_mu, new_sigma, new_traj_distr, prev_traj_distr, tot=True):
     return np.sum(kl_div) if tot else kl_div
 
 
+def traj_distr_kl_robust(new_mu, new_sigma, new_traj_distr, prev_traj_distr, tot=True):
+    """
+    Compute KL divergence between new and previous trajectory
+    distributions.
+    Args:
+        new_mu: T x dX, mean of new trajectory distribution.
+        new_sigma: T x dX x dX, variance of new trajectory distribution.
+        new_traj_distr: A linear Gaussian policy object, new
+            distribution.
+        prev_traj_distr: A linear Gaussian policy object, previous
+            distribution.
+        tot: Whether or not to sum KL across all time steps.
+    Returns:
+        kl_div: The KL divergence between the new and previous
+            trajectories.
+    """
+    # Constants.
+    T = new_mu.shape[0]
+    dU = new_traj_distr.dU
+
+    # Initialize vector of divergences for each time step.
+    kl_div = np.zeros(T)
+
+    # Step through trajectory.
+    for t in range(T):
+        # Fetch matrices and vectors from trajectory distributions.
+        mu_t = new_mu[t, :]
+        sigma_t = new_sigma[t, :, :]
+        Gu_prev = prev_traj_distr.Gu[t, :, :]
+        Gu_new = new_traj_distr.Gu[t, :, :]
+        gu_prev = prev_traj_distr.gu[t, :]
+        gu_new = new_traj_distr.gu[t, :]
+        chol_prev = prev_traj_distr.chol_pol_covar_u[t, :, :]
+        chol_new = new_traj_distr.chol_pol_covar_u[t, :, :]
+
+        # Compute log determinants and precision matrices.
+        logdet_prev = 2 * sum(np.log(np.diag(chol_prev)))
+        logdet_new = 2 * sum(np.log(np.diag(chol_new)))
+        prc_prev = sp.linalg.solve_triangular( chol_prev, sp.linalg.solve_triangular(chol_prev.T, np.eye(dU),
+                                                  lower=True) )
+        prc_new = sp.linalg.solve_triangular( chol_new, sp.linalg.solve_triangular(chol_new.T, np.eye(dU),
+                                                 lower=True) )
+
+        # Construct matrix, vector, and constants.
+        M_prev = np.r_[
+            np.c_[Gu_prev.T.dot(prc_prev).dot(Gu_prev), -Gu_prev.T.dot(prc_prev)],
+            np.c_[-prc_prev.dot(Gu_prev), prc_prev]
+        ]
+        M_new = np.r_[
+            np.c_[Gu_new.T.dot(prc_new).dot(Gu_new), -Gu_new.T.dot(prc_new)],
+            np.c_[-prc_new.dot(Gu_new), prc_new]
+        ]
+        v_prev = np.r_[Gu_prev.T.dot(prc_prev).dot(gu_prev),
+                       -prc_prev.dot(gu_prev)]
+        v_new = np.r_[Gu_new.T.dot(prc_new).dot(gu_new), -prc_new.dot(gu_new)]
+        c_prev = 0.5 * gu_prev.T.dot(prc_prev).dot(gu_prev)
+        c_new = 0.5 * gu_new.T.dot(prc_new).dot(gu_new)
+
+        # Compute KL divergence at timestep t.
+        kl_div[t] = max(
+            0,
+            -0.5 * mu_t.T.dot(M_new - M_prev).dot(mu_t) -
+            mu_t.T.dot(v_new - v_prev) - c_new + c_prev -
+            0.5 * np.sum(sigma_t * (M_new-M_prev)) - 0.5 * logdet_new +
+            0.5 * logdet_prev )
+
+    # Add up divergences across time to get total divergence.
+    return np.sum(kl_div) if tot else kl_div
+
 def traj_distr_kl_alt(new_mu, new_sigma, new_traj_distr, prev_traj_distr, tot=True):
+    """
+    This function computes the same quantity as the function above.
+    However, it is easier to modify and understand this function, i.e.,
+    passing in a different mu and sigma to this function will behave properly.
+    """
+    T, dX, dU = new_mu.shape[0], new_traj_distr.dX, new_traj_distr.dU
+    kl_div = np.zeros(T)
+
+    for t in range(T):
+        Gu_prev = prev_traj_distr.Gu[t, :, :]
+        Gu_new = new_traj_distr.Gu[t, :, :]
+
+        gu_prev = prev_traj_distr.gu[t, :]
+        gu_new = new_traj_distr.gu[t, :]
+
+        sig_prev = prev_traj_distr.pol_covar_u[t, :, :]
+        sig_new = new_traj_distr.pol_covar_u[t, :, :]
+
+        chol_prev = prev_traj_distr.chol_pol_covar_u[t, :, :]
+        chol_new = new_traj_distr.chol_pol_covar_u[t, :, :]
+
+        inv_prev = prev_traj_distr.inv_pol_covar_u[t, :, :]
+        inv_new = new_traj_distr.inv_pol_covar_u[t, :, :]
+
+        logdet_prev = 2 * sum(np.log(np.diag(chol_prev)))
+        logdet_new = 2 * sum(np.log(np.diag(chol_new)))
+
+        K_diff, k_diff = Gu_prev - Gu_new, gu_prev - gu_new
+        mu, sigma = new_mu[t, :dX], new_sigma[t, :dX, :dX]
+
+        kl_div[t] = max(
+                0,
+                0.5 * (logdet_prev - logdet_new - new_traj_distr.dU +
+                       np.sum(np.diag(inv_prev.dot(sig_new))) +
+                       k_diff.T.dot(inv_prev).dot(k_diff) +
+                       mu.T.dot(K_diff.T).dot(inv_prev).dot(K_diff).dot(mu) +
+                       np.sum(np.diag(K_diff.T.dot(inv_prev).dot(K_diff).dot(sigma))) +
+                       2 * k_diff.T.dot(inv_prev).dot(K_diff).dot(mu))
+        )
+
+    return np.sum(kl_div) if tot else kl_div
+
+def traj_distr_kl_alt_robust(new_mu, new_sigma, new_traj_distr, prev_traj_distr, tot=True):
     """
     This function computes the same quantity as the function above.
     However, it is easier to modify and understand this function, i.e.,

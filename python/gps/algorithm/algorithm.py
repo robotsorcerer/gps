@@ -198,16 +198,8 @@ class Algorithm(object):
             ]
 
         for cond in range(self.M):
-            LOGGER.debug("updating protagonist trajectory")
-            self.new_traj_distr[cond], self.cur[cond].eta = \
-                    self.traj_opt.update_protagonist(cond, self)
-
-            LOGGER.debug("updating adversary trajectory")
-            self.new_traj_distr_adv[cond], self.cur[cond].eta_adv = \
-                    self.traj_opt.update_adversary(cond, self)
-            #
-            # LOGGER.debug("Computing conditional of prot on adv.")
-            # self.traj_opt.update_robust(cond, self)
+            LOGGER.debug("Computing local control laws.")
+            self.traj_opt.update_robust(cond, self)
 
     def _eval_cost(self, cond):
         """
