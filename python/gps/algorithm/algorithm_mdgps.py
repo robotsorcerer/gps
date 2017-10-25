@@ -220,6 +220,7 @@ class AlgorithmMDGPS(Algorithm):
 
             mu_v    = np.zeros((N, T, dV))
             prc_v   = np.zeros((N, T, dV, dV))
+
             wt_u    = np.zeros((N, T))
             wt_v    = np.zeros((N, T))
 
@@ -234,6 +235,7 @@ class AlgorithmMDGPS(Algorithm):
                 prc_v[:, t, :, :] = np.tile(traj_v.inv_pol_covar_v[t, :, :],
                                           [N, 1, 1])
                 for i in range(N):
+                    mu_u[i, t, :]  = (traj_u.Gu[t, :, :].dot(X[i, t, :]) + traj_u.gu[t, :])
                     mu_v[i, t, :]  = (traj_v.Gv[t, :, :].dot(X[i, t, :]) + traj_v.gv[t, :])
                 wt_u[:, t].fill(pol_info.pol_wt[t])
                 wt_v[:, t].fill(pol_info.pol_wt[t])

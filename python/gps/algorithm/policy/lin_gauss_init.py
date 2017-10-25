@@ -115,11 +115,11 @@ def init_lqr_robust(hyperparams):
     x0, dX, dU, dV = config['x0'], config['dX'], config['dU'], config['dV'] # will be 7,26,7, 7
     dt, T = config['dt'], config['T']
 
-    # print('dX: {}, dU: {}'.format(dX, dU))
+    # dX, dU, dV = 26, 7, 7
     #TODO: Use packing instead of assuming which indices are the joint
     #      angles.
 
-    # Constants.
+    # Constants. This is now correct
     idx_x = slice(dX)  # Slices out state.
     idx_u = slice(dX, dX+dU)  # Slices out actions.
     idx_v = slice(dX+dU, dX+dU+dV)  # Slice out disturbances.
@@ -240,10 +240,10 @@ def init_lqr_robust(hyperparams):
         PSigu = inverse of covariance term for local controllers
         """
 
-        if np.any(np.isnan(Qtt_t[idx_u, idx_u])): # Fix Quu/Qvv function
-            Qtt_t[idx_u, idx_u] = np.eye(Qtt_t.shape[-1])
-        if  np.any(np.isnan(Qtt_t[idx_v, idx_v])):
-            Qtt_t[idx_v, idx_v] = np.eye(Qtt_t.shape[-1])
+        # if np.any(np.isnan(Qtt_t[idx_u, idx_u])): # Fix Quu/Qvv function
+        #     Qtt_t[idx_u, idx_u] = np.eye(Qtt_t.shape[-1])
+        # if  np.any(np.isnan(Qtt_t[idx_v, idx_v])):
+        #     Qtt_t[idx_v, idx_v] = np.eye(Qtt_t.shape[-1])
         try:
             # first find Qvv inverse and Quu inverse
             U_u = sp.linalg.cholesky(make_pdef(Qtt_t[idx_u, idx_u]))
