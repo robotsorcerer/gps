@@ -584,7 +584,7 @@ class TrajOptLQRPython(TrajOpt):
                             reasonably well conditioned)!')
         return traj_distr, eta
 
-    def make_pdef(A):
+    def make_pdef(self, A):
         """
             checks if the sigma matrix is symmetric
             positive definite before inverting via cholesky decomposition
@@ -596,11 +596,11 @@ class TrajOptLQRPython(TrajOpt):
         else:
             # find lowest eigen value
             eta = 1e-6  # regularizer for matrix multiplier
-            low = np.amin(np.sort(eigval))
+            low = np.amin(eigval)
             Anew = low * A + eta * np.eye(A.shape[0])
             return Anew
 
-    def make_identity(A):
+    def make_identity(self, A):
         """
             checks if the sigma matrix is symmetric
             positive definite before inverting via cholesky decomposition
@@ -776,7 +776,7 @@ class TrajOptLQRPython(TrajOpt):
 
             fCm, fcv = algorithm.compute_costs_protagonist(  #from algorithm_mdgps.py#L204
                     m, eta, augment=(not self.cons_per_step) )
-
+            print('Qtt: {}, Qt: {}'.format(Qtt.shape, Qt.shape))
             # Compute state-action-state function at each time step.
             for t in range(T - 1, -1, -1):
                 # Add in the cost.
@@ -799,11 +799,11 @@ class TrajOptLQRPython(TrajOpt):
                 Qtt[t] = 0.5 * (Qtt[t] + Qtt[t].T)
 
                 # first find Qvv inverse and Quu inverse
-                U_u = sp.linalg.cholesky(self.make_pdef(self, Qtt[idx_u, idx_u]))
+                U_u = sp.linalg.cholesky(self.make_pdef(Qtt[idx_u, idx_u]))
                 L_u = U_u.T
 
                 # factorize Qvv
-                U_v = sp.linalg.cholesky(self.make_pdef(self, Qtt[idx_v, idx_v]))
+                U_v = sp.linalg.cholesky(self.make_pdef(Qtt[idx_v, idx_v]))
                 L_v = U_v.T
 
                 invPSig_u[t, :, :] = Qtt[idx_u, idx_u]
