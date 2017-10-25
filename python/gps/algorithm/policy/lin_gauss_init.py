@@ -115,13 +115,14 @@ def init_lqr_robust(hyperparams):
     x0, dX, dU, dV = config['x0'], config['dX'], config['dU'], config['dV'] # will be 7,26,7, 7
     dt, T = config['dt'], config['T']
 
+    # print('dX: {}, dU: {}'.format(dX, dU))
     #TODO: Use packing instead of assuming which indices are the joint
     #      angles.
 
     # Constants.
     idx_x = slice(dX)  # Slices out state.
     idx_u = slice(dX, dX+dU)  # Slices out actions.
-    idx_v = slice(dX, dX+dV)  # Slice out disturbances.
+    idx_v = slice(dX+dU, dX+dU+dV)  # Slice out disturbances.
 
     if len(config['init_acc']) == 0:
         config['init_acc'] = np.zeros(dU)
@@ -170,7 +171,7 @@ def init_lqr_robust(hyperparams):
     # Setup a cost function based on stiffness.
     # Ltt = (dX+dU+dV) by (dX+dU+dV) - Hessian of loss with respect to
     # trajectory at a single timestep.
-    Ltt = np.hstack([
+    Ltt = np.diag(np.hstack([
          config['stiffness'] * np.ones(dU),
          config['stiffness'] * config['stiffness_vel'] * np.ones(dU),
          np.zeros(dX - dU*2), np.ones(dU),
@@ -178,10 +179,10 @@ def init_lqr_robust(hyperparams):
          config['stiffness'] * np.ones(dV),
          config['stiffness'] * config['stiffness_vel'] * np.ones(dV),
          np.zeros(dX - dV*2), np.ones(dV)
-    ])
+    ]))
     Ltt = Ltt / config['init_var']  # Cost function - quadratic term.
     lt = -Ltt.dot(np.r_[x0, np.zeros(dU), x0, np.zeros(dV)])  # Cost function - linear term.
-
+    # print('Ltt: {}, lt: {}'.format(Ltt.shape, Ltt.dot(np.r_[x0, np.zeros(dU), x0, np.zeros(dV)]).shape))
     # Perform dynamic programming.
     gu = np.zeros((T, dU))  # local open loop control
     gv = np.zeros((T, dV))  # local open loop control adversary
@@ -225,6 +226,8 @@ def init_lqr_robust(hyperparams):
 
         Qtt_t = Ltt_t + Fd.T.dot(Vxx_t).dot(Fd)
         qt_t = lt_t + Fd.T.dot(vx_t + Vxx_t.dot(fc))
+        # print('Qtt: {}, qt: {}'.format(Qtt_t.shape, qt_t.shape))
+        # raw_input("enter any key to continua")
 
         """
         see eqn 18 in appendix III

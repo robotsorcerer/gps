@@ -41,9 +41,9 @@ def guess_dynamics_robust(gains, acc, dX, dU, dV, dt):
     Args:
         gains: dU dimensional joint gains.
         acc: dU dimensional joint acceleration.
-        dX: Dimensionality of the state.
-        dU: Dimensionality of the action.
-        dV: Dimensionality of the disturbance.
+        dX: Dimensionality of the state. = 26
+        dU: Dimensionality of the action. = 7
+        dV: Dimensionality of the disturbance. = 7
         dt: Length of a time step.
     Returns:
         Fd: A dX by dX+dU+dV transition matrix.
