@@ -59,11 +59,11 @@ class CostSum(Cost):
             return l, lx, lu, lxx, luu, lux #don't negate here cause torque and fk costs are already negated
 
         elif self.mode=='robust': #'sample_adv' in kwargs:
-            sample_adv = kwargs['sample_adv']
-            l, lx, lu, lv, lxx, luu, lvv, lux, lvx = self._costs[0].eval(sample, sample_adv=sample_adv)
+            # sample_adv = kwargs['sample_adv']
+            l, lx, lu, lv, lxx, luu, lvv, lux, lvx = self._costs[0].eval(sample, sample_adv=None)
 
             l   = l   * weight
-
+            
             lx  = lx  * weight
             lu  = lu  * weight
             lv  = lv  * weight

@@ -11,7 +11,8 @@ from gps.algorithm.traj_opt.traj_opt import TrajOpt
 from gps.algorithm.traj_opt.traj_opt_utils import \
         DGD_MAX_ITER, DGD_MAX_LS_ITER, DGD_MAX_GD_ITER, \
         ALPHA, BETA1, BETA2, EPS, \
-        traj_distr_kl, traj_distr_kl_alt
+        traj_distr_kl, traj_distr_kl_alt, \
+        traj_distr_kl_robust, traj_distr_kl_alt_robust
 
 from gps.algorithm.algorithm_badmm import AlgorithmBADMM
 from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS
@@ -682,7 +683,7 @@ class TrajOptLQRPython(TrajOpt):
                     traj_distr.Gv[t, :, :].dot(sigma_v[t, idx_x, idx_x]),
                     traj_distr.Gv[t, :, :].dot(sigma_v[t, idx_x, idx_x]).dot(
                         traj_distr.Gv[t, :, :].T
-                    ) + traj_distr.pol_covar_v[t, :, :]
+                    ) + traj_distr.pol_covar_v[t, :, :],
                 # pad with control terms
                     traj_distr.Gu[t, :, :].dot(sigma_u[t, idx_x, idx_x]).dot(
                         traj_distr.Gu[t, :, :].T
@@ -696,9 +697,6 @@ class TrajOptLQRPython(TrajOpt):
             ])
 
             if t < T - 1:
-                print('Fm: {}, sigma_u: {}, mu_u: {}, fv: {}'.format(\
-                    Fm.shape, sigma_u.shape, mu_u.shape, fv.shape))
-
                 sigma_u[t+1, idx_x, idx_x] = \
                         Fm[t, :, :].dot(sigma_u[t, :, :]).dot(Fm[t, :, :].T) + \
                         dyn_covar[t, :, :]

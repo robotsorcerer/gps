@@ -43,6 +43,40 @@ class CaffePolicy(Policy):
         u = action_mean + self.chol_pol_covar.T.dot(noise)
         return u
 
+    def act_u(self, x, obs, t, noise):
+        """
+        Return an action for a state.
+        Args:
+            x: State vector.
+            obs: Observation vector.
+            t: Time step.
+            noise: Action noise. This will be scaled by the variance.
+        """
+        # Normalize obs.
+        obs = obs.dot(self.scale) + self.bias
+
+        self.net.blobs[self.net.blobs.keys()[0]].data[:] = obs
+        action_mean = self.net.forward().values()[0][0]
+        u = action_mean + self.chol_pol_covar.T.dot(noise)
+        return u
+
+    def act_v(self, x, obs, t, noise):
+        """
+        Return an action for a state.
+        Args:
+            x: State vector.
+            obs: Observation vector.
+            t: Time step.
+            noise: Action noise. This will be scaled by the variance.
+        """
+        # Normalize obs.
+        obs = obs.dot(self.scale) + self.bias
+
+        self.net.blobs[self.net.blobs.keys()[0]].data[:] = obs
+        action_mean = self.net.forward().values()[0][0]
+        v = action_mean + self.chol_pol_covar.T.dot(noise)
+        return v
+
     def get_weights_string(self):
         """ Return the weights of the neural network as a string. """
         raise 'NotImplemented - weights string prob in net_param'

@@ -28,6 +28,7 @@ from gps.gui.mean_plotter import MeanPlotter
 from gps.gui.plotter_3d import Plotter3D
 from gps.gui.image_visualizer import ImageVisualizer
 from gps.gui.util import buffered_axis_limits, load_data_from_npz
+from gps.algorithm.policy.lin_gauss_policy import LinearGaussianPolicy, LinearGaussianPolicyRobust
 
 from gps.proto.gps_pb2 import END_EFFECTOR_POINTS
 
@@ -336,7 +337,11 @@ class GPSTrainingGUI(object):
         for m in range(algorithm.M):
             cost = costs[m]
             step = np.mean(algorithm.prev[m].step_mult * algorithm.base_kl_step)
-            entropy = 2*np.sum(np.log(np.diagonal(algorithm.prev[m].traj_distr.chol_pol_covar,
+            if isinstance(algorithm.prev[m].traj_distr, LinearGaussianPolicyRobust):
+                entropy = 2*np.sum(np.log(np.diagonal(algorithm.prev[m].traj_distr.chol_pol_covar_u,
+                    axis1=1, axis2=2)))
+            else:
+                entropy = 2*np.sum(np.log(np.diagonal(algorithm.prev[m].traj_distr.chol_pol_covar,
                     axis1=1, axis2=2)))
             itr_data += ' | %8.2f %8.2f %8.2f' % (cost, step, entropy)
             if isinstance(algorithm, AlgorithmBADMM):
@@ -410,7 +415,10 @@ class GPSTrainingGUI(object):
         # Calculate mean and covariance for end effector points
         eept_idx = agent.get_idx_x(END_EFFECTOR_POINTS)
         start, end = eept_idx[0], eept_idx[-1]
-        mu, sigma = algorithm.traj_opt.forward(algorithm.prev[m].traj_distr, algorithm.prev[m].traj_info)
+        if isinstance(algorithm.prev[m].traj_distr, LinearGaussianPolicyRobust):
+            mu, sigma = algorithm.traj_opt.forward_robust(algorithm.prev[m].traj_distr, algorithm.prev[m].traj_info)
+        else:
+            mu, sigma = algorithm.traj_opt.forward(algorithm.prev[m].traj_distr, algorithm.prev[m].traj_info)
         mu_eept, sigma_eept = mu[:, start:end+1], sigma[:, start:end+1, start:end+1]
 
         # Linear Gaussian Controller Distributions (Red)
