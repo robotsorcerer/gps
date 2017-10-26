@@ -1022,6 +1022,25 @@ class TrajOptLQRPython(TrajOpt):
                     mu[t, :].T.dot(traj_info.cv[t, :])
         return predicted_cost
 
+    def estimate_cost_robust(self, traj_distr, traj_info):
+        """ Compute Laplace approximation to expected cost. """
+        # Constants.
+        T = traj_distr.T
+
+        # Perform forward pass (note that we repeat this here, because
+        # traj_info may have different dynamics from the ones that were
+        # used to compute the distribution already saved in traj).
+        mu, sigma = self.forward_robust(traj_distr, traj_info)
+
+        # Compute cost.
+        predicted_cost = np.zeros(T)
+        for t in range(T):
+            predicted_cost[t] = traj_info.cc[t] + 0.5 * \
+                    np.sum(sigma[t, :, :] * traj_info.Cm[t, :, :]) + 0.5 * \
+                    mu[t, :].T.dot(traj_info.Cm[t, :, :]).dot(mu[t, :]) + \
+                    mu[t, :].T.dot(traj_info.cv[t, :])
+        return predicted_cost
+
     def _conv_check(self, con, kl_step):
         """Function that checks whether dual gradient descent has converged."""
         if self.cons_per_step:

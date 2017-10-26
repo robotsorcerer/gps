@@ -146,7 +146,7 @@ class AlgorithmMDGPS(Algorithm):
 
         # C-step
         if self.iteration_count > 0:
-            self._stepadjust()
+            self._stepadjust_robust()
         """
         minimize augmented reward wrt control
         maximize augmented reward wrt adversary
@@ -473,6 +473,69 @@ class AlgorithmMDGPS(Algorithm):
 
         for m in range(self.M):
             self._set_new_mult(predicted_impr, actual_impr, m)
+
+    def _stepadjust_robust(self):
+        """
+        Calculate new step sizes. This version uses the same step size
+        for all conditions.
+        """
+        # Compute previous cost and previous expected cost.
+        prev_M = len(self.prev) # May be different in future.
+        prev_laplace = np.empty(prev_M)
+        prev_mc = np.empty(prev_M)
+        prev_predicted = np.empty(prev_M)
+        for m in range(prev_M):
+            prev_nn = self.prev[m].pol_info.traj_distr()
+            prev_lg = self.prev[m].new_traj_distr
+
+            # Compute values under Laplace approximation. This is the policy
+            # that the previous samples were actually drawn from under the
+            # dynamics that were estimated from the previous samples.
+            prev_laplace[m] = self.traj_opt.estimate_cost_robust(
+                    prev_nn, self.prev[m].traj_info
+            ).sum()
+            # This is the actual cost that we experienced.
+            prev_mc[m] = self.prev[m].cs.mean(axis=0).sum()
+            # This is the policy that we just used under the dynamics that
+            # were estimated from the prev samples (so this is the cost
+            # we thought we would have).
+            prev_predicted[m] = self.traj_opt.estimate_cost_robust(
+                    prev_lg, self.prev[m].traj_info
+            ).sum()
+
+        # Compute current cost.
+        cur_laplace = np.empty(self.M)
+        cur_mc = np.empty(self.M)
+        for m in range(self.M):
+            cur_nn = self.cur[m].pol_info.traj_distr()
+            # This is the actual cost we have under the current trajectory
+            # based on the latest samples.
+            cur_laplace[m] = self.traj_opt.estimate_cost_robust(
+                    cur_nn, self.cur[m].traj_info
+            ).sum()
+            cur_mc[m] = self.cur[m].cs.mean(axis=0).sum()
+
+        # Compute predicted and actual improvement.
+        prev_laplace = prev_laplace.mean()
+        prev_mc = prev_mc.mean()
+        prev_predicted = prev_predicted.mean()
+        cur_laplace = cur_laplace.mean()
+        cur_mc = cur_mc.mean()
+        if self._hyperparams['step_rule'] == 'laplace':
+            predicted_impr = prev_laplace - prev_predicted
+            actual_impr = prev_laplace - cur_laplace
+        elif self._hyperparams['step_rule'] == 'mc':
+            predicted_impr = prev_mc - prev_predicted
+            actual_impr = prev_mc - cur_mc
+        LOGGER.debug('Previous cost: Laplace: %f, MC: %f',
+                     prev_laplace, prev_mc)
+        LOGGER.debug('Predicted cost: Laplace: %f', prev_predicted)
+        LOGGER.debug('Actual cost: Laplace: %f, MC: %f',
+                     cur_laplace, cur_mc)
+
+        for m in range(self.M):
+            self._set_new_mult(predicted_impr, actual_impr, m)
+
 
     def compute_costs(self, m, eta, augment=True):
         """ Compute cost estimates used in the LQR backward pass. """
