@@ -27,6 +27,7 @@ class CostAction(Cost):
         sample_u = sample.get_U()
         T = sample.T
         Du = sample.dU
+        Dv = sample.dV
         Dx = sample.dX
 
         if self.mode == 'protagonist':
@@ -120,9 +121,10 @@ class CostAction(Cost):
             # compute lux, lvx terms
             lux = np.zeros((T, Du, Dx))
             lvx = np.zeros((T, Du, Dx))
+            luv = np.zeros((T, Du, Dv))
 
             # note the lu terms are +ve while lv terms are -ve
-            return l, lx, lu, -lv, lxx, luu, -lvv, lux, -lvx
+            return l, lx, lu, -lv, lxx, luu, -luv, -lvv, lux, -lvx
 
         else:
             os._exit("unknown mode. Cost Action Mode should either be protagonist or antagonist ")

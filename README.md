@@ -52,9 +52,11 @@ common = {
     'data_files_dir': EXP_DIR + 'data_files/',
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.csv',
+    'dists_filename': EXP_DIR + 'dist.txt',
     'conditions': 4,
     'mode': 'antagonist',
     'gamma': 1e8,
+    'target_end_effector': np.array([0.0, 0.3, -0.5, 0.0, 0.3, -0.2]),
 }
 ```
 

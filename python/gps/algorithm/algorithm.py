@@ -264,15 +264,17 @@ class Algorithm(object):
             sample      = self.cur[cond].sample_list[n] # cur is every var in iteration data
             # sample_adv  = self.cur[cond].sample_list_adv[n]
             # Get costs.  Self.cost will be a CostSum object see mdgps/antag/hyperparams#L128
-            l, lx, lu, lv, lxx, luu, lvv, lux, lvx  = self.cost[cond].eval(sample, sample_adv=None)
+            l, lx, lu, lv, lxx, luu, lvv, luv , lux, lvx = self.cost[cond].eval(sample, sample_adv=None)
             cc[n, :] = l
             cs[n, :] = l
+
+            # Assemble matrix and vector
             cv[n,:,:] = np.c_[lx, lu,  lv]
-            Cm_temp = np.concatenate(
-                    (np.c_[lxx, np.transpose(lux, [0, 2, 1]), np.transpose(lvx, [0, 2, 1])], np.c_[lux, luu, lvv]),
-                    axis=1
-                )
-            Cm[n, :, :, :] = np.concatenate((Cm_temp, np.c_[lvx, lvv, luu],), axis=1)
+            Cm[n, :, :, :] = np.concatenate(
+                    (np.c_[lxx, np.transpose(lux, [0, 2, 1]), np.transpose(lvx, [0, 2, 1])],
+                    np.c_[lux, luu, luv],
+                    np.c_[lvx, np.transpose(luv, [0, 2, 1]), lvv]),
+                    axis=1)
 
             # Adjust for expanding cost around a sample.
             X = sample.get_X()
