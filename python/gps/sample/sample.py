@@ -1,6 +1,5 @@
 """ This file defines the sample class. """
 import numpy as np
-
 from gps.proto.gps_pb2 import ACTION, ACTION_V
 
 
@@ -16,6 +15,7 @@ class Sample(object):
         self.T = agent.T
         self.dX = agent.dX
         self.dU = agent.dU
+        self.dV = agent.dV
         self.dO = agent.dO
         self.dM = agent.dM
 

@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 from gps.gui.config import config
+from gps.proto.gps_pb2 import END_EFFECTOR_POINTS
 from gps.gui.action_panel import Action, ActionPanel
 from gps.gui.textbox import Textbox
 from gps.gui.mean_plotter import MeanPlotter
@@ -42,6 +43,8 @@ class GPSTrainingGUI(object):
         self._hyperparams = hyperparams
         self._log_filename = self._hyperparams['log_filename']
         self._costs_filename = self._hyperparams['costs_filename']
+        self._dists_filename = self._hyperparams['dists_filename']
+
         self.mode = self._hyperparams['mode']
         if 'target_filename' in self._hyperparams:
             self._target_filename = self._hyperparams['target_filename']
@@ -277,8 +280,20 @@ class GPSTrainingGUI(object):
 
         costs = [np.mean(np.sum(algorithm.prev[m].cs, axis=1)) for m in range(algorithm.M)]
 
-        with open(self._costs_filename, 'a') as f:
-            f.write("%s\n" % costs)
+        # tgt = self._hyperparams['target_end_effector']
+        # dists = []  # distance from target for all initial conditions
+        # for m in range(algorithm.M):
+        #     print('sample: ', sample)
+        #     sample = traj_sample_lists[m]
+        #     pt = sample.get(END_EFFECTOR_POINTS)
+        #     dists.append(pt - tgt)
+
+        # with open(self._dists_filename, 'a') as foo:
+        #     foo.write("%s\n" % dists)
+
+        with open(self._costs_filename, 'a') as bar:
+            bar.write("%s\n" % costs)
+
         self._update_iteration_data(itr, algorithm, costs, pol_sample_lists, protag_pol_samples=protag_pol_samples)
         self._cost_plotter.update(costs, t=itr)
         if END_EFFECTOR_POINTS in agent.x_data_types:

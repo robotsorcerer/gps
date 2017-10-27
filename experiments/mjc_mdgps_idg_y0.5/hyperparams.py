@@ -47,9 +47,11 @@ common = {
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.txt',
+    'dists_filename': EXP_DIR + 'dist.txt',
     'conditions': 4,
     'mode': 'robust',
     'gamma': 0.5,
+    'target_end_effector': np.array([0.0, 0.3, -0.5, 0.0, 0.3, -0.2]),
 }
 
 if not os.path.exists(common['data_files_dir']):

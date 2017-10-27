@@ -20,6 +20,8 @@ class CostFK(Cost):
         config.update(hyperparams)
         Cost.__init__(self, config)
 
+        self._dists_filename = 'dists_filename'
+
     def eval(self, sample):
         """
         Evaluate forward kinematics (end-effector penalties) cost.
@@ -34,7 +36,7 @@ class CostFK(Cost):
             T = sample.T
             dX = sample.dX
             dU = sample.dU
-            dV = sample.dU
+            dV = sample.dV
 
             wpm = get_ramp_multiplier(
                 self._hyperparams['ramp_option'], T,
@@ -47,9 +49,11 @@ class CostFK(Cost):
             lu = np.zeros((T, dU))
             lv = np.zeros((T, dV))
             lx = np.zeros((T, dX))
-            luu = np.zeros((T, dU, dU))
-            lvv = np.zeros((T, dU, dV))
             lxx = np.zeros((T, dX, dX))
+            luu = np.zeros((T, dU, dU))
+            luv = np.zeros((T, dU, dV))
+            lvv = np.zeros((T, dV, dV))
+            luv = np.zeros((T, dU, dV))
             lux = np.zeros((T, dU, dX))
             lvx = np.zeros((T, dV, dX))
 
@@ -57,6 +61,10 @@ class CostFK(Cost):
             tgt = self._hyperparams['target_end_effector']
             pt = sample.get(END_EFFECTOR_POINTS)
             dist = pt - tgt
+
+            with open(self._dists_filename, 'a') as foo:
+                foo.write("%s\n" % dist)
+
             # TODO - These should be partially zeros so we're not double
             #        counting.
             #        (see pts_jacobian_only in matlab costinfos code)
@@ -76,7 +84,7 @@ class CostFK(Cost):
                                      data_types=[JOINT_ANGLES, JOINT_ANGLES])
 
             # don't negate here as the control terms are zero anyway
-            return l, lx, lu, lv, lxx, luu, lvv, lux, lvx
+            return l, lx, lu, lv, lxx, luu, lvv, luv, lux, lvx
 
         else:
             T = sample.T
@@ -99,6 +107,7 @@ class CostFK(Cost):
 
             # Choose target.
             tgt = self._hyperparams['target_end_effector']
+            # print('sample', sample)
             pt = sample.get(END_EFFECTOR_POINTS)
             dist = pt - tgt
             # TODO - These should be partially zeros so we're not double

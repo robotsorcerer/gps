@@ -638,9 +638,7 @@ class AlgorithmMDGPS(Algorithm):
                 KB.T.dot(inv_pol_Sv).dot(kB), np.zeros_like(inv_pol_Sv.dot(kB)),
                 -inv_pol_Sv.dot(kB),
             ])
-            # print('fCm: {}, Cm: {}, PKLm: {}', fCm.shape, Cm.shape, PKLm.shape, PKLv.shape)
             fCm[t, :, :] = (Cm[t, :, :] + PKLm[t, :, :] * eta) / (eta + multiplier)
-            # print('cv: {}, PKLv: {}: ', cv.shape, PKLv.shape)
             fcv[t, :] = (cv[t, :] + PKLv[t, :] * eta) / (eta + multiplier)
 
         return fCm, fcv
