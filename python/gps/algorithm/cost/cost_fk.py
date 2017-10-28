@@ -1,5 +1,5 @@
 """ This file defines the forward kinematics cost function. """
-import copy, os
+import copy, os, csv
 
 import numpy as np
 
@@ -20,7 +20,9 @@ class CostFK(Cost):
         config.update(hyperparams)
         Cost.__init__(self, config)
 
-        self._dists_filename = 'dists_filename'
+        self._dists_filename = 'dists_filename' + \
+                                str(self._hyperparams['gamma']) + '.csv'
+        dist_array = []
 
     def eval(self, sample):
         """
@@ -62,8 +64,10 @@ class CostFK(Cost):
             pt = sample.get(END_EFFECTOR_POINTS)
             dist = pt - tgt
 
+            # print(dist)
             with open(self._dists_filename, 'a') as foo:
-                foo.write("%s\n" % dist)
+                # foo.write("%s\n" % dist)
+                np.savetxt(foo, dist, delimiter=' ', fmt='%1.4e')
 
             # TODO - These should be partially zeros so we're not double
             #        counting.

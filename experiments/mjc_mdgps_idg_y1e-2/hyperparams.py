@@ -37,10 +37,10 @@ SENSOR_DIMS = {
 PR2_GAINS = np.array([3.09, 1.08, 0.393, 0.674, 0.111, 0.152, 0.098])
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
-EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_idg_y0.5/'
+EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_idg_y1e-2/'
 
 common = {
-    'experiment_name': 'idg_0.5' + '_' + \
+    'experiment_name': 'idg_y1e-2' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',
@@ -50,7 +50,7 @@ common = {
     'dists_filename': EXP_DIR + 'dist.txt',
     'conditions': 4,
     'mode': 'robust',
-    'gamma': 0.5,
+    'gamma': 1e-2,
     'target_end_effector': np.array([0.0, 0.3, -0.5, 0.0, 0.3, -0.2]),
 }
 
@@ -76,7 +76,7 @@ agent = {
                     END_EFFECTOR_POINT_VELOCITIES],
     'camera_pos': np.array([0., 0., 2., 0., 0.2, 0.5]),
     'mode': 'robust',
-    'gamma': 0.5,
+    'gamma': 1e-2,
 }
 
 agent_adv = { #adversarial agent
@@ -125,7 +125,7 @@ torque_cost = {
     'type': CostAction,
     'wu': 1e-3 / PR2_GAINS,
     'mode': 'robust',
-    'gamma': 0.5,
+    'gamma': 1e-2,
 }
 
 fk_cost = {
@@ -136,7 +136,7 @@ fk_cost = {
     'l2': 10.0,
     'alpha': 1e-5,
     'mode': 'robust',
-    'gamma': 0.5,
+    'gamma': 1e-2,
 }
 
 # Create second cost function for last step only.
@@ -150,7 +150,7 @@ final_cost = {
     'alpha': 1e-5,
     'wp_final_multiplier': 10.0,
     'mode': 'robust',
-    'gamma': 0.5,
+    'gamma': 1e-2,
 }
 
 algorithm['cost'] = {
@@ -158,7 +158,7 @@ algorithm['cost'] = {
     'costs': [torque_cost, fk_cost, final_cost],
     'weights': [0.8, 0.8, 0.8], #[1.0, 1.0, 1.0],
     'mode': 'robust',
-    'gamma': 0.5,
+    'gamma': 1e-2,
 }
 
 algorithm['dynamics'] = {
@@ -171,7 +171,7 @@ algorithm['dynamics'] = {
         'max_samples': 20,
     },
     'mode': 'robust',
-    'gamma': 0.5,
+    'gamma': 1e-2,
 }
 
 algorithm['traj_opt'] = {
@@ -183,7 +183,7 @@ algorithm['policy_opt'] = {
     'iterations': 4000,
     'weights_file_prefix': EXP_DIR + 'policy',
     'mode': 'robust',
-    'gamma': 0.5,
+    'gamma': 1e-2,
 }
 
 algorithm['policy_prior'] = {
@@ -192,7 +192,7 @@ algorithm['policy_prior'] = {
     'min_samples_per_cluster': 40,
     'max_samples': 20,
     'mode': 'robust',
-    'gamma': 0.5,
+    'gamma': 1e-2,
 }
 
 config = {
@@ -206,7 +206,7 @@ config = {
     'agent_adv': agent_adv,
     'algorithm': algorithm,
     'mode': 'robust',
-    'gamma': 0.5,
+    'gamma': 1e-2,
 }
 
 common['info'] = generate_experiment_info(config)
