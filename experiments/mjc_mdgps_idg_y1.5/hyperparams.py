@@ -40,7 +40,7 @@ BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
 EXP_DIR = BASE_DIR + '/../experiments/mjc_mdgps_idg_y1.5/'
 
 common = {
-    'experiment_name': 'idg_y4' + '_' + \
+    'experiment_name': 'idg_1.5' + '_' + \
             datetime.strftime(datetime.now(), '%m-%d-%y_%H-%M'),
     'experiment_dir': EXP_DIR,
     'data_files_dir': EXP_DIR + 'data_files/',

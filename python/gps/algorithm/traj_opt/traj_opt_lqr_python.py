@@ -665,7 +665,7 @@ class TrajOptLQRPython(TrajOpt):
                     sigma_u[t, idx_x, idx_x],
                     sigma_u[t, idx_x, idx_x].dot(traj_distr.Gu[t, :, :].T),
                     #pad with v terms
-                    sigma_v[t, idx_x, idx_x].dot(traj_distr.Gv[t, :, :].T),
+                    np.zeros_like(sigma_v[t, idx_x, idx_x].dot(traj_distr.Gv[t, :, :].T))
                 ]),
                 np.hstack([
                     traj_distr.Gu[t, :, :].dot(sigma_u[t, idx_x, idx_x]),
@@ -673,17 +673,15 @@ class TrajOptLQRPython(TrajOpt):
                         traj_distr.Gu[t, :, :].T
                     ) + traj_distr.pol_covar_u[t, :, :],
                     # pad with adversarial terms
-                    traj_distr.Gv[t, :, :].dot(sigma_v[t, idx_x, idx_x]).dot(
+                    np.zeros_like(traj_distr.Gv[t, :, :].dot(sigma_v[t, idx_x, idx_x]).dot(
                         traj_distr.Gv[t, :, :].T
-                    ) + traj_distr.pol_covar_v[t, :, :]
+                    ) + traj_distr.pol_covar_v[t, :, :])
                 ]),
                 # pad dU terms with zero
-                # np.zeros([dU, dX+dU+dV])
                 np.hstack([
-                    traj_distr.Gv[t, :, :].dot(sigma_v[t, idx_x, idx_x]),
-                    traj_distr.Gv[t, :, :].dot(sigma_v[t, idx_x, idx_x]).dot(
-                        traj_distr.Gv[t, :, :].T
-                    ) + traj_distr.pol_covar_v[t, :, :],
+                    np.zeros_like(traj_distr.Gv[t, :, :].dot(sigma_v[t, idx_x, idx_x])),
+                    np.zeros_like(traj_distr.Gv[t, :, :].dot(sigma_v[t, idx_x, idx_x]).dot(
+                        traj_distr.Gv[t, :, :].T) + traj_distr.pol_covar_v[t, :, :]),
                 # pad with control terms
                     traj_distr.Gu[t, :, :].dot(sigma_u[t, idx_x, idx_x]).dot(
                         traj_distr.Gu[t, :, :].T
@@ -693,7 +691,8 @@ class TrajOptLQRPython(TrajOpt):
             mu_u[t, :] = np.hstack([
                 mu_u[t, idx_x],
                 traj_distr.Gu[t, :, :].dot(mu_u[t, idx_x]) + traj_distr.gu[t, :],
-                traj_distr.Gv[t, :, :].dot(mu_v[t, idx_x]) + traj_distr.gv[t, :]
+                np.zeros_like(traj_distr.Gv[t, :, :].dot(mu_v[t, idx_x]) + \
+                              traj_distr.gv[t, :])
             ])
 
             if t < T - 1:

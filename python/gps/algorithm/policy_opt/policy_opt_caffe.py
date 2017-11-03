@@ -329,7 +329,6 @@ class PolicyOptCaffe(PolicyOpt):
 
         return output, pol_sigma, pol_prec, pol_det_sigma
 
-
     def prob_v(self, obs):
         """
         Run policy forward.
@@ -378,6 +377,7 @@ class PolicyOptCaffe(PolicyOpt):
             'hyperparams': self._hyperparams,
             'dO': self._dO,
             'dU': self._dU,
+            'dV': self._dV,
             'scale': self.policy.scale,
             'bias': self.policy.bias,
             'caffe_iter': self.caffe_iter,
@@ -386,7 +386,7 @@ class PolicyOptCaffe(PolicyOpt):
 
     # For unpickling.
     def __setstate__(self, state):
-        self.__init__(state['hyperparams'], state['dO'], state['dU'])
+        self.__init__(state['hyperparams'], state['dO'], state['dU'], state['dV'])
         self.policy.scale = state['scale']
         self.policy.bias = state['bias']
         self.caffe_iter = state['caffe_iter']

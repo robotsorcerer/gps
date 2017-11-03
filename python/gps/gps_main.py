@@ -206,8 +206,12 @@ class GPSMain(object):
         )
 
         if self.gui:
-            self.gui.update(itr, self.algorithm, self.agent,
-                traj_sample_lists, pol_sample_lists, protag_pol_samples=self.protag_pol_samples)
+            if self.robust:
+                self.gui.update(itr, self.algorithm, self.agent,
+                    traj_sample_lists, pol_sample_lists, protag_pol_samples=None)
+            else:
+                self.gui.update(itr, self.algorithm, self.agent,
+                    traj_sample_lists, pol_sample_lists, protag_pol_samples=self.protag_pol_samples)
             self.gui.set_status_text(('Took %d policy sample(s) from ' +
                 'algorithm state at iteration %d.\n' +
                 'Saved to: data_files/pol_sample_itr_%02d.pkl.\n') % (N, itr, itr))
