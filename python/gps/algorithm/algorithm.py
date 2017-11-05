@@ -139,8 +139,7 @@ class Algorithm(object):
 
         for m in range(self.M):
             cur_data = self.cur[m].sample_list
-            # cur_data_adv = self.cur[m].sample_list_adv
-
+            
             X = cur_data.get_X()
             U = cur_data.get_U()
             V = cur_data.get_V()

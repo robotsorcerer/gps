@@ -4,9 +4,20 @@ import logging
 import numpy as np
 import scipy.linalg
 
+import visdom
+
 
 LOGGER = logging.getLogger(__name__)
+viz = visdom.Visdom()
 
+assert viz.check_connection()
+
+#
+# textwindow = viz.text('GMM Clusters!')
+#
+# updatetextwindow = viz.text('GMM Cluster Window Plot')
+# assert updatetextwindow is not None, 'Window was none'
+# viz.text('And here it is', win=updatetextwindow, append=True)
 
 def logsum(vec, axis=0, keepdims=True):
     #TODO: Add a docstring.
@@ -200,6 +211,17 @@ class GMM(object):
             self.logmass = self.logmass - logsum(self.logmass, axis=0)
             assert self.logmass.shape == (K, 1)
             self.mass = np.exp(self.logmass)
+
+            # visualiuze clusters in visdom
+            # viz.images(self.mass,
+            #           opts=dict(title='Mass of Gaussian clusters', caption='Cluster')
+            #           )
+            # viz.scatter(
+            #     X = self.mass,
+            #     # markersize=10,
+            #     # markercolor=np.random.randint(0, 255, (255, 3,)),
+            # )
+
             # Reboot small clusters.
             w[:, (self.mass < (1.0 / K) * 1e-4)[:, 0]] = 1.0 / N
             # Fit cluster means.
