@@ -281,12 +281,7 @@ class GPSTrainingGUI(object):
         costs = [np.mean(np.sum(algorithm.prev[m].cs, axis=1)) for m in range(algorithm.M)]
 
         tgt = self._hyperparams['target_end_effector']
-        # dists = []  # distance from target for all initial conditions
-        # for m in range(algorithm.M):
-        #     sample = traj_sample_lists[m]
-        #     # print('sample: ', sample)
-        #     pt = sample.get(END_EFFECTOR_POINTS)
-        #     dists.append(pt - tgt)
+        dists = []  # distance from target for all initial conditions
 
         # with open(self._dists_filename, 'a') as foo:
         #     foo.write("%s\n" % dists)

@@ -23,6 +23,7 @@ class AlgorithmMDGPS(Algorithm):
         config = copy.deepcopy(ALG_MDGPS)
         config.update(hyperparams)
         Algorithm.__init__(self, config)
+        self.itr = 0
 
         policy_prior = self._hyperparams['policy_prior'] #self._hyperparams is from algorithm.py
         for m in range(self.M):  #self.M= # conditions
@@ -38,6 +39,9 @@ class AlgorithmMDGPS(Algorithm):
         self.policy_opt = self._hyperparams['policy_opt']['type']( #will be PolicyOptCaffe
             self._hyperparams['policy_opt'], self.dO, self.dU, self.dV #dO and dX are from hyperparams
         )
+        # print(self._hyperparams.keys())
+        self._dists_filename = self._hyperparams['cost']['dists_filename']
+        self._points_filename = self._hyperparams['cost']['points_filename']
 
     def iteration(self, sample_lists):
         """
@@ -111,12 +115,26 @@ class AlgorithmMDGPS(Algorithm):
 
     def iteration_idg(self, sample_lists):
         # Store the samples and evaluate the costs.
+        dists = []
         for m in range(self.M):                       # self.M is the # of the condition number
             self.cur[m].sample_list = sample_lists[m] # cur is every var in iteration data
             self._eval_cost_idg(m)                    # _eval_cost is defined in algorithm.py line 220
 
+            dist = self.cur[m].traj_info.target_distance
+            dists.append(dist)
+            # save distance to targets in list
+        with open(self._dists_filename, 'a') as foo:
+            foo.write("%s\n" % (sum(dists)/len(dists)))
+
+        with open(self._points_filename, 'a') as bar:
+            bar.write("%s\n" % dists)
+
+        del dists[:]
+        self.itr += 1
+
         # Update dynamics linearizations.
         self._update_dynamics_idg()
+
 
         # On the first iteration, need to catch policy up to init_traj_distr.
         if self.iteration_count == 0:
@@ -535,7 +553,6 @@ class AlgorithmMDGPS(Algorithm):
 
         for m in range(self.M):
             self._set_new_mult(predicted_impr, actual_impr, m)
-
 
     def compute_costs(self, m, eta, augment=True):
         """ Compute cost estimates used in the LQR backward pass. """

@@ -10,7 +10,7 @@ import visdom
 LOGGER = logging.getLogger(__name__)
 viz = visdom.Visdom()
 
-assert viz.check_connection()
+# assert viz.check_connection()
 
 #
 # textwindow = viz.text('GMM Clusters!')

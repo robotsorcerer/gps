@@ -36,6 +36,7 @@ class TrajectoryInfo(BundleType):
             'cc': None,  # Cost estimate constant term.
             'cv': None,  # Cost estimate vector term.
             'Cm': None,  # Cost estimate matrix term.
+            'target_distance': None, # distance from eef pts to bottom of slot
             'last_kl_step': float('inf'),  # KL step of the previous iteration.
         }
         BundleType.__init__(self, variables)

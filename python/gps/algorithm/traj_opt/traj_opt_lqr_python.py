@@ -599,7 +599,7 @@ class TrajOptLQRPython(TrajOpt):
             return A
         else:
             # find lowest eigen value
-            eta = 1e-6  # regularizer for matrix multiplier
+            eta = 1e-3  # regularizer for matrix multiplier
             low = np.amin(eigval)
             Anew = low * A + eta * np.eye(A.shape[0])
             return Anew
@@ -802,11 +802,13 @@ class TrajOptLQRPython(TrajOpt):
                 Qtt[t] = 0.5 * (Qtt[t] + Qtt[t].T)
 
                 # first find Qvv inverse and Quu inverse
-                U_u = sp.linalg.cholesky(self.make_pdef(Qtt[t, idx_u, idx_u]))
+                # U_u = sp.linalg.cholesky(self.make_pdef(Qtt[t, idx_u, idx_u]))
+                U_u = sp.linalg.cholesky(Qtt[t, idx_u, idx_u])
                 L_u = U_u.T
 
                 # factorize Qvv
-                U_v = sp.linalg.cholesky(self.make_pdef(Qtt[t, idx_v, idx_v]))
+                # U_v = sp.linalg.cholesky(self.make_pdef(Qtt[t, idx_v, idx_v]))
+                U_v = sp.linalg.cholesky(Qtt[t, idx_v, idx_v])
                 L_v = U_v.T
 
                 invPSig_u[t, :, :] = Qtt[t, idx_u, idx_u]
@@ -830,11 +832,13 @@ class TrajOptLQRPython(TrajOpt):
 
                 # Compute Cholesky decomposition of Q function action component.
                 try:
-                    inv_term_U = sp.linalg.cholesky(self.make_pdef(inv_term))
+                    # inv_term_U = sp.linalg.cholesky(self.make_pdef(inv_term))
+                    inv_term_U = sp.linalg.cholesky(inv_term)
                     inv_term_L = inv_term_U.T
 
                     # inverse cholesky factors for gv
-                    inv_term_U_v = sp.linalg.cholesky(self.make_pdef(inv_term_v))
+                    # inv_term_U_v = sp.linalg.cholesky(self.make_pdef(inv_term_v))
+                    inv_term_U_v = sp.linalg.cholesky(inv_term_v)
                     inv_term_L_v = inv_term_U_v.T
                 except LinAlgError as e:
                     # Error thrown when Qtt[idx_u, idx_u] is not

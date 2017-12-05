@@ -59,7 +59,7 @@ class CostSum(Cost):
             return l, lx, lu, lxx, luu, lux #don't negate here cause torque and fk costs are already negated
 
         elif self.mode=='robust': #'sample_adv' in kwargs:
-            l, lx, lu, lv, lxx, luu, lvv, luv, lux, lvx = self._costs[0].eval(sample, sample_adv=None)
+            l, lx, lu, lv, lxx, luu, lvv, luv, lux, lvx, dist = self._costs[0].eval(sample, sample_adv=None)
 
             l   = l   * weight
 
@@ -76,7 +76,7 @@ class CostSum(Cost):
             luv = luv * weight
 
             for i in range(1, len(self._costs)): # evals fk_cost and final_cost
-                pl, plx, plu,  plv, plxx, pluu, plvv, pluv, plux, plvx = \
+                pl, plx, plu,  plv, plxx, pluu, plvv, pluv, plux, plvx, dist = \
                     self._costs[i].eval(sample)
                 weight = self._weights[i]
                 l = l + pl * weight
@@ -93,7 +93,7 @@ class CostSum(Cost):
                 luv = luv + pluv * weight
 
             #don't negate here cause torque and fk costs are already negated
-            return l, lx, lu, lv, lxx, luu, lvv, luv, lux, lvx
+            return l, lx, lu, lv, lxx, luu, lvv, luv, lux, lvx, dist
 
         else:
             # print('evaluating cost in protagonist')

@@ -48,9 +48,12 @@ add_definitions("-DOPENTHREADS_ATOMIC_USE_MUTEX")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/Boost.NumPy")
 boost_python_module(mjcpy mjcpy2.cpp  mujoco_osg_viewer.cpp)
+boost_python_module(mjcpy2_gl mjcpy2_gl.cpp)
 if (MJC_OLD)  # version of mujoco older than 1.31
 target_link_libraries(mjcpy "${MUJOCO_DIR}/libmujoco.so" ${OSG_LIBRARIES} ${Boost_SYSTEM_LIBRARY} boost_numpy)
 else()
-target_link_libraries(mjcpy "${MUJOCO_DIR}/bin/libmujoco131.so" ${OSG_LIBRARIES} 
+target_link_libraries(mjcpy "${MUJOCO_DIR}/bin/libmujoco131.so" ${OSG_LIBRARIES}
+												${Boost_SYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} boost_numpy)
+target_link_libraries(mjcpy2_gl "${MUJOCO_DIR}/bin/libmujoco131.so"
  												${Boost_SYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} boost_numpy)
 endif()

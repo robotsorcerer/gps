@@ -92,7 +92,6 @@ class CostAction(Cost):
             # print('sample: ', sample.shape, ' | sample_adv: ', sample_adv.shape) #('sample: ', (100, 7), ' | sample_adv: ', (100, 7))
             l = 0.5 * np.sum(self._hyperparams['wu'] * (sample ** 2), axis=1) - \
                 self.gamma * np.sum( self._hyperparams['wu'] * (sample_adv ** 2), axis=1)  # shape 100
-
             lu = self._hyperparams['wu'] * sample_u
             # compute lu
             lv = 0.5 * np.sum(self._hyperparams['wu'] * (sample ** 2), axis=1) - \
@@ -124,7 +123,7 @@ class CostAction(Cost):
             luv = np.zeros((T, Du, Dv))
 
             # note the lu terms are +ve while lv terms are -ve
-            return l, lx, lu, -lv, lxx, luu, -luv, -lvv, lux, -lvx
+            return l, lx, lu, -lv, lxx, luu, -luv, -lvv, lux, -lvx, 0
 
         else:
             os._exit("unknown mode. Cost Action Mode should either be protagonist or antagonist ")

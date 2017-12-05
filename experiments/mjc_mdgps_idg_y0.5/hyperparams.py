@@ -46,11 +46,13 @@ common = {
     'data_files_dir': EXP_DIR + 'data_files/',
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
-    'costs_filename': EXP_DIR + 'costs.txt',
-    'dists_filename': EXP_DIR + 'dist.txt',
+    'costs_filename': EXP_DIR + 'costs.csv',
+    'dists_filename': EXP_DIR + 'dist_0.5.csv',
     'conditions': 4,
     'mode': 'robust',
     'gamma': 0.5,
+    'dists_filename': EXP_DIR + 'dist_y0.5.csv',
+    'points_filename': EXP_DIR + 'eef_points_y0.5.csv',
     'target_end_effector': np.array([0.0, 0.3, -0.5, 0.0, 0.3, -0.2]),
 }
 
@@ -159,6 +161,8 @@ algorithm['cost'] = {
     'weights': [0.8, 0.8, 0.8], #[1.0, 1.0, 1.0],
     'mode': 'robust',
     'gamma': 0.5,
+    'dists_filename': common['dists_filename'],
+    'points_filename': common['points_filename'],
 }
 
 algorithm['dynamics'] = {

@@ -139,7 +139,7 @@ class Algorithm(object):
 
         for m in range(self.M):
             cur_data = self.cur[m].sample_list
-            
+
             X = cur_data.get_X()
             U = cur_data.get_U()
             V = cur_data.get_V()
@@ -242,7 +242,6 @@ class Algorithm(object):
 
         self.cur[cond].cs = cs  # True value of cost.
 
-
     def _eval_cost_idg(self, cond):
         """
         Evaluate costs for all samples for a condition.
@@ -259,13 +258,15 @@ class Algorithm(object):
         cv = np.zeros((N, T, dX+dU+dV))    # Cost estimate vector term.
         Cm = np.zeros((N, T, dX+dU+dV, dX+dU+dV)) # Cost estimate matrix term.
 
+        dists = np.zeros((N, dU))
         for n in range(N):
             sample      = self.cur[cond].sample_list[n] # cur is every var in iteration data
             # sample_adv  = self.cur[cond].sample_list_adv[n]
             # Get costs.  Self.cost will be a CostSum object see mdgps/antag/hyperparams#L128
-            l, lx, lu, lv, lxx, luu, lvv, luv , lux, lvx = self.cost[cond].eval(sample, sample_adv=None)
+            l, lx, lu, lv, lxx, luu, lvv, luv , lux, lvx, dist = self.cost[cond].eval(sample, sample_adv=None)
             cc[n, :] = l
             cs[n, :] = l
+            dists[n, :] = dist
 
             # Assemble matrix and vector
             cv[n,:,:] = np.c_[lx, lu,  lv]
@@ -292,8 +293,10 @@ class Algorithm(object):
         self.cur[cond].traj_info.cc = np.mean(cc, 0)  # Constant term (scalar).
         self.cur[cond].traj_info.cv = np.mean(cv, 0)  # Linear term (vector).
         self.cur[cond].traj_info.Cm = np.mean(Cm, 0)  # Quadratic term (matrix).
+        self.cur[cond].traj_info.target_distance = np.mean(dists) # mean of all eef pts in one iteration of idg
 
         self.cur[cond].cs = cs  # True value of cost.
+
 
     def _eval_cost_cl(self, cond, sample_lists_prot=None):
         """

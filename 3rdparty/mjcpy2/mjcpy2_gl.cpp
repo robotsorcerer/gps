@@ -7,7 +7,8 @@
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/tuple/tuple.hpp>
-#include "mujoco_osg_viewer.hpp"
+#include "mujoco.h"
+// #include "mujoco_osg_viewer.hpp"
 
 namespace bp = boost::python;
 namespace bn = boost::numpy;
@@ -24,6 +25,18 @@ namespace pathfinder{
     }
 }
 
+
+void NewModelFromXML(const char* filename,mjModel*& model) {
+    char errmsg[100];
+#if MJC131
+    model = mj_loadXML(filename, NULL, errmsg, sizeof(errmsg));
+#else
+    model = mj_loadXML(filename, NULL, errmsg, sizeof(errmsg));; //mj_loadXML(filename, errmsg);
+#endif
+    if( !model ) {
+        printf("%s\n",errmsg);
+    }
+}
 
 namespace {
 
@@ -94,7 +107,7 @@ bp::object main_namespace;
 
         mjModel* m_model;
         mjData* m_data;
-        MujocoOSGViewer* m_viewer;
+        // MujocoOSGViewer* m_viewer;
         int m_numSteps;
         int m_featmask;
 
@@ -119,16 +132,16 @@ PyMJCWorld2::PyMJCWorld2(const std::string& loadfile) {
     if (!m_model) PRINT_AND_THROW("couldn't load model: " + std::string(loadfile));
     m_data = mj_makeData(m_model);
     FAIL_IF_FALSE(!!m_data);
-    m_viewer = NULL;
+    // m_viewer = NULL;
     m_numSteps = 1;
     m_featmask = 0;
 }
 
 
 PyMJCWorld2::~PyMJCWorld2() {
-	if (m_viewer) {
-		delete m_viewer;
-	}
+	// if (m_viewer) {
+	// 	delete m_viewer;
+	// }
 	mj_deleteData(m_data);
 	mj_deleteModel(m_model);
 }
@@ -222,32 +235,32 @@ void PyMJCWorld2::Kinematics() {
 }
 
 void PyMJCWorld2::_PlotInit() {
-    if (m_viewer == NULL) {
-        m_viewer = new MujocoOSGViewer();
-        m_viewer->SetModel(m_model);
-    }
+    // if (m_viewer == NULL) {
+    //     m_viewer = new MujocoOSGViewer();
+    //     m_viewer->SetModel(m_model);
+    // }
 }
 
 void PyMJCWorld2::_PlotInit(float x, float y, float z, float px, float py, float pz) {
-    if (m_viewer == NULL) {
-        m_viewer = new MujocoOSGViewer(osg::Vec3(x, y, z),osg::Vec3(px, py, pz));
-        m_viewer->SetModel(m_model);
-    }
+    // if (m_viewer == NULL) {
+    //     m_viewer = new MujocoOSGViewer(osg::Vec3(x, y, z),osg::Vec3(px, py, pz));
+    //     m_viewer->SetModel(m_model);
+    // }
 }
 
 void PyMJCWorld2::_PlotInit(int width, int height, float x, float y, float z, float px, float py, float pz) {
-    if (m_viewer == NULL) {
-        m_viewer = new MujocoOSGViewer(width, height, osg::Vec3(x, y, z),osg::Vec3(px, py, pz));
-        m_viewer->SetModel(m_model);
-    }
+    // if (m_viewer == NULL) {
+    //     m_viewer = new MujocoOSGViewer(width, height, osg::Vec3(x, y, z),osg::Vec3(px, py, pz));
+    //     m_viewer->SetModel(m_model);
+    // }
 }
 
 void PyMJCWorld2::Plot(const bn::ndarray& x) {
     FAIL_IF_FALSE(x.get_dtype() == MJTNUM_DTYPE && x.get_nd() == 1 && x.get_flags() & bn::ndarray::C_CONTIGUOUS);
     _PlotInit();
     SetState(reinterpret_cast<const mjtNum*>(x.get_data()),m_model,m_data);
-	m_viewer->SetData(m_data);
-	m_viewer->RenderOnce();
+	// m_viewer->SetData(m_data);
+	// m_viewer->RenderOnce();
 }
 
 void PyMJCWorld2::InitCam(float cx, float cy, float cz, float px, float py, float pz) {
@@ -262,8 +275,8 @@ void PyMJCWorld2::Idle(const bn::ndarray& x) {
     FAIL_IF_FALSE(x.get_dtype() == MJTNUM_DTYPE && x.get_nd() == 1 && x.get_flags() & bn::ndarray::C_CONTIGUOUS);
     _PlotInit();
     SetState(reinterpret_cast<const mjtNum*>(x.get_data()),m_model,m_data);
-    m_viewer->SetData(m_data);
-    m_viewer->Idle();
+    // m_viewer->SetData(m_data);
+    // m_viewer->Idle();
 }
 
 
@@ -320,47 +333,47 @@ void PyMJCWorld2::SetData(bp::dict d) {
 
 // grabs current image, returns an array of shape [height, width, channels]
 bp::dict PyMJCWorld2::GetImage() {
-    m_viewer->RenderOnce();
+    // m_viewer->RenderOnce();
     bp::dict out;
-    const unsigned char* tmp = static_cast<const unsigned char*>(m_viewer->m_image->getDataPointer());
-    out["num_pixels"] = m_viewer->m_image->getTotalDataSize();
-    out["width"] = m_viewer->m_image->s();
-    out["height"] = m_viewer->m_image->t();
+    // const unsigned char* tmp = static_cast<const unsigned char*>(m_viewer->m_image->getDataPointer());
+    // out["num_pixels"] = m_viewer->m_image->getTotalDataSize();
+    // out["width"] = m_viewer->m_image->s();
+    // out["height"] = m_viewer->m_image->t();
     int num_channels = 0;
-    if (m_viewer->m_image->getTotalDataSize() > 0)
-    {
-        num_channels = m_viewer->m_image->getTotalDataSize() / m_viewer->m_image->s() / m_viewer->m_image->t();
-    }
-    out["img"] = toNdarray3<unsigned char>(tmp, m_viewer->m_image->t(), m_viewer->m_image->s(), num_channels);
+    // if (m_viewer->m_image->getTotalDataSize() > 0)
+    // {
+    //     num_channels = m_viewer->m_image->getTotalDataSize() / m_viewer->m_image->s() / m_viewer->m_image->t();
+    // }
+    // out["img"] = toNdarray3<unsigned char>(tmp, m_viewer->m_image->t(), m_viewer->m_image->s(), num_channels);
     out["num_channels"] = num_channels;
     return out;
 }
 
 // grabs current image, returns an array of shape [height, width, channels]
 bp::dict PyMJCWorld2::GetImageScaled(int width, int height) {
-    m_viewer->RenderOnce();
-    m_viewer->m_image->scaleImage(width,height,m_viewer->m_image->r());
+    // m_viewer->RenderOnce();
+    // m_viewer->m_image->scaleImage(width,height,m_viewer->m_image->r());
     bp::dict out;
-    const unsigned char* tmp = static_cast<const unsigned char*>(m_viewer->m_image->getDataPointer());
-    out["num_pixels"] = m_viewer->m_image->getTotalDataSize();
-    out["width"] = m_viewer->m_image->s();
-    out["height"] = m_viewer->m_image->t();
+    // const unsigned char* tmp = static_cast<const unsigned char*>(m_viewer->m_image->getDataPointer());
+    // out["num_pixels"] = m_viewer->m_image->getTotalDataSize();
+    // out["width"] = m_viewer->m_image->s();
+    // out["height"] = m_viewer->m_image->t();
     int num_channels = 0;
-    if (m_viewer->m_image->getTotalDataSize() > 0)
-    {
-        num_channels = m_viewer->m_image->getTotalDataSize() / m_viewer->m_image->s() / m_viewer->m_image->t();
-    }
-    out["img"] = toNdarray3<unsigned char>(tmp, m_viewer->m_image->t(), m_viewer->m_image->s(), num_channels);
+    // if (m_viewer->m_image->getTotalDataSize() > 0)
+    // {
+    //     num_channels = m_viewer->m_image->getTotalDataSize() / m_viewer->m_image->s() / m_viewer->m_image->t();
+    // }
+    // out["img"] = toNdarray3<unsigned char>(tmp, m_viewer->m_image->t(), m_viewer->m_image->s(), num_channels);
     out["num_channels"] = num_channels;
     return out;
 }
 
 void PyMJCWorld2::SetCamera(float x, float y, float z, float px, float py, float pz){
     // place camera at (x,y,z) pointing to (px,py,pz)
-    m_viewer->SetCamera(x,y,z,px,py,pz);
+    // m_viewer->SetCamera(x,y,z,px,py,pz);
 }
 
-BOOST_PYTHON_MODULE(mjcpy) {
+BOOST_PYTHON_MODULE(mjcpy2_gl) {
     bn::initialize();
 
     bp::class_<PyMJCWorld2,boost::noncopyable>("MJCWorld","docstring here", bp::init<const std::string&>())

@@ -20,8 +20,6 @@ class CostFK(Cost):
         config.update(hyperparams)
         Cost.__init__(self, config)
 
-        self._dists_filename = 'dists_filename' + \
-                                str(self._hyperparams['gamma']) + '.csv'
         dist_array = []
 
     def eval(self, sample):
@@ -64,10 +62,9 @@ class CostFK(Cost):
             pt = sample.get(END_EFFECTOR_POINTS)
             dist = pt - tgt
 
-            # print(dist)
-            with open(self._dists_filename, 'a') as foo:
-                # foo.write("%s\n" % dist)
-                np.savetxt(foo, dist, delimiter=' ', fmt='%1.4e')
+            dist_norm = np.linalg.norm(dist, ord=2)
+            # with open(self._dists_filename, 'a') as foo:
+            #     np.savetxt(foo, dist_norm, delimiter=' ', fmt='%1.4e')
 
             # TODO - These should be partially zeros so we're not double
             #        counting.
@@ -88,7 +85,7 @@ class CostFK(Cost):
                                      data_types=[JOINT_ANGLES, JOINT_ANGLES])
 
             # don't negate here as the control terms are zero anyway
-            return l, lx, lu, lv, lxx, luu, lvv, luv, lux, lvx
+            return l, lx, lu, lv, lxx, luu, lvv, luv, lux, lvx, dist_norm
 
         else:
             T = sample.T

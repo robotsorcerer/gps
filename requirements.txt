@@ -4,3 +4,4 @@ scipy
 tensorflow
 numpy
 visdom
+scikit-image
