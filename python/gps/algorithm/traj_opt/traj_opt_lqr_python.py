@@ -371,7 +371,7 @@ class TrajOptLQRPython(TrajOpt):
 
         # Set initial covariance (initial mu is always zero).
         sigma[0, idx_x, idx_x] = traj_info.x0sigma
-        mu[0, idx_x] = traj_info.x0mu
+        mu[0, idx_x]           = traj_info.x0mu
 
         for t in range(T):
             sigma[t, :, :] = np.vstack([
@@ -599,7 +599,7 @@ class TrajOptLQRPython(TrajOpt):
             return A
         else:
             # find lowest eigen value
-            eta = 1e-3  # regularizer for matrix multiplier
+            eta = 1e-6  # regularizer for matrix multiplier
             low = np.amin(eigval)
             Anew = low * A + eta * np.eye(A.shape[0])
             return Anew

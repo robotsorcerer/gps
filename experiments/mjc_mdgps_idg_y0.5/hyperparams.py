@@ -104,7 +104,7 @@ agent_adv = { #adversarial agent
 algorithm = {
     'type': AlgorithmMDGPS,
     'conditions': common['conditions'],
-    'iterations': 12,  #was 12
+    'iterations': 52,  #was 12
     'kl_step': 1.0,
     'min_step_mult': 0.5,
     'max_step_mult': 3.0,
