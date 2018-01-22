@@ -1,0 +1,4 @@
+#! /bin/bash
+echo -e "enter experiment name e.g. mjc_mdgps_idg_y0.5\n"
+read expt
+python python/gps/gps_main.py -i $expt

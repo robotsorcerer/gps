@@ -61,14 +61,14 @@ class Textbox:
                 f.write(text + '\n')
 
     def set_bgcolor(self, color, alpha=1.0):
-        self._ax.set_axis_bgcolor(ColorConverter().to_rgba(color, alpha))
+        self._ax.set_facecolor(ColorConverter().to_rgba(color, alpha))
         self.draw()
 
     def draw(self):
-        color, alpha = self._ax.get_axis_bgcolor(), self._ax.get_alpha()
-        self._ax.set_axis_bgcolor(mpl.rcParams['figure.facecolor'])
+        color, alpha = self._ax.get_facecolor(), self._ax.get_alpha()
+        self._ax.set_facecolor(mpl.rcParams['figure.facecolor'])
         self._ax.draw_artist(self._ax.patch)
-        self._ax.set_axis_bgcolor(ColorConverter().to_rgba(color, alpha))
+        self._ax.set_facecolor(ColorConverter().to_rgba(color, alpha))
 
         self._ax.draw_artist(self._ax.patch)
         self._ax.draw_artist(self._text_box)
