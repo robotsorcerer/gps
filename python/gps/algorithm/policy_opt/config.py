@@ -10,6 +10,7 @@ import os
 GENERIC_CONFIG = {
     # Initialization.
     'init_var': 0.1,  # Initial policy variance.
+    'init_var_v': 0.1,  # Initial policy variance antag.
     'ent_reg': 0.0,  # Entropy regularizer.
     # Solver hyperparameters.
     'iterations': 5000,  # Number of iterations per inner iteration.
@@ -20,7 +21,7 @@ GENERIC_CONFIG = {
     'weight_decay': 0.005,  # Weight decay.
     'solver_type': 'Adam',  # Solver type (e.g. 'SGD', 'Adam', etc.).
     # set gpu usage.
-    'use_gpu': 1,  # Whether or not to use the GPU for caffe training.
+    'use_gpu': 0,  # Whether or not to use the GPU for caffe training.
     'gpu_id': 0,
     'random_seed': 1,
 }

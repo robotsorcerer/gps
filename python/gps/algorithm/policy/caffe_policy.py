@@ -74,7 +74,7 @@ class CaffePolicy(Policy):
 
         self.net.blobs[self.net.blobs.keys()[0]].data[:] = obs
         action_mean = self.net.forward().values()[0][0]
-        v = action_mean + self.chol_pol_covar.T.dot(noise)
+        v = action_mean + self.chol_pol_covar_v.T.dot(noise)
         return v
 
     def get_weights_string(self):

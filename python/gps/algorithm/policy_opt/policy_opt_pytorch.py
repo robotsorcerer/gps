@@ -14,46 +14,52 @@ from gps.algorithm.policy_opt.config import POLICY_OPT_PYTORCH
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.utils.data as data
+import torch.nn.functional as F
 from torch.autograd import Variable
 
-from gps.algorithm.policy.tf_policy import TfPolicy
+from gps.algorithm.policy.pytorch_policy import PyTorchPolicy
 from gps.algorithm.policy_opt.policy_opt import PolicyOpt
 
 
 LOGGER = logging.getLogger(__name__)
 
-
-class PolicyOptPyTorch(PolicyOpt):
+class PolicyOptPyTorch(PolicyOpt, nn.Module):
     """ Policy optimization using pytorch for DAG computations/nonlinear function approximation. """
-    def __init__(self, hyperparams, dO, dU):
-        config = copy.deepcopy(POLICY_OPT_TF)
+    def __init__(self, hyperparams, dO, dU, dV):
+        config = copy.deepcopy(POLICY_OPT_PYTORCH)
         config.update(hyperparams)
 
-        PolicyOpt.__init__(self, config, dO, dU)
+        PolicyOpt.__init__(self, config, dO, dU, dV)
 
-        tf.set_random_seed(self._hyperparams['random_seed'])
+        self.use_cuda = torch.cuda.is_available()
+        FloatTensor = torch.cuda.FloatTensor if self.use_cuda else torch.FloatTensor
+        DoubleTensor = torch.cuda.DoubleTensor if self.use_cuda else torch.DoubleTensor
+        LongTensor = torch.cuda.LongTensor if self.use_cuda else torch.LongTensor
+        ByteTensor = torch.cuda.ByteTensor if self.use_cuda else torch.ByteTensor
+        self.Tensor = FloatTensor
+
+        torch.manual_seed(self._hyperparams['random_seed'])
+
+        self.dim_input = self._dO
+        self.dim_output =self._dU
+        self.dim_hidden = 42
+        self.batch_size = self._hyperparams['batch_size']
+        self.network_config=self._hyperparams['network_params']
+
+        self.layer1 = nn.Linear(self.dim_input, self.dim_hidden)
+        self.layer2 = nn.Linear(self.dim_hidden, self.dim_hidden)
+        self.layer3 = nn.Linear(self.dim_hidden, self.dim_hidden)
+        self.out_layer = nn.Linear(self.dim_hidden, self.dim_output)
 
         self.pytorch_iter = 0
-        self.batch_size = self._hyperparams['batch_size']
-        self.device_string = "/cpu:0"
+        self.device_string = use_cuda
         if self._hyperparams['use_gpu'] == 1:
             self.gpu_device = self._hyperparams['gpu_id']
-            self.device_string = "/gpu:" + str(self.gpu_device)
-        self.act_op = None  # mu_hat
-        self.feat_op = None # features
-        self.loss_scalar = None
-        self.obs_tensor = None
-        self.precision_tensor = None
-        self.action_tensor = None  # mu true
-        self.solver = None
-        self.feat_vals = None
-        self.init_network()
-        self.init_solver()
-        self.var = self._hyperparams['init_var'] * np.ones(dU)
-        self.sess = tf.Session()
-        self.policy = TfPolicy(dU, self.obs_tensor, self.act_op, self.feat_op,
-                               np.zeros(dU), self.sess, self.device_string, copy_param_scope=self._hyperparams['copy_param_scope'])
+            # self.device_string = "/gpu:" + str(self.gpu_device)
+        self.var_u = self._hyperparams['init_var'] * np.ones(dU)
+        self.var_v = self._hyperparams['init_var_v'] * np.ones(dV)
+        self.policy = PyTorchPolicy(dU, dV, net, self.obs_tensor, self.act_op, self.feat_op,
+                                    np.zeros(dU), np.zeros(dV), with_gpu=self.use_cuda)
         # List of indices for state (vector) data and image (tensor) data in observation.
         self.x_idx, self.img_idx, i = [], [], 0
         if 'obs_image_data' not in self._hyperparams['network_params']:
@@ -65,38 +71,19 @@ class PolicyOptPyTorch(PolicyOpt):
             else:
                 self.x_idx = self.x_idx + list(range(i, i+dim))
             i += dim
-        init_op = tf.global_variables_initializer()#tf.initialize_all_variables()
-        self.sess.run(init_op)
 
-    def init_network(self):
-        """ Helper method to initialize the tf networks used """
-        tf_map_generator = self._hyperparams['network_model']
-        tf_map, fc_vars, last_conv_vars = tf_map_generator(dim_input=self._dO, dim_output=self._dU, batch_size=self.batch_size,
-                                  network_config=self._hyperparams['network_params'])
-        self.obs_tensor = tf_map.get_input_tensor()
-        self.precision_tensor = tf_map.get_precision_tensor()
-        self.action_tensor = tf_map.get_target_output_tensor()
-        self.act_op = tf_map.get_output_op()
-        self.feat_op = tf_map.get_feature_op()
-        self.loss_scalar = tf_map.get_loss_op()
-        self.fc_vars = fc_vars
-        self.last_conv_vars = last_conv_vars
+    def forward(self, x):
+        out = F.ReLU(self.layer1(x))
+        out = F.ReLU(self.layer2(out))
+        out = self.layer3(out)
 
-        # Setup the gradients
-        self.grads = [tf.gradients(self.act_op[:,u], self.obs_tensor)[0]
-                for u in range(self._dU)]
+        return out
 
     def init_solver(self):
         """ Helper method to initialize the solver. """
-        self.solver = TfSolver(loss_scalar=self.loss_scalar,
-                               solver_name=self._hyperparams['solver_type'],
-                               base_lr=self._hyperparams['lr'],
-                               lr_policy=self._hyperparams['lr_policy'],
-                               momentum=self._hyperparams['momentum'],
-                               weight_decay=self._hyperparams['weight_decay'],
-                               fc_vars=self.fc_vars,
-                               last_conv_vars=self.last_conv_vars)
-        self.saver = tf.train.Saver()
+        self.optimizer = optim.Adam(self.parameters(), lr=self._hyperparams['lr'],
+                                betas=(0.9, 0.999), eps=1e-08,
+                                weight_decay=self._hyperparams['weight_decay'])
 
     def update(self, obs, tgt_mu, tgt_prc, tgt_wt):
         """
@@ -181,9 +168,14 @@ class PolicyOptPyTorch(PolicyOpt):
             start_idx = int(i * self.batch_size %
                             (batches_per_epoch * self.batch_size))
             idx_i = idx[start_idx:start_idx+self.batch_size]
-            feed_dict = {self.obs_tensor: obs[idx_i],
-                         self.action_tensor: tgt_mu[idx_i],
-                         self.precision_tensor: tgt_prc[idx_i]}
+
+            self.optimizer.zero_grad()
+            self.obs_tensor = self(Variable(obs[idx_i]))
+            self.action_tensor = self(Variable(tgt_mu[idx_i]))
+            self.precision_tensor = self(Variable(tgt_prc[idx_i]))
+
+            obs_loss = self.critetion(self.obs_tensor)
+
             train_loss = self.solver(feed_dict, self.sess, device_string=self.device_string)
 
             average_loss += train_loss

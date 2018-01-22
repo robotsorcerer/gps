@@ -37,7 +37,6 @@ class TfPolicy(Policy):
             self.copy_params = tf.get_collection(tf.GraphKeys.VARIABLES, scope=copy_param_scope)
             self.copy_params_assign_placeholders = [tf.placeholder(tf.float32, shape=param.get_shape()) for
                                                       param in self.copy_params]
-
             self.copy_params_assign_ops = [tf.assign(self.copy_params[i],
                                                      self.copy_params_assign_placeholders[i])
                                              for i in range(len(self.copy_params))]
@@ -132,4 +131,3 @@ class TfPolicy(Policy):
         cls_init.bias = pol_dict['bias']
         cls_init.x_idx = pol_dict['x_idx']
         return cls_init
-
