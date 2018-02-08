@@ -292,15 +292,15 @@ class GPSTrainingGUI(object):
             tgt = self._hyperparams['target_state']
 
         pt = []
-        for m in range(len(traj_sample_lists)):
-            pt.append(traj_sample_lists[m].get(END_EFFECTOR_POINTS))
+        # for m in range(len(traj_sample_lists)):
+        #     pt.append(traj_sample_lists[m].get(END_EFFECTOR_POINTS))
+        #
+        # pt_np    = np.asarray(pt)
+        # pt_np_mn = np.mean(pt)
+        #
+        # dist = pt_np_mn - tgt
 
-        pt_np    = np.asarray(pt)
-        pt_np_mn = np.mean(pt)
-
-        dist = pt_np_mn - tgt
-
-        np.savetxt(self._dists_filename,  dists)
+        # np.savetxt(self._dists_filename,  dists)
         np.savetxt(self._costs_filename,  costs)
 
         self._update_iteration_data(itr, algorithm, costs, pol_sample_lists, protag_pol_samples=protag_pol_samples)
