@@ -72,7 +72,11 @@ class AlgorithmMDGPS(Algorithm):
 
         UU = np.mean(U, 0)
 
-        np.savetxt(self.save_dir['control_u'], UU)
+        print('UU shape: ', UU.shape, np.mean(UU).shape)
+        f = open(self.save_dir['control_u'], 'ab')
+            np.savetxt(f, np.mean(UU))
+        f.close()
+
 
         # C-step
         if self.iteration_count > 0:

@@ -47,6 +47,7 @@ class GPSTrainingGUI(object):
         if os.path.isfile(self._log_filename):
             os.remove(self._log_filename)
 
+
         if os.path.isfile(self._costs_filename):
             os.remove(self._costs_filename)
 
@@ -301,7 +302,10 @@ class GPSTrainingGUI(object):
         # dist = pt_np_mn - tgt
 
         # np.savetxt(self._dists_filename,  dists)
-        np.savetxt(self._costs_filename,  costs)
+
+        f = open(self._costs_filename, 'ab')
+            np.savetxt(f,  costs)
+        f.close()
 
         self._update_iteration_data(itr, algorithm, costs, pol_sample_lists, protag_pol_samples=protag_pol_samples)
         self._cost_plotter.update(costs, t=itr)
