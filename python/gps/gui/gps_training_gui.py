@@ -41,6 +41,7 @@ class GPSTrainingGUI(object):
         self._hyperparams = hyperparams
         self._log_filename = self._hyperparams['log_filename']
         self._costs_filename = self._hyperparams['costs_filename']
+        self._dists_filename = self._hyperparams['dists_filename']
         self.mode = self._hyperparams['mode']
         if 'target_filename' in self._hyperparams:
             self._target_filename = self._hyperparams['target_filename']
@@ -276,8 +277,24 @@ class GPSTrainingGUI(object):
 
         costs = [np.mean(np.sum(algorithm.prev[m].cs, axis=1)) for m in range(algorithm.M)]
 
-        with open(self._costs_filename, 'a') as f:
-            f.write("%s\n" % costs)
+        if 'target_end_effector' in self._hyperparams.keys():
+            tgt = self._hyperparams['target_end_effector']
+
+        elif 'target_state' in self._hyperparams.keys():
+            tgt = self._hyperparams['target_state']
+
+        pt = []
+        for m in range(len(traj_sample_lists)):
+            pt.append(traj_sample_lists[m].get(END_EFFECTOR_POINTS))
+
+        pt_np    = np.asarray(pt)
+        pt_np_mn = np.mean(pt)
+
+        dist = pt_np_mn - tgt
+
+        np.savetxt(self._dists_filename,  dists)
+        np.savetxt(self._costs_filename,  costs)
+
         self._update_iteration_data(itr, algorithm, costs, pol_sample_lists, protag_pol_samples=protag_pol_samples)
         self._cost_plotter.update(costs, t=itr)
         if END_EFFECTOR_POINTS in agent.x_data_types:
