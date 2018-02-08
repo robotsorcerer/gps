@@ -304,7 +304,7 @@ class GPSTrainingGUI(object):
         # np.savetxt(self._dists_filename,  dists)
 
         f = open(self._costs_filename, 'ab')
-            np.savetxt(f,  costs)
+        np.savetxt(f,  np.array(costs).T)
         f.close()
 
         self._update_iteration_data(itr, algorithm, costs, pol_sample_lists, protag_pol_samples=protag_pol_samples)

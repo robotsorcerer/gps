@@ -1,5 +1,5 @@
 """ This file defines the MD-based GPS algorithm. """
-import copy
+import copy, time
 import logging
 
 import numpy as np
@@ -70,11 +70,12 @@ class AlgorithmMDGPS(Algorithm):
 
             U[m] = self.cur[m].traj_info.U
 
-        UU = np.mean(U, 0)
+        UU = np.mean(U, 1)  # mean across all time dims
 
-        print('UU shape: ', UU.shape, np.mean(UU).shape)
+        #print('UU shape: ', UU.shape, U.shape) UU: [100x7], U: [5, 100, 7]
+        #time.sleep(100)
         f = open(self.save_dir['control_u'], 'ab')
-            np.savetxt(f, np.mean(UU))
+        np.savetxt(f, UU.reshape(1, self.M * UU.shape[0])) # ave each condition as a row
         f.close()
 
 
