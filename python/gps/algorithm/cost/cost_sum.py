@@ -52,7 +52,6 @@ class CostSum(Cost):
 
         T, Dx, Du = 100, 7, 2
         for i in range(1, len(self._costs)):
-            print('costs sum objects: ', self._costs[i])
             pl, plx, plu, plxx, pluu, plux = self._costs[i].eval(sample)
             weight = self._weights[i]
             l   = l + pl * weight

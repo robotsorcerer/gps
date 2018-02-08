@@ -42,7 +42,7 @@ class GPSTrainingGUI(object):
         self._hyperparams = hyperparams
         self._log_filename = self._hyperparams['log_filename']
         self._costs_filename = self._hyperparams['costs_filename']
-        self._dists_filename = self._hyperparams['_dists_filename']
+        self._dists_filename = self._hyperparams['dists_filename']
 
         if os.path.isfile(self._log_filename):
             os.remove(self._log_filename)

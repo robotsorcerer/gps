@@ -1,0 +1,20 @@
+MuJoCo Pro Trial license activation key, number 87684, type 6.
+
+Issued to Dan Nguyen <dan.nguyen@utsouthwestern.edu>.
+
+Expires November 11, 2017.
+
+This file activates MuJoCo Pro on a single computer with id:
+LINUX_PVG1OSmN5D89a_R605S3Bsg224uX0154JS0nS158
+
+Do not modify this file. Its entire content, including the
+plain text section, is used by the activation manager.
+
+9d9884d193448d9c57a2ded0e9d9b10ea958fe5942253e303dbdbf9301f97d32
+1c048500ad08a972fafc9191c03fa37391cda31557b868a59664fc77543b8c29
+d0c583e38c5f8cb7aae419b892cac7a7f5b83f2459993b5e1df8cf44d6b9b4a8
+c806b496523f14773b6eaf5a34f2aa1eb7debb34f83b59ad73d856cd943e2313
+3c5b8cf94b6be4e2daca18284aa6f9635d19caddcc7a423ab2dd8cabcaea8625
+f0903e3f2a5b5d607893e9b12bd2483b6ac16519f4b702423c5964082383e5c6
+3ed65e63296e590fa3f21d8369261ad77fb87005444d7ec27b10a3549d2b901e
+040efdf62d89a96dd00c85cc6fb85fe428decd848c23c907a9b2d92f52078715

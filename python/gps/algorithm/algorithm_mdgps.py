@@ -42,7 +42,7 @@ class AlgorithmMDGPS(Algorithm):
             sample_lists: List of SampleList objects for each condition.
         """
         # define U and V at each iteration
-        U = np.zeros_like(sample_list[0].get_U())
+        U = np.zeros_like(sample_lists[0].get_U())
 
         # Store the samples and evaluate the costs.
         for m in range(self.M):  #self.M is the # of the condition number
@@ -62,7 +62,7 @@ class AlgorithmMDGPS(Algorithm):
             self._update_policy()
 
         # define U and V at each iteration
-        U = np.zeros_like(sample_list[0].get_U())
+        U = np.zeros_like(sample_lists[0].get_U())
 
         # Update policy linearizations.
         for m in range(self.M):

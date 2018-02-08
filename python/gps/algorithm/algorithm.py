@@ -184,7 +184,6 @@ class Algorithm(object):
         cv = np.zeros((N, T, dX+dU))    # Cost estimate vector term.
         Cm = np.zeros((N, T, dX+dU, dX+dU)) # Cost estimate matrix term.
 
-        U = np.zeros((N, dU))
         for n in range(N):
             sample = self.cur[cond].sample_list[n] # cur is every var in iteration data
             # Get costs.  Self.cost will be a CostSum object see mdgps/antag/hyperparams#L128
@@ -201,8 +200,8 @@ class Algorithm(object):
 
             # Adjust for expanding cost around a sample.
             X = sample.get_X()
-            U[n, :] = sample.get_U()
-            yhat = np.c_[X, U[n,:]]
+            U = sample.get_U()
+            yhat = np.c_[X, U]
             rdiff = -yhat
             rdiff_expand = np.expand_dims(rdiff, axis=2)
             cv_update = np.sum(Cm[n, :, :, :] * rdiff_expand, axis=1)
@@ -237,9 +236,6 @@ class Algorithm(object):
         cv = np.zeros((N, T, dX+dU))    # Cost estimate vector term.
         Cm = np.zeros((N, T, dX+dU, dX+dU)) # Cost estimate matrix term.
 
-        U = np.zeros((N, dU))
-        V = np.zeros((N, dU))
-
         for n in range(N):
             sample = self.cur[cond].sample_list[n] # == 1 Sample object
             sample_prot = sample_lists_prot[n]
@@ -257,11 +253,11 @@ class Algorithm(object):
 
             # Adjust for expanding cost around a sample.
             X = sample.get_X()
-            U[n,:] = sample.get_U()
+            U = sample.get_U()
             print('U: {}, V: {}'.format(U[n,:].shape, sample_prot.get_U().shape))
             V[n, :] = sample_prot.get_U()
 
-            UV = U[n,:] + V[n,:]
+            UV = U + V
 
             yhat = np.c_[X, UV]
             rdiff = -yhat
