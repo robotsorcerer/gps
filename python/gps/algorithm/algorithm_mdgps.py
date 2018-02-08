@@ -72,10 +72,8 @@ class AlgorithmMDGPS(Algorithm):
 
         UU = np.mean(U, 1)  # mean across all time dims
 
-        #print('UU shape: ', UU.shape, U.shape) UU: [100x7], U: [5, 100, 7]
-        #time.sleep(100)
         f = open(self.save_dir['control_u'], 'ab')
-        np.savetxt(f, UU.reshape(1, self.M * UU.shape[0])) # ave each condition as a row
+        np.savetxt(f, UU.reshape(1, UU.size)) # ave each condition as a row
         f.close()
 
 
@@ -93,8 +91,8 @@ class AlgorithmMDGPS(Algorithm):
     def iteration_cl(self, sample_lists_prot, sample_lists):
 
         # define U and V at each iteration
-        U = np.zeros_like(sample_list[0].get_U())
-        V = np.zeros_like(sample_list[0].get_U())
+        U = np.zeros_like(sample_lists_prot[0].get_U())
+        V = np.zeros_like(sample_lists[0].get_U())
 
         # Store the samples and evaluate the costs.
         for m in range(self.M):  # self.M is the # of the condition number
@@ -121,11 +119,16 @@ class AlgorithmMDGPS(Algorithm):
             U[m] = self.cur[m].traj_info.U
             V[m] = self.cur[m].traj_info.V
 
-        UU = np.mean(U, 0)
-        VV = np.mean(V, 0)
+        UU = np.mean(U, 1)
+        VV = np.mean(V, 1)
 
-        np.savetxt(self.save_dir['control_u'], UU)
-        np.savetxt(self.save_dir['control_v'], VV)
+        fu = open(self.save_dir['control_u'], 'ab')
+        np.savetxt(f, UU.reshape(1, UU.size)) # ave each condition as a row
+        fu.close()
+
+        fv = open(self.save_dir['control_v'], 'ab')
+        np.savetxt(fv, UU.reshape(1, UU.size)) # ave each condition as a row
+        fv.close()
 
         # C-step
         if self.iteration_count > 0:
