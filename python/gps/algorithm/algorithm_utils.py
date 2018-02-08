@@ -30,6 +30,8 @@ class TrajectoryInfo(BundleType):
             'cc': None,  # Cost estimate constant term.
             'cv': None,  # Cost estimate vector term.
             'Cm': None,  # Cost estimate matrix term.
+            'U': None, # for saving the input
+            'V': None, # for saving the adversarial input
             'last_kl_step': float('inf'),  # KL step of the previous iteration.
         }
         BundleType.__init__(self, variables)

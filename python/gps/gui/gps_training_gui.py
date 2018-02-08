@@ -14,6 +14,7 @@ Image Visualizer            displays images received from a rostopic
 
 For more detailed documentation, visit: rll.berkeley.edu/gps/gui
 """
+import os
 import time
 import threading
 
@@ -41,7 +42,14 @@ class GPSTrainingGUI(object):
         self._hyperparams = hyperparams
         self._log_filename = self._hyperparams['log_filename']
         self._costs_filename = self._hyperparams['costs_filename']
-        self._dists_filename = self._hyperparams['dists_filename']
+        self._dists_filename = self._hyperparams['_dists_filename']
+
+        if os.path.isfile(self._log_filename):
+            os.remove(self._log_filename)
+
+        if os.path.isfile(self._costs_filename):
+            os.remove(self._costs_filename)
+
         self.mode = self._hyperparams['mode']
         if 'target_filename' in self._hyperparams:
             self._target_filename = self._hyperparams['target_filename']

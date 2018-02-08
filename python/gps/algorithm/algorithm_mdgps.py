@@ -32,6 +32,7 @@ class AlgorithmMDGPS(Algorithm):
         self.policy_opt = self._hyperparams['policy_opt']['type']( #will be PolicyOptCaffe
             self._hyperparams['policy_opt'], self.dO, self.dU #dO and dX are from hyperparams
         )
+        self.save_dir = self._hyperparams['save_dir']
 
     def iteration(self, sample_lists):
         """
@@ -40,10 +41,15 @@ class AlgorithmMDGPS(Algorithm):
         Args:
             sample_lists: List of SampleList objects for each condition.
         """
+        # define U and V at each iteration
+        U = np.zeros_like(sample_list[0].get_U())
+
         # Store the samples and evaluate the costs.
         for m in range(self.M):  #self.M is the # of the condition number
             self.cur[m].sample_list = sample_lists[m] #cur is every var in iteration data
             self._eval_cost(m)  #_eval_cost is defined in algorithm.py line 129
+            U[m] = self.cur[m].traj_info.U
+
 
         # Update dynamics linearizations.
         self._update_dynamics()
@@ -55,9 +61,18 @@ class AlgorithmMDGPS(Algorithm):
             ]
             self._update_policy()
 
+        # define U and V at each iteration
+        U = np.zeros_like(sample_list[0].get_U())
+
         # Update policy linearizations.
         for m in range(self.M):
             self._update_policy_fit(m)
+
+            U[m] = self.cur[m].traj_info.U
+
+        UU = np.mean(U, 0)
+
+        np.savetxt(self.save_dir['control_u'], UU)
 
         # C-step
         if self.iteration_count > 0:
@@ -71,11 +86,17 @@ class AlgorithmMDGPS(Algorithm):
         self._advance_iteration_variables()
 
     def iteration_cl(self, sample_lists_prot, sample_lists):
+
+        # define U and V at each iteration
+        U = np.zeros_like(sample_list[0].get_U())
+        V = np.zeros_like(sample_list[0].get_U())
+
         # Store the samples and evaluate the costs.
         for m in range(self.M):  # self.M is the # of the condition number
             self.cur[m].sample_list = sample_lists[m] # cur is every var in iteration data
             sample_prot = sample_lists_prot[m]
             self._eval_cost_cl(m, sample_lists_prot=sample_prot)  # _eval_cost is defined in algorithm.py line 220
+
 
         # Update dynamics linearizations.
         # self._update_dynamics_cl(sample_lists_prot=sample_prot)
@@ -91,6 +112,15 @@ class AlgorithmMDGPS(Algorithm):
         # Update policy linearizations.
         for m in range(self.M):
             self._update_policy_fit(m)
+
+            U[m] = self.cur[m].traj_info.U
+            V[m] = self.cur[m].traj_info.V
+
+        UU = np.mean(U, 0)
+        VV = np.mean(V, 0)
+
+        np.savetxt(self.save_dir['control_u'], UU)
+        np.savetxt(self.save_dir['control_v'], VV)
 
         # C-step
         if self.iteration_count > 0:

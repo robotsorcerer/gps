@@ -133,7 +133,7 @@ class Algorithm(object):
             U = cur_data.get_U()
 
             # index last time step and sqeeze along first singleton dimesion
-            U_adv = np.mean(sample_prot.get_U(), axis=0)
+            V = sample_prot.get_U()
 
             # Update prior and fit dynamics. #traj_info.dynamics = DynamicsLRPrior
             self.cur[m].traj_info.dynamics.update_prior(cur_data) #L18, dynamics_lr_prior
@@ -183,6 +183,8 @@ class Algorithm(object):
         cc = np.zeros((N, T))   # Cost estimate constant term.
         cv = np.zeros((N, T, dX+dU))    # Cost estimate vector term.
         Cm = np.zeros((N, T, dX+dU, dX+dU)) # Cost estimate matrix term.
+
+        U = np.zeros((N, dU))
         for n in range(N):
             sample = self.cur[cond].sample_list[n] # cur is every var in iteration data
             # Get costs.  Self.cost will be a CostSum object see mdgps/antag/hyperparams#L128
@@ -199,8 +201,8 @@ class Algorithm(object):
 
             # Adjust for expanding cost around a sample.
             X = sample.get_X()
-            U = sample.get_U()
-            yhat = np.c_[X, U]
+            U[n, :] = sample.get_U()
+            yhat = np.c_[X, U[n,:]]
             rdiff = -yhat
             rdiff_expand = np.expand_dims(rdiff, axis=2)
             cv_update = np.sum(Cm[n, :, :, :] * rdiff_expand, axis=1)
@@ -214,6 +216,9 @@ class Algorithm(object):
         self.cur[cond].traj_info.Cm = np.mean(Cm, 0)  # Quadratic term (matrix).
 
         self.cur[cond].cs = cs  # True value of cost.
+
+        # store away the input torques
+        self.cur[cond].traj_info.U = np.mean(U, 0)
 
     def _eval_cost_cl(self, cond, sample_lists_prot=None):
         """
@@ -231,6 +236,10 @@ class Algorithm(object):
         cc = np.zeros((N, T))   # Cost estimate constant term.
         cv = np.zeros((N, T, dX+dU))    # Cost estimate vector term.
         Cm = np.zeros((N, T, dX+dU, dX+dU)) # Cost estimate matrix term.
+
+        U = np.zeros((N, dU))
+        V = np.zeros((N, dU))
+
         for n in range(N):
             sample = self.cur[cond].sample_list[n] # == 1 Sample object
             sample_prot = sample_lists_prot[n]
@@ -248,21 +257,13 @@ class Algorithm(object):
 
             # Adjust for expanding cost around a sample.
             X = sample.get_X()
-            U = sample.get_U()
+            U[n,:] = sample.get_U()
+            print('U: {}, V: {}'.format(U[n,:].shape, sample_prot.get_U().shape))
+            V[n, :] = sample_prot.get_U()
 
-            #retrieve state and action for adversary
-            #index last time step and sqeeze along first singleton dimesion
-            # X_adv = np.squeeze(sample_prot.get_X()[-1:,:,:], axis=(0,))
-            # U_adv = np.squeeze(sample_prot.get_U()[-1:,:,:], axis=(0,))
+            UV = U[n,:] + V[n,:]
 
-            X_adv = np.mean(sample_prot.get_X(), axis=0)
-            U_adv = np.mean(sample_prot.get_U(), axis=0)
-
-            # new state space dynamics will be the effect of the adv and protag
-            # X += X_adv
-            U += U_adv
-
-            yhat = np.c_[X, U]
+            yhat = np.c_[X, UV]
             rdiff = -yhat
             rdiff_expand = np.expand_dims(rdiff, axis=2)
             cv_update = np.sum(Cm[n, :, :, :] * rdiff_expand, axis=1)
@@ -276,6 +277,9 @@ class Algorithm(object):
         self.cur[cond].traj_info.Cm = np.mean(Cm, 0)  # Quadratic term (matrix).
 
         self.cur[cond].cs = cs  # True value of cost.
+        # store away the input torques
+        self.cur[cond].traj_info.U = np.mean(U, 0)
+        self.cur[cond].traj_info.V = np.mean(V, 0)
 
     def _advance_iteration_variables(self):
         """

@@ -22,7 +22,6 @@ class CostAction(Cost):
         Args:
             sample: A single sample
         """
-        self.gamma = self._hyperparams['gamma']
         self.mode = self._hyperparams['mode']
 
         sample_u = sample.get_U()
@@ -47,6 +46,7 @@ class CostAction(Cost):
                 lv = 0.5 * sum(wu * u^2) - 2 * gamma * wu * v
                 lvv = 0.5 * sum(wu * u^2) - 2 * gamma * wu
             """
+            self.gamma = self._hyperparams['gamma']
             sample_prot = kwargs['sample_prot']
             # if sample_prot is not None:
             sample_prot_u = sample_prot.get_U()

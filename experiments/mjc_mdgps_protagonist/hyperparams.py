@@ -46,6 +46,7 @@ common = {
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.txt',
+    'dists_filename': EXP_DIR + 'dist.txt',
     'conditions': 4,
     'mode': 'protagonist',
     'gamma': 0,
@@ -99,6 +100,7 @@ algorithm['init_traj_distr'] = {
 torque_cost = {
     'type': CostAction,
     'wu': 1e-3 / PR2_GAINS,
+    'mode': 'protagonist',
 }
 
 fk_cost = {
@@ -109,6 +111,7 @@ fk_cost = {
     'l2': 10.0,
     'alpha': 1e-5,
     'gamma': 0,
+    'mode': 'protagonist',
 }
 
 # Create second cost function for last step only.
@@ -122,6 +125,7 @@ final_cost = {
     'alpha': 1e-5,
     'wp_final_multiplier': 10.0,
     'gamma': 0,
+    'mode': 'protagonist',
 }
 
 algorithm['cost'] = {
@@ -129,6 +133,7 @@ algorithm['cost'] = {
     'costs': [torque_cost, fk_cost, final_cost],
     'weights': [0.8, 0.8, 0.8], #[1.0, 1.0, 1.0],
     'gamma': 0,
+    'mode': 'protagonist',
 }
 
 algorithm['dynamics'] = {
@@ -140,6 +145,13 @@ algorithm['dynamics'] = {
         'min_samples_per_cluster': 40,
         'max_samples': 20,
     },
+}
+
+algorithm['save_dir'] = {
+    'costs_filename': common['costs_filename'],
+    'dists_filename': common['dists_filename'],
+    'control_u': EXP_DIR + 'control_u.txt',
+    'control_v': EXP_DIR + 'control_v.txt',
 }
 
 algorithm['traj_opt'] = {
@@ -168,8 +180,8 @@ config = {
     'common': common,
     'agent': agent,
     'algorithm': algorithm,
-    'gamma': 1e1,
-    'mode': 'antagonist', #could also be protagonist
+    'gamma': 0,
+    'mode': 'protagonist',
 }
 
 common['info'] = generate_experiment_info(config)
