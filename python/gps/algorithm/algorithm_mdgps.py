@@ -75,7 +75,7 @@ class AlgorithmMDGPS(Algorithm):
         #print('UU shape: ', UU.shape, U.shape) UU: [100x7], U: [5, 100, 7]
         #time.sleep(100)
         f = open(self.save_dir['control_u'], 'ab')
-        np.savetxt(f, UU.reshape(1, self.M * UU.shape[0])) # ave each condition as a row
+        np.savetxt(f, UU.reshape(1,1 * UU.size)) # ave each condition as a row
         f.close()
 
 
