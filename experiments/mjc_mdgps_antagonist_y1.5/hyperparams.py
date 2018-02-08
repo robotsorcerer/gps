@@ -45,6 +45,7 @@ common = {
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.txt',
+    'dists_filename': EXP_DIR + 'dists.txt',
     'conditions': 4,
     'mode': 'antagonist',
     'gamma': 1.5,
