@@ -255,7 +255,7 @@ class Algorithm(object):
             X = sample.get_X()
             U = sample.get_U()
             print('U: {}, V: {}'.format(U[n,:].shape, sample_prot.get_U().shape))
-            V[n, :] = sample_prot.get_U()
+            V = sample_prot.get_U()
 
             UV = U + V
 
