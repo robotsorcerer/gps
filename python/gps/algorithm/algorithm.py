@@ -257,7 +257,12 @@ class Algorithm(object):
             print('U: {}, V: {}'.format(U[n,:].shape, sample_prot.get_U().shape))
             V = sample_prot.get_U()
 
-            UV = U + V
+            X_adv = np.mean(sample_prot.get_X(), axis=0)
+            U_adv = np.mean(sample_prot.get_U(), axis=0)
+
+            # new state space dynamics will be the effect of the adv and protag
+            # X += X_adv
+            U += U_adv
 
             yhat = np.c_[X, U]
             rdiff = -yhat
