@@ -259,7 +259,7 @@ class Algorithm(object):
 
             UV = U + V
 
-            yhat = np.c_[X, UV]
+            yhat = np.c_[X, U]
             rdiff = -yhat
             rdiff_expand = np.expand_dims(rdiff, axis=2)
             cv_update = np.sum(Cm[n, :, :, :] * rdiff_expand, axis=1)
