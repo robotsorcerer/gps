@@ -123,7 +123,7 @@ class AlgorithmMDGPS(Algorithm):
         VV = np.mean(V, 1)
 
         fu = open(self.save_dir['control_u'], 'ab')
-        np.savetxt(f, UU.reshape(1, UU.size)) # ave each condition as a row
+        np.savetxt(fu, UU.reshape(1, UU.size)) # ave each condition as a row
         fu.close()
 
         fv = open(self.save_dir['control_v'], 'ab')
