@@ -522,6 +522,7 @@ def main():
         data_filenames = os.listdir(data_files_dir)
         algorithm_prefix = 'algorithm_itr_'
         algorithm_filenames = [f for f in data_filenames if f.startswith(algorithm_prefix)]
+        #print('algorithm_filenames: ', algorithm_filenames)
         current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
         current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
 
