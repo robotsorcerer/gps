@@ -45,6 +45,7 @@ common = {
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
     'costs_filename': EXP_DIR + 'costs.txt',
+    'dists_filename': EXP_DIR + 'dist.txt',
     'conditions': 4,
     'gamma': 1,
     'mode': 'antagonist'
@@ -109,7 +110,7 @@ fk_cost = {
     'wp': np.array([2, 2, 1, 2, 2, 1]),
     'l1': 0.1,
     'l2': 10.0,
-    'alpha': 1e-5,
+    'alpha': 1e-1,
     'gamma': 1,
     'mode': 'antagonist', #could also be protagonist
 }
@@ -122,19 +123,23 @@ final_cost = {
     'wp': fk_cost['wp'],
     'l1': 1.0,
     'l2': 0.0,
-    'alpha': 1e-5,
+    'alpha': 1e-1,
     'wp_final_multiplier': 10.0,
+    'gamma': 1,
+    'mode': 'antagonist',
 }
 
 algorithm['cost'] = {
     'type': CostSum,
     'costs': [torque_cost, fk_cost, final_cost],
     'weights': [1.0, 1.0, 1.0],
+    'gamma': 1,
+    'mode': 'antagonist',
 }
 
 algorithm['dynamics'] = {
     'type': DynamicsLRPrior,
-    'regularization': 1e-6,
+    'regularization': 1e-1,
     'prior': {
         'type': DynamicsPriorGMM,
         'max_clusters': 20,
@@ -160,6 +165,14 @@ algorithm['policy_prior'] = {
     'max_samples': 20,
 }
 
+algorithm['save_dir'] = {
+    'costs_filename': common['costs_filename'],
+    'dists_filename': common['dists_filename'],
+    'control_u': EXP_DIR + 'control_u.txt',
+    'control_v': EXP_DIR + 'control_v.txt',
+}
+
+
 config = {
     'gui_on': True,
     'iterations': algorithm['iterations'],
@@ -169,6 +182,8 @@ config = {
     'common': common,
     'agent': agent,
     'algorithm': algorithm,
+    'gamma': 1,
+    'mode': 'antagonist',
 }
 
 common['info'] = generate_experiment_info(config)
