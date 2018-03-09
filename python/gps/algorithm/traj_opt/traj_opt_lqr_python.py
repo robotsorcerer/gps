@@ -910,22 +910,22 @@ class TrajOptLQRPython(TrajOpt):
                 # Compute value function.
                 if (self.cons_per_step or \
                     not self._hyperparams['update_in_bwd_pass']):
-                    Vxx[t, :, :] =  Qtt[t, idx_x, idx_x] + \
+                    Vxx[t, :, :] = 0.5*( Qtt[t, idx_x, idx_x] + \
                                     traj_distr.Gu[t, :, :].T.dot(Qtt[t, idx_u, idx_u]).dot(traj_distr.Gu[t, :, :]) + \
-                                    traj_distr.Gv[t, :, :].T.dot(Qtt[t, idx_v, idx_v]).dot(traj_distr.Gv[t, :, :]) + \
-                                    2 * traj_distr.Gu[t, :, :].T.dot(Qtt[t, idx_u, idx_x]) + \
-                                    2 * traj_distr.Gv[t, :, :].T.dot(Qtt[t, idx_v, idx_x]) + \
-                                    2 * traj_distr.Gu[t, :, :].T.dot(Qtt[t, idx_u, idx_v]).dot(traj_distr.Gv[t, :, :])
+                                    traj_distr.Gv[t, :, :].T.dot(Qtt[t, idx_v, idx_v]).dot(traj_distr.Gv[t, :, :])) + \
+                                    traj_distr.Gu[t, :, :].T.dot(Qtt[t, idx_u, idx_x]) + \
+                                    traj_distr.Gv[t, :, :].T.dot(Qtt[t, idx_v, idx_x]) + \
+                                    traj_distr.Gu[t, :, :].T.dot(Qtt[t, idx_u, idx_v]).dot(traj_distr.Gv[t, :, :])
 
-                    Vx[t, :] =  Qt[t, idx_x].T + \
-                                Qt[t, idx_u].T.dot(traj_distr.Gu[t, :, :]) + \
-                                Qt[t, idx_v].T.dot(traj_distr.Gv[t, :, :]) + \
+                    Vx[t, :] =  Qt[t, idx_x] + \
+                                traj_distr.Gu[t, :, :].T.dot(Qt[t, idx_u]) + \
+                                traj_distr.Gv[t, :, :].T.dot(Qt[t, idx_v]) + \
                                 traj_distr.gu[t, :].T.dot(Qtt[t, idx_u, idx_u]).dot(traj_distr.Gu[t, :, :]) + \
                                 traj_distr.gv[t, :].T.dot(Qtt[t, idx_v, idx_v]).dot(traj_distr.Gv[t, :, :]) + \
-                                traj_distr.gu[t, :].T.dot(Qtt[t, idx_u, idx_x]) + \
-                                traj_distr.gv[t, :].T.dot(Qtt[t, idx_v, idx_x]) + \
-                                traj_distr.gu[t, :].T.dot(Qtt[t, idx_u, idx_v]).dot(traj_distr.Gv[t, :, :]) + \
-                                traj_distr.gv[t, :].T.dot(Qtt[t, idx_v, idx_u]).dot(traj_distr.Gu[t, :, :])
+                                traj_distr.gu[t, :].dot(Qtt[t, idx_u, idx_x]) + \
+                                traj_distr.gv[t, :].dot(Qtt[t, idx_v, idx_x]) + \
+                                traj_distr.gu[t, :].dot(Qtt[t, idx_u, idx_v]).dot(traj_distr.Gv[t, :, :]) + \
+                                traj_distr.gv[t, :].dot(Qtt[t, idx_v, idx_u]).dot(traj_distr.Gu[t, :, :])
                 else:
                     Vxx[t, :, :] =  Qtt[t, idx_x, idx_x] + \
                                     traj_distr.Gu[t, :, :].T.dot(Qtt[t, idx_u, idx_u]).dot(traj_distr.Gu[t, :, :]) + \
