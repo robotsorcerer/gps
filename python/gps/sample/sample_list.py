@@ -1,5 +1,5 @@
 """ This file defines the sample list wrapper and sample writers. """
-import cPickle
+import pickle
 import logging
 
 import numpy as np
@@ -10,9 +10,9 @@ LOGGER = logging.getLogger(__name__)
 
 class SampleList(object):
     """ Class that handles writes and reads to sample data. """
-    def __init__(self, samples):
-        self._samples = samples #will be empty lists
-        # self._samples = samples_adv #samples_adv
+    def __init__(self, samples, samples_adv=None):
+        self._samples = samples
+        self._samples_adv = samples_adv if samples_adv is not None else []
 
     def get_X(self, idx=None):
         """ Returns N x T x dX numpy array of states. """
@@ -76,7 +76,7 @@ class PickleSampleWriter(object):
     def write(self, samples):
         """ Write samples to data file. """
         with open(self._data_file, 'wb') as data_file:
-            cPickle.dump(data_file, samples)
+            pickle.dump(samples, data_file)
 
 class SysOutWriter(object):
     """ Writes notifications to sysout on sample writes. """

@@ -6,7 +6,6 @@ anything that produces state (X) or observation (phi) information.
 
 // Headers.
 #include <ros/ros.h>
-#include <boost/scoped_ptr.hpp>
 
 // This header defines the main enum that lists the available sensors, which
 // is also used by the state assembler.
@@ -56,9 +55,9 @@ public:
     // Configure the Sensor (for Sensor-specific trial settings).
     virtual void configure_sensor(OptionsMap &options);
     // Set data format and meta data on the provided sample.
-    virtual void set_sample_data_format(boost::scoped_ptr<Sample>& sample);
+    virtual void set_sample_data_format(std::unique_ptr<Sample>& sample);
     // Set data on the provided sample.
-    virtual void set_sample_data(boost::scoped_ptr<Sample>& sample, int t);
+    virtual void set_sample_data(std::unique_ptr<Sample>& sample, int t);
 };
 
 }

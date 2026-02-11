@@ -59,7 +59,7 @@ public:
     // Destructor.
     virtual ~PositionController();
     // Update the controller (take an action).
-    virtual void update(RobotPlugin *plugin, ros::Time current_time, boost::scoped_ptr<Sample>& sample, Eigen::VectorXd &torques);
+    virtual void update(RobotPlugin *plugin, ros::Time current_time, std::unique_ptr<Sample>& sample, Eigen::VectorXd &torques);
     // Configure the controller.
     virtual void configure_controller(OptionsMap &options);
     // Check if controller is finished with its current task.

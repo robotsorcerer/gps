@@ -3,7 +3,7 @@ mpl.use('Qt5Agg')
 
 import os
 import sys
-import imp
+import importlib.util
 import copy
 import time
 import os.path
@@ -15,7 +15,7 @@ import traceback
 from random import shuffle
 
 # Add gps/python to path so that imports work.
-sys.path.append('/'.join(str.split(__file__, '/')[:-2]))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from gps.gui.gps_training_gui import GPSTrainingGUI
 from gps.utility.data_logger import DataLogger
 from gps.sample.sample_list import SampleList
@@ -543,7 +543,9 @@ def main():
         sys.exit("Experiment '%s' does not exist.\nDid you create '%s'?" %
                  (exp_name, hyperparams_file))
 
-    hyperparams = imp.load_source('hyperparams', hyperparams_file)
+    spec = importlib.util.spec_from_file_location('hyperparams', hyperparams_file)
+    hyperparams = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hyperparams)
 
     if args.targetsetup:
         try:
@@ -605,7 +607,7 @@ def main():
         current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
         current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
 
-        gps = GPSMain(hyperparams.config, args.quit, closeloop, robust)
+        gps = GPSMain(hyperparams.config, closeloop, robust, quit_on_end=args.quit)
         if hyperparams.config['gui_on']:
             run_gps = threading.Thread(
                 target=lambda: gps.run_cl(itr=current_itr, itr_load=resume_training_itr)

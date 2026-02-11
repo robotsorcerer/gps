@@ -7,7 +7,6 @@ a time.
 #include <Eigen/Dense>
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 #include "gps_agent_pkg/sensor.h"
 #include "gps_agent_pkg/sample.h"
 

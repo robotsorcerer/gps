@@ -126,4 +126,7 @@ class CostAction(Cost):
             return l, lx, lu, -lv, lxx, luu, -luv, -lvv, lux, -lvx, 0
 
         else:
-            os._exit("unknown mode. Cost Action Mode should either be protagonist or antagonist ")
+            raise ValueError(
+                "unknown mode. Cost Action Mode should either be "
+                "protagonist or antagonist"
+            )

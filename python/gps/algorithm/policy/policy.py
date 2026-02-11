@@ -2,9 +2,8 @@
 import abc
 
 
-class Policy(object):
+class Policy(abc.ABC):
     """ Computes actions from states/observations. """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def act(self, x, obs, t, noise):

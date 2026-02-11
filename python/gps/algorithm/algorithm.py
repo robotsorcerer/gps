@@ -15,9 +15,8 @@ from gps.utility.general_utils import extract_condition
 LOGGER = logging.getLogger(__name__)
 
 
-class Algorithm(object):
+class Algorithm(abc.ABC):
     """ Algorithm superclass. """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, hyperparams):
         config = copy.deepcopy(ALG) #cost is none here

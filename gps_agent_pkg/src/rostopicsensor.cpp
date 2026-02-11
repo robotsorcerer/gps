@@ -49,10 +49,10 @@ void ROSTopicSensor::update(RobotPlugin *plugin, ros::Time current_time, bool is
 void ROSTopicSensor::configure_sensor(OptionsMap &options)
 {
     ROS_INFO("configuring rostopicsensor");
-    //data_size_ = boost::get<int>(options["data_size"]); // Maybe just set this my size of first sample?
+    //data_size_ = std::get<int>(options["data_size"]); // Maybe just set this my size of first sample?
 }
 // Set data format and meta data on the provided sample.
-void ROSTopicSensor::set_sample_data_format(boost::scoped_ptr<Sample>& sample) 
+void ROSTopicSensor::set_sample_data_format(std::unique_ptr<Sample>& sample) 
 {
     // Set image size and format.
     OptionsMap data_metadata;
@@ -60,7 +60,7 @@ void ROSTopicSensor::set_sample_data_format(boost::scoped_ptr<Sample>& sample)
     sample->set_meta_data(gps::IMAGE_FEAT,data_size_,SampleDataFormatEigenVector,data_metadata);
 }
 // Set data on the provided sample.
-void ROSTopicSensor::set_sample_data(boost::scoped_ptr<Sample>& sample, int t) 
+void ROSTopicSensor::set_sample_data(std::unique_ptr<Sample>& sample, int t) 
 {
     sample->set_data_vector(t,gps::IMAGE_FEAT,latest_data_.data(),latest_data_.size(),SampleDataFormatEigenVector);
     // sample->set_data_vector(t,gps::JOINT_ANGLES,previous_angles_.data(),previous_angles_.size(),SampleDataFormatEigenVector);

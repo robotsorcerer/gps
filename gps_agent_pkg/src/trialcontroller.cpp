@@ -17,7 +17,7 @@ TrialController::~TrialController() {
 }
 
 // Update the controller (take an action).
-void TrialController::update(RobotPlugin *plugin, ros::Time current_time, boost::scoped_ptr<Sample>& sample, Eigen::VectorXd &torques)
+void TrialController::update(RobotPlugin *plugin, ros::Time current_time, std::unique_ptr<Sample>& sample, Eigen::VectorXd &torques)
 {
     if (is_finished()){
         ROS_ERROR("Updating when controller is finished. May seg fault.");
@@ -50,17 +50,17 @@ void TrialController::configure_controller(OptionsMap &options)
     }
     std::vector<int> datatypes;
 
-    int T = boost::get<int>(options["T"]);
+    int T = std::get<int>(options["T"]);
     step_counter_ = 0;
     trial_end_step_ = T;
 
-    datatypes = boost::get<std::vector<int> >(options["state_datatypes"]);
+    datatypes = std::get<std::vector<int> >(options["state_datatypes"]);
     state_datatypes_.resize(datatypes.size());
     for(int i=0; i<datatypes.size(); i++){
         state_datatypes_[i] = (gps::SampleType) datatypes[i];
     }
 
-    datatypes = boost::get<std::vector<int> >(options["obs_datatypes"]);
+    datatypes = std::get<std::vector<int> >(options["obs_datatypes"]);
     obs_datatypes_.resize(datatypes.size());
     for(int i=0; i<datatypes.size(); i++){
         obs_datatypes_[i] = (gps::SampleType) datatypes[i];

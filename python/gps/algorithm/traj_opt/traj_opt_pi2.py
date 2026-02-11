@@ -73,16 +73,16 @@ class TrajOptPI2(TrajOpt):
         ffw_controls = np.zeros(U.shape)
         if use_lqr_actions:
             noise = cur_data.get_noise()
-            for i in xrange(len(cur_data)):
+            for i in range(len(cur_data)):
                 U_lqr = [prev_traj_distr.K[t].dot(X[i, t]) + prev_traj_distr.k[t] +
                          prev_traj_distr.chol_pol_covar[t].T.dot(noise[i, t])
-                         for t in xrange(T)]
+                         for t in range(T)]
                 ffw_controls[i] = [U_lqr[t] - prev_traj_distr.K[t].dot(X[i, t])
-                                   for t in xrange(T)]
+                                   for t in range(T)]
         else:
-            for i in xrange(len(cur_data)):
+            for i in range(len(cur_data)):
                 ffw_controls[i] = [U[i, t] - prev_traj_distr.K[t].dot(X[i, t])
-                                   for t in xrange(T)]
+                                   for t in range(T)]
 
         # Copy feedback gain matrix from the old trajectory distribution.                       
         traj_distr = prev_traj_distr.nans_like()
@@ -134,7 +134,7 @@ class TrajOptPI2(TrajOpt):
         fail = True
         while fail:
             fail = False
-            for t in xrange(T):
+            for t in range(T):
 
                 # Compute cost-to-go for each time step for each sample.
                 cost_to_go = np.sum(costs[:, t:T], axis=1)
@@ -159,7 +159,7 @@ class TrajOptPI2(TrajOpt):
                 mean_new[t] = np.sum(prob[:, np.newaxis] * samples[:, t], axis=0)
 
                 # Update policy covariance with weighted max-likelihood.
-                for i in xrange(samples.shape[0]):
+                for i in range(samples.shape[0]):
                     mean_diff = samples[i, t] - mean_new[t]
                     mean_diff = np.reshape(mean_diff, (len(mean_diff), 1))
                     cov_new[t] += prob[i] * np.dot(mean_diff, mean_diff.T)

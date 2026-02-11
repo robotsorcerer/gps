@@ -7,15 +7,12 @@
 #include "gps_agent_pkg/LinGaussParams.h"
 #include "gps_agent_pkg/tfcontroller.h"
 #include "gps_agent_pkg/TfParams.h"
+#include "gps_agent_pkg/pytorchcontroller.h"
+#include "gps_agent_pkg/TorchParams.h"
 #include "gps_agent_pkg/ControllerParams.h"
 #include "gps_agent_pkg/util.h"
 #include "gps/proto/gps.pb.h"
 #include <vector>
-
-#ifdef USE_CAFFE
-#include "gps_agent_pkg/caffenncontroller.h"
-#include "gps_agent_pkg/CaffeParams.h"
-#endif
 
 using namespace gps_control;
 
@@ -87,7 +84,7 @@ void RobotPlugin::initialize_sensors(ros::NodeHandle& n)
     //for (int i = 0; i < TotalSensorTypes; i++)
     {
         ROS_INFO_STREAM("creating sensor: " + to_string(i));
-        boost::shared_ptr<Sensor> sensor(Sensor::create_sensor((SensorType)i,n,this, gps::TRIAL_ARM));
+        std::shared_ptr<Sensor> sensor(Sensor::create_sensor((SensorType)i,n,this, gps::TRIAL_ARM));
         sensors_.push_back(sensor);
     }
 
@@ -100,7 +97,7 @@ void RobotPlugin::initialize_sensors(ros::NodeHandle& n)
     for (int i = 0; i < 1; i++)
     {
         ROS_INFO_STREAM("creating auxiliary sensor: " + to_string(i));
-        boost::shared_ptr<Sensor> sensor(Sensor::create_sensor((SensorType)i,n,this, gps::AUXILIARY_ARM));
+        std::shared_ptr<Sensor> sensor(Sensor::create_sensor((SensorType)i,n,this, gps::AUXILIARY_ARM));
         aux_sensors_.push_back(sensor);
     }
 
@@ -148,7 +145,7 @@ void RobotPlugin::initialize_position_controllers(ros::NodeHandle& n)
 }
 
 // Helper function to initialize a sample from the current sensors.
-void RobotPlugin::initialize_sample(boost::scoped_ptr<Sample>& sample, gps::ActuatorType actuator_type)
+void RobotPlugin::initialize_sample(std::unique_ptr<Sample>& sample, gps::ActuatorType actuator_type)
 {
     // Go through all of the sensors and initialize metadata.
     if (actuator_type == gps::TRIAL_ARM)
@@ -259,8 +256,18 @@ void RobotPlugin::update_controllers(ros::Time current_time, bool is_controller_
 
 }
 
-void RobotPlugin::publish_sample_report(boost::scoped_ptr<Sample>& sample, int T /*=1*/){
-    while(!report_publisher_->trylock());
+void RobotPlugin::publish_sample_report(std::unique_ptr<Sample>& sample, int T /*=1*/){
+    // Use a timed spin to avoid blocking the real-time thread indefinitely.
+    // trylock() returns true on success; retry up to 1000 times (~1 ms at 1 kHz).
+    {
+        int retries = 0;
+        while (!report_publisher_->trylock()) {
+            if (++retries > 1000) {
+                ROS_WARN_THROTTLE(1.0, "publish_sample_report: lock timeout, dropping sample");
+                return;
+            }
+        }
+    }
     std::vector<gps::SampleType> dtypes;
     sample->get_available_dtypes(dtypes);
 
@@ -387,55 +394,40 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
         }
         trial_controller_->configure_controller(controller_params);
     }
-#ifdef USE_CAFFE
-    else if (msg->controller.controller_to_execute == gps::CAFFE_CONTROLLER) {
-        gps_agent_pkg::CaffeParams params = msg->controller.caffe;
-        trial_controller_.reset(new CaffeNNController());
+    else if (msg->controller.controller_to_execute == gps::PYTORCH_CONTROLLER) {
+        gps_agent_pkg::TorchParams params = msg->controller.torch;
+        trial_controller_.reset(new PyTorchController());
 
-        // TODO(chelsea/zoe): put this somewhere else.
         int dim_bias = params.dim_bias;
-        Eigen::MatrixXd scale;
-        scale.resize(dim_bias, dim_bias);
-        Eigen::VectorXd bias;
-        bias.resize(dim_bias);
+        int dU = static_cast<int>(params.dU);
 
-        int dU = (int) params.dU;
+        // Unpack the diagonal of the scale matrix (length dO = dim_bias).
+        Eigen::VectorXd scale_diag(dim_bias);
+        for (int i = 0; i < dim_bias; ++i) {
+            scale_diag(i) = params.scale[i];
+        }
 
-        int idx = 0;
-        // Unpack the scale matrix
-        for (int j = 0; j < dim_bias; ++j)
-        {
-            for (int i = 0; i < dim_bias; ++i)
-            {
-                scale(i,j) = params.scale[idx];
-                idx++;
+        // Unpack the bias vector (length dO = dim_bias).
+        Eigen::VectorXd bias(dim_bias);
+        for (int i = 0; i < dim_bias; ++i) {
+            bias(i) = params.bias[i];
+        }
+
+        // Unpack pre-sampled noise: params.noise is flat [T * dU], row-major.
+        for (int t = 0; t < static_cast<int>(msg->T); ++t) {
+            Eigen::VectorXd noise(dU);
+            for (int u = 0; u < dU; ++u) {
+                noise(u) = params.noise[u + t * dU];
             }
+            controller_params["noise_" + to_string(t)] = noise;
         }
 
-        idx = 0;
-        // Unpack the bias vector
-        for (int i = 0; i < dim_bias; ++i)
-        {
-            bias(i) = params.bias[idx];
-            idx++;
-        }
-
-        for(int t=0; t<(int)msg->T; t++){
-            Eigen::VectorXd noise;
-            noise.resize(dU);
-            for(int u=0; u<dU; u++){
-                noise(u) = params.noise[u+t*dU];
-            }
-            controller_params["noise_"+to_string(t)] = noise;
-        }
- 
-        controller_params["net_param"] = params.net_param;
-        controller_params["scale"] = scale;
-        controller_params["bias"] = bias;
-        controller_params["T"] = (int)msg->T;
+        controller_params["model_bytes"] = params.model_bytes;
+        controller_params["scale"] = scale_diag;
+        controller_params["bias"]  = bias;
+        controller_params["T"]     = static_cast<int>(msg->T);
         trial_controller_->configure_controller(controller_params);
     }
-#endif
     else if (msg->controller.controller_to_execute == gps::TF_CONTROLLER) {
         trial_controller_.reset(new TfController());
         controller_params["T"] = (int)msg->T;
@@ -445,7 +437,8 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
         trial_controller_-> configure_controller(controller_params);
     }
     else{
-        ROS_ERROR("Unknown trial controller arm type and/or USE_CAFFE=0");
+        ROS_ERROR("Unknown trial controller type: %d",
+                  static_cast<int>(msg->controller.controller_to_execute));
     }
 
     // Configure sensor for trial
@@ -543,7 +536,7 @@ Sensor *RobotPlugin::get_sensor(SensorType sensor, gps::ActuatorType actuator_ty
 }
 
 // Get forward kinematics solver.
-void RobotPlugin::get_fk_solver(boost::shared_ptr<KDL::ChainFkSolverPos> &fk_solver, boost::shared_ptr<KDL::ChainJntToJacSolver> &jac_solver, gps::ActuatorType arm)
+void RobotPlugin::get_fk_solver(std::shared_ptr<KDL::ChainFkSolverPos> &fk_solver, std::shared_ptr<KDL::ChainJntToJacSolver> &jac_solver, gps::ActuatorType arm)
 {
     if (arm == gps::AUXILIARY_ARM)
     {
@@ -583,7 +576,15 @@ void RobotPlugin::tf_robot_action_command_callback(const gps_agent_pkg::TfAction
 }
 
 void RobotPlugin::tf_publish_obs(Eigen::VectorXd obs){
-    while(!tf_publisher_->trylock());
+    {
+        int retries = 0;
+        while (!tf_publisher_->trylock()) {
+            if (++retries > 1000) {
+                ROS_WARN_THROTTLE(1.0, "tf_publish_obs: lock timeout, dropping observation");
+                return;
+            }
+        }
+    }
     tf_publisher_->msg_.data.resize(obs.size());
     for(int i=0; i<obs.size(); i++) {
         tf_publisher_->msg_.data[i] = obs[i];

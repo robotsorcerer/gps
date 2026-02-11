@@ -1,5 +1,12 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.14)
 project(gps_agent_pkg)
+
+# ---------------------------------------------------------------------------
+# C++17 — required for std::variant, std::optional, structured bindings
+# ---------------------------------------------------------------------------
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(ROS_DEFAULT_DIR /opt/ros/$ENV{ROS_DISTRO}/share/)
 
@@ -8,12 +15,16 @@ set(pluginlib_DIR                 ${ROS_DEFAULT_DIR}/pluginlib/cmake)
 set(pr2_controller_interface_DIR  ${ROS_DEFAULT_DIR}/pr2_controller_interface/cmake)
 set(pr2_controller_manager_DIR    ${ROS_DEFAULT_DIR}/pr2_controller_manager/cmake/)
 set(pr2_controllers_msgs_DIR      ${ROS_DEFAULT_DIR}/pr2_controllers_msgs/cmake)
-set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
-set(Caffe_DIR                     $ENV{CAFFE_ROOT})
+set(pr2_mechanism_model_DIR       ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
 
-OPTION(ENABLE_CXX11 "Enable C++11 support" ON)
-OPTION(USE_CAFFE "Enable Caffe support" OFF)
-OPTION(USE_CAFFE_GPU "Enable Caffe GPU support" OFF)
+# ---------------------------------------------------------------------------
+# LibTorch — locate via TORCH_ROOT env var or CMake find_package
+# ---------------------------------------------------------------------------
+if(DEFINED ENV{TORCH_ROOT})
+    list(APPEND CMAKE_PREFIX_PATH "$ENV{TORCH_ROOT}")
+endif()
+find_package(Torch REQUIRED)
+message(STATUS "Found Torch: ${TORCH_INCLUDE_DIRS}")
 
 find_package(PkgConfig)
 pkg_search_module(Eigen3 REQUIRED eigen3)
@@ -36,10 +47,9 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   tf
-  Caffe
 )
 
-include_directories($ENV{GPS_ROOT_DIR}/build/gps)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../build/gps)
 
 ## System dependencies are found with CMake's conventions
  find_package(Boost REQUIRED COMPONENTS system)
@@ -58,6 +68,7 @@ add_message_files(
    TfActionCommand.msg
    TfObsData.msg
    TfParams.msg
+   TorchParams.msg
    TrialCommand.msg
 )
 
@@ -79,35 +90,10 @@ catkin_package(
 ## Build ##
 ###########
 include_directories(include)
-# Include Caffe
-if (USE_CAFFE)
-    # add definitions for the C++ code
-    add_definitions(-DUSE_CAFFE)
-    if (USE_CAFFE_GPU)
-        add_definitions(-DCAFFE_GPU)
-        find_package(CUDA 5.5 REQUIRED)
-        include_directories(${CUDA_INCLUDE_DIRS})
-    else (USE_CAFFE_GPU)
-        add_definitions(-DCPU_ONLY)
-    endif (USE_CAFFE_GPU)
-    # add paths to CAFFE
-    link_directories(${CAFFE_LIBRARY_PATH})  # Should be set to /path/to/caffe/build/lib
-    include_directories(${CAFFE_INCLUDE_PATH})  # Should be set to /path/to/caffe/distribute/include
-    # extra header paths
-    include_directories(${CAFFE_EXTRA_PATH})
-    # add neural network to DDP controller files
-    set(DDP_FILES ${DDP_FILES} src/neuralnetworkcaffe.cpp src/caffenncontroller.cpp)
-    # compile Caffe test
-    #rosbuild_add_executable(caffe_test src/caffe_test.cpp src/neural_network_caffe.cpp)
-    #target_link_libraries(caffe_test caffe protobuf)
-
-    # compile image processor node
-    #rosbuild_add_executable(caffe_img_processor src/img_processor.cpp src/neural_network_caffe.cpp)
-    #target_link_libraries(caffe_img_processor caffe protobuf)
-endif (USE_CAFFE)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${TORCH_INCLUDE_DIRS}
   $ENV{GPS_ROOT_DIR}/build/gps
 )
 
@@ -125,18 +111,16 @@ set(DDP_FILES src/robotplugin.cpp
               src/encodersensor.cpp
               src/encoderfilter.cpp
               src/rostopicsensor.cpp
+              src/pytorchcontroller.cpp
               src/util.cpp)
 
 add_library(gps_agent_lib
             ${DDP_FILES}
-   #src/${PROJECT_NAME}/gps_agent_pkg.cpp
 )
 
-# Include Caffe in controller
-if (USE_CAFFE)
-    target_link_libraries(gps_agent_lib caffe protobuf)
-endif (USE_CAFFE)
+target_link_libraries(gps_agent_lib pthread ${TORCH_LIBRARIES})
 
-target_link_libraries(gps_agent_lib pthread )
+# LibTorch requires position-independent code when linking into a shared lib.
+set_property(TARGET gps_agent_lib PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_dependencies(gps_agent_lib ${PROJECT_NAME}_gencpp)

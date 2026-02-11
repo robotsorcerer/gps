@@ -1,175 +1,195 @@
 """ This file defines a neural network policy implemented in PyTorch. """
-import tempfile
-import torch
+import os
+import pickle
+import logging
+
 import numpy as np
+import torch
 
 from gps.algorithm.policy.policy import Policy
+
+LOGGER = logging.getLogger(__name__)
 
 
 class PyTorchPolicy(Policy):
     """
     A neural network policy implemented in PyTorch. The network output is
     taken to be the mean, and Gaussian noise is added on top of it.
-    U = net.forward(obs) + noise, where noise ~ N(0, diag(var))
+
+    U = net.forward(obs) + noise, where noise ~ N(0, diag(var_u))
+
     Args:
-        test_net: Initialized pytorch network that can run forward.
-        var: Du-dimensional noise variance vector.
+        dU: Dimension of protagonist (controller) actions.
+        dV: Dimension of antagonist (disturbance) actions.
+        net: Initialized ``torch.nn.Module`` producing actions of shape [1, dU].
+        var_u: dU-dimensional noise variance vector for the protagonist.
+        var_v: dV-dimensional noise variance vector for the antagonist.
+        with_gpu: Whether to use CUDA when available.
     """
-    def __init__(self, dU, dV, net, obs_tensor, act_op,
-            feat_op, var_u, var_v, with_gpu):
+
+    def __init__(self, dU, dV, net, var_u, var_v, with_gpu=False):
         Policy.__init__(self)
         self.net = net
         self.dU = dU
         self.dV = dV
-        self.obs_tensor = obs_tensor
-        self.act_op = act_op
-        self.feat_op = feat_op
+        self.with_gpu = with_gpu
         self.chol_pol_covar = np.diag(np.sqrt(var_u))
         self.chol_pol_covar_v = np.diag(np.sqrt(var_v))
-        self.scale = None  # must be set from elsewhere based on observations
+        self.scale = None   # set externally after observing samples
         self.bias = None
-        self.x_idx = None
+        self.x_idx = None   # indices of state dimensions used as input
+        self._device = torch.device("cuda" if with_gpu and torch.cuda.is_available() else "cpu")
+
+    def _obs_to_tensor(self, obs: np.ndarray) -> torch.Tensor:
+        """Normalise and convert an observation array to a float tensor."""
+        if len(obs.shape) == 1:
+            obs = np.expand_dims(obs, axis=0)
+        obs_in = obs.copy()
+        if self.scale is not None and self.x_idx is not None:
+            obs_in[:, self.x_idx] = obs_in[:, self.x_idx].dot(self.scale) + self.bias
+        return torch.FloatTensor(obs_in).to(self._device)
 
     def act(self, x, obs, t, noise):
         """
         Return an action for a state.
         Args:
-            x: State vector.
-            obs: Observation vector.
-            t: Time step.
-            noise: Action noise. This will be scaled by the variance.
+            x: State vector (unused; kept for API compatibility).
+            obs: Observation vector, shape [dO].
+            t: Time step (unused).
+            noise: dU-dimensional noise vector, or None for deterministic.
+        Returns:
+            dU-dimensional action vector (numpy).
         """
-
-        # Normalize obs.
-        if len(obs.shape) == 1:
-            obs = np.expand_dims(obs, axis=0)
-        obs[:, self.x_idx] = obs[:, self.x_idx].dot(self.scale) + self.bias
-
-        if self.with_gpu:
-            with torch.cuda.device(0):
-                self.net = net.cuda()
-                action_mean = self.net(self.act_op.cuda())
-        else:
-            action_mean = self.net(self.act_op)
-
+        obs_t = self._obs_to_tensor(obs)
+        with torch.no_grad():
+            action_mean = self.net(obs_t).cpu().numpy()[0]
         if noise is None:
-            u = action_mean
-        else:
-            u = action_mean + self.chol_pol_covar.T.dot(noise)
-        return u[0]  # the DAG computations are batched by default, but we use batch size 1.
+            return action_mean
+        return action_mean + self.chol_pol_covar.T.dot(noise)
 
     def act_u(self, x, obs, t, noise):
-        """
-        Return an action for a state.
-        Args:
-            x: State vector.
-            obs: Observation vector.
-            t: Time step.
-            noise: Action noise. This will be scaled by the variance.
-        """
-
-        # Normalize obs.
-        if len(obs.shape) == 1:
-            obs = np.expand_dims(obs, axis=0)
-        obs[:, self.x_idx] = obs[:, self.x_idx].dot(self.scale) + self.bias
-
-        if self.with_gpu:
-            with torch.cuda.device(0):
-                self.net = net.cuda()
-                action_mean = self.net(self.act_op.cuda())
-        else:
-            action_mean = self.net(self.act_op)
-
-        if noise is None:
-            u = action_mean
-        else:
-            u = action_mean + self.chol_pol_covar.T.dot(noise)
-        return u[0]  # the DAG computations are batched by default, but we use batch size 1.
+        """Protagonist action — identical to act()."""
+        return self.act(x, obs, t, noise)
 
     def act_v(self, x, obs, t, noise):
         """
-        Return an action for a state.
-        Args:
-            x: State vector.
-            obs: Observation vector.
-            t: Time step.
-            noise: Action noise. This will be scaled by the variance.
+        Antagonist disturbance action.
+        Uses the same network but applies the antagonist noise covariance.
         """
-
-        # Normalize obs.
-        if len(obs.shape) == 1:
-            obs = np.expand_dims(obs, axis=0)
-        obs[:, self.x_idx] = obs[:, self.x_idx].dot(self.scale) + self.bias
-
-        if self.with_gpu:
-            with torch.cuda.device(0):
-                self.net = net.cuda()
-                action_mean = self.net(self.act_op.cuda())
-        else:
-            action_mean = self.net(self.act_op)
-
+        obs_t = self._obs_to_tensor(obs)
+        with torch.no_grad():
+            action_mean = self.net(obs_t).cpu().numpy()[0]
         if noise is None:
-            u = action_mean
-        else:
-            u = action_mean + self.chol_pol_covar_v.T.dot(noise)
-        return u[0]  # the DAG computations are batched by default, but we use batch size 1.
+            return action_mean
+        return action_mean + self.chol_pol_covar_v.T.dot(noise)
 
     def get_features(self, obs):
         """
-        Return the image features for an observation.
+        Return the penultimate-layer features for an observation.
         Args:
-            obs: Observation vector.
+            obs: Observation vector, shape [dO].
+        Returns:
+            Feature vector (numpy).
         """
-        if len(obs.shape) == 1:
-            obs = np.expand_dims(obs, axis=0)
-        if self.with_gpu:
-            # Assume that features don't depend on the robot config, so don't normalize by scale and bias.
-            with torch.cuda.device(0):
-                feat = self.feat_op(obs.cuda())
-        else:
-            feat = self.feat_op(obs)
-        return feat[0]  # the DAG computations are batched by default, but we use batch size 1.
+        obs_t = self._obs_to_tensor(obs)
+        # If the network exposes a forward_features hook, use it; otherwise
+        # fall back to the full forward pass.
+        with torch.no_grad():
+            if hasattr(self.net, 'forward_features'):
+                feat = self.net.forward_features(obs_t).cpu().numpy()[0]
+            else:
+                feat = self.net(obs_t).cpu().numpy()[0]
+        return feat
 
-    # def get_copy_params(self):
-    #     param_values = self.sess.run(self.copy_params)
-    #     return {self.copy_params[i].name:param_values[i] for i in range(len(self.copy_params))}
-    #
-    # def set_copy_params(self, param_values):
-    #     value_list = [param_values[self.copy_params[i].name] for i in range(len(self.copy_params))]
-    #     feeds = {self.copy_params_assign_placeholders[i]:value_list[i] for i in range(len(self.copy_params))}
-    #     self.sess.run(self.copy_params_assign_ops, feed_dict=feeds)
-    def pickle_policy(self, deg_obs, deg_action, checkpoint_path, goal_state=None, should_hash=False):
+    def pickle_policy(self, deg_obs, deg_action, checkpoint_path,
+                      goal_state=None, should_hash=False):
         """
-        We can save just the policy if we are only interested in running forward at a later point
-        without needing a policy optimization class. Useful for debugging and deploying.
+        Save just the policy weights for later deployment.
+        Args:
+            deg_obs: Observation dimension.
+            deg_action: Action dimension.
+            checkpoint_path: Base path for the checkpoint directory.
+            goal_state: Optional goal state to store.
+            should_hash: Append a UUID to avoid collisions.
         """
-        if should_hash is True:
-            hash_str = str(uuid.uuid4())
-            checkpoint_path += hash_str
-        os.mkdir(checkpoint_path + '/')
-        checkpoint_path += '/_pol'
-        pickled_pol = {'deg_obs': deg_obs, 'deg_action': deg_action, 'chol_pol_covar': self.chol_pol_covar,
-                       'checkpoint_path_pytorch': checkpoint_path + '_pytorch_data', 'scale': self.scale, 'bias': self.bias,
-                       'with_gpu': self.with_gpu, 'goal_state': goal_state, 'x_idx': self.x_idx}
-        pickle.dump(pickled_pol, open(checkpoint_path, "wb"))
-        torch.save(self.net.state_dict(), checkpoint_path + '_pytorch_data')
+        if should_hash:
+            import uuid
+            checkpoint_path += str(uuid.uuid4())
+        os.makedirs(checkpoint_path, exist_ok=True)
+        checkpoint_path = os.path.join(checkpoint_path, '_pol')
+        state_dict_path = checkpoint_path + '_pytorch_data'
+        pickled_pol = {
+            'deg_obs': deg_obs,
+            'deg_action': deg_action,
+            'chol_pol_covar': self.chol_pol_covar,
+            'checkpoint_path_pytorch': state_dict_path,
+            'scale': self.scale,
+            'bias': self.bias,
+            'with_gpu': self.with_gpu,
+            'goal_state': goal_state,
+            'x_idx': self.x_idx,
+        }
+        with open(checkpoint_path, 'wb') as f:
+            pickle.dump(pickled_pol, f)
+        torch.save(self.net.state_dict(), state_dict_path)
 
     @classmethod
     def load_policy(cls, policy_dict_path, network_config=None):
         """
-        For when we only need to load a policy for the forward pass. For instance, to run on the robot from
-        a checkpointed policy.
+        Load a saved policy for inference only.
+        Args:
+            policy_dict_path: Path to the pickled policy dict.
+            network_config: Optional dict used to reconstruct the network
+                architecture (reserved for future use).
+        Returns:
+            A PyTorchPolicy instance with restored weights.
         """
-        pol_dict = pickle.load(open(policy_dict_path, "rb"))
+        with open(policy_dict_path, 'rb') as f:
+            pol_dict = pickle.load(f)
 
-        check_file = pol_dict['checkpoint_path_pytorch']
-        self.net.load_state_dict(torch.load(join(check_file))
+        state_dict_path = pol_dict['checkpoint_path_pytorch']
+        # Reconstruct a minimal network matching the saved architecture.
+        # If network_config is provided, use it; otherwise infer from pol_dict.
+        dU = pol_dict['deg_action']
+        dO = pol_dict['deg_obs']
+        with_gpu = pol_dict.get('with_gpu', False)
 
-        device_string = pol_dict['device_string']
+        net = _build_default_net(dO, dU)
+        map_location = 'cuda' if with_gpu and torch.cuda.is_available() else 'cpu'
+        net.load_state_dict(torch.load(state_dict_path, map_location=map_location))
+        net.eval()
 
-        cls_init = cls(pol_dict['deg_action'], np.zeros((1,)), device_string)
-        cls_init.chol_pol_covar = pol_dict['chol_pol_covar']
-        cls_init.scale = pol_dict['scale']
-        cls_init.bias = pol_dict['bias']
-        cls_init.x_idx = pol_dict['x_idx']
-        return cls_init
+        policy = cls(
+            dU=dU,
+            dV=dU,  # default: dV == dU for symmetric game
+            net=net,
+            var_u=np.zeros(dU),
+            var_v=np.zeros(dU),
+            with_gpu=with_gpu,
+        )
+        policy.chol_pol_covar = pol_dict['chol_pol_covar']
+        policy.scale = pol_dict.get('scale')
+        policy.bias = pol_dict.get('bias')
+        policy.x_idx = pol_dict.get('x_idx')
+        return policy
+
+
+def _build_default_net(dO: int, dU: int, dim_hidden: int = 42) -> torch.nn.Module:
+    """Build the default 3-hidden-layer fully-connected network."""
+    import torch.nn as nn
+
+    class _Net(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.layer1 = nn.Linear(dO, dim_hidden)
+            self.layer2 = nn.Linear(dim_hidden, dim_hidden)
+            self.layer3 = nn.Linear(dim_hidden, dim_hidden)
+            self.out_layer = nn.Linear(dim_hidden, dU)
+
+        def forward(self, x):
+            out = torch.relu(self.layer1(x))
+            out = torch.relu(self.layer2(out))
+            out = torch.relu(self.layer3(out))
+            return self.out_layer(out)
+
+    return _Net()

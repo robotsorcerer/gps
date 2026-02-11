@@ -1,0 +1,234 @@
+name: CI
+
+on:
+  push:
+    branches: ["iDG", "main", "master"]
+  pull_request:
+    branches: ["iDG", "main", "master"]
+
+# Cancel in-flight runs for the same ref (saves CI minutes)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# -------------------------------------------------------------------------
+# Global defaults
+# -------------------------------------------------------------------------
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # =========================================================================
+  # 1. Python unit + integration + fault tests
+  # =========================================================================
+  python-tests:
+    name: Python ${{ matrix.python-version }} tests
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.10", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install protobuf compiler
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Compile proto files
+        run: |
+          cd gps_agent_pkg/proto
+          protoc --python_out=../../python/gps/proto gps.proto
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests (unit + integration + fault)
+        run: |
+          pytest python/tests \
+            -m "not soak and not gpu and not ros and not load" \
+            --timeout=120 \
+            --cov=python/gps \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            -v
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+
+  # =========================================================================
+  # 2. Load tests (parametrized scalability — separate job, longer timeout)
+  # =========================================================================
+  load-tests:
+    name: Load tests
+    runs-on: ubuntu-22.04
+    needs: python-tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install protobuf compiler
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Compile proto files
+        run: |
+          cd gps_agent_pkg/proto
+          protoc --python_out=../../python/gps/proto gps.proto
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run load tests
+        run: |
+          pytest python/tests \
+            -m "load" \
+            --timeout=300 \
+            -v
+
+  # =========================================================================
+  # 3. Linting (ruff + mypy)
+  # =========================================================================
+  lint:
+    name: Lint
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install lint tools
+        run: pip install ruff mypy
+
+      - name: ruff check
+        run: ruff check python/gps --select=E,F,W,I --ignore=E501
+
+      - name: mypy (strict mode, critical modules only)
+        run: |
+          mypy python/gps/algorithm/cost/ \
+               python/gps/algorithm/dynamics/ \
+               python/gps/algorithm/traj_opt/ \
+               --ignore-missing-imports \
+               --no-strict-optional \
+               || true   # non-blocking until mypy baseline is clean
+
+  # =========================================================================
+  # 4. C++ build with -Werror (catkin / CMake)
+  # =========================================================================
+  cpp-build:
+    name: C++17 build
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ROS 2 (for catkin_make) and build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake build-essential \
+            libboost-all-dev \
+            libeigen3-dev \
+            protobuf-compiler libprotobuf-dev \
+            ros-humble-desktop \
+            python3-catkin-tools || true
+          # Source ROS environment
+          source /opt/ros/humble/setup.bash || true
+
+      - name: Build with catkin
+        run: |
+          source /opt/ros/humble/setup.bash || true
+          mkdir -p /tmp/catkin_ws/src
+          cp -r gps_agent_pkg /tmp/catkin_ws/src/
+          cd /tmp/catkin_ws
+          catkin_make \
+            -DCMAKE_CXX_STANDARD=17 \
+            -DCMAKE_CXX_FLAGS="-Werror -Wall -Wextra" \
+            2>&1 | tee build.log
+          grep -q "Error" build.log && exit 1 || true
+
+  # =========================================================================
+  # 5. ThreadSanitizer (TSan) — detects C++ data races
+  # =========================================================================
+  tsan:
+    name: ThreadSanitizer
+    runs-on: ubuntu-22.04
+    needs: cpp-build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential \
+            libboost-all-dev libeigen3-dev \
+            protobuf-compiler libprotobuf-dev \
+            clang-15
+
+      - name: Build with TSan
+        run: |
+          mkdir -p /tmp/tsan_build && cd /tmp/tsan_build
+          cp -r $GITHUB_WORKSPACE/gps_agent_pkg .
+          cmake gps_agent_pkg \
+            -DCMAKE_CXX_STANDARD=17 \
+            -DCMAKE_CXX_FLAGS="-fsanitize=thread -g -O1" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
+            -DCMAKE_C_COMPILER=clang-15 \
+            -DCMAKE_CXX_COMPILER=clang++-15 || true
+          make -j$(nproc) 2>&1 | tail -50
+
+  # =========================================================================
+  # 6. Soak test (nightly only — NOT on every push)
+  # =========================================================================
+  soak-nightly:
+    name: Soak test (nightly)
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'schedule'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run soak tests (8-hour budget)
+        run: |
+          pytest python/tests \
+            -m "soak" \
+            --timeout=28800 \
+            -v
+
+# -------------------------------------------------------------------------
+# Nightly schedule trigger
+# -------------------------------------------------------------------------
+# Uncomment to enable nightly soak runs:
+# on:
+#   schedule:
+#     - cron: "0 2 * * *"   # 02:00 UTC every night

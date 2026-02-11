@@ -56,7 +56,7 @@ PositionController::~PositionController()
 }
 
 // Update the controller (take an action).
-void PositionController::update(RobotPlugin *plugin, ros::Time current_time, boost::scoped_ptr<Sample>& sample, Eigen::VectorXd &torques)
+void PositionController::update(RobotPlugin *plugin, ros::Time current_time, std::unique_ptr<Sample>& sample, Eigen::VectorXd &torques)
 {
     // Get current joint angles.
     plugin->get_joint_encoder_readings(temp_angles_, arm_);
@@ -132,10 +132,10 @@ void PositionController::configure_controller(OptionsMap &options)
     ROS_INFO_STREAM("Received controller configuration");
     // needs to report when finished
     report_waiting = true;
-    mode_ = (gps::PositionControlMode) boost::get<int>(options["mode"]);
+    mode_ = (gps::PositionControlMode) std::get<int>(options["mode"]);
     if (mode_ != gps::NO_CONTROL){
-        Eigen::VectorXd data = boost::get<Eigen::VectorXd>(options["data"]);
-        Eigen::MatrixXd pd_gains = boost::get<Eigen::MatrixXd>(options["pd_gains"]);
+        Eigen::VectorXd data = std::get<Eigen::VectorXd>(options["data"]);
+        Eigen::MatrixXd pd_gains = std::get<Eigen::MatrixXd>(options["pd_gains"]);
         for(int i=0; i<pd_gains.rows(); i++){
             pd_gains_p_(i) = pd_gains(i, 0);
             pd_gains_i_(i) = pd_gains(i, 1);
@@ -164,6 +164,8 @@ bool PositionController::is_finished() const
     else if (mode_ == gps::NO_CONTROL){
         return true;
     }
+    // Unrecognised mode: conservatively report not finished.
+    return false;
 }
 
 // Reset the controller -- this is typically called when the controller is turned on.

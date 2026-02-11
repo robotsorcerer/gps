@@ -7,12 +7,11 @@ from gps.proto.gps_pb2 import ACTION
 from gps.sample.sample_list import SampleList
 
 
-class Agent(object):
+class Agent(abc.ABC):
     """
     Agent superclass. The agent interacts with the environment to
     collect samples.
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, hyperparams):
         config = copy.deepcopy(AGENT)
@@ -93,7 +92,7 @@ class Agent(object):
             end: End index of samples to return.
         """
         return (SampleList(self._samples[condition][start:], self._samples_adv[condition][start:]) if end is None
-    else SampleList(self._samples[condition][start:end], self._samples_adv[condition][start:end]))
+                else SampleList(self._samples[condition][start:end], self._samples_adv[condition][start:end]))
 
     def clear_samples(self, condition=None):
         """

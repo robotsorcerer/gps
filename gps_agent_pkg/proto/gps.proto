@@ -62,7 +62,8 @@ enum PositionControlMode {
 
 enum ControllerType {
   LIN_GAUSS_CONTROLLER = 0;
-  CAFFE_CONTROLLER = 1;
+  CAFFE_CONTROLLER = 1;  // Deprecated — kept for proto numbering stability.
   TF_CONTROLLER = 2;
-  TOTAL_CONTROLLER_TYPES = 3;
+  PYTORCH_CONTROLLER = 3;
+  TOTAL_CONTROLLER_TYPES = 4;
 }

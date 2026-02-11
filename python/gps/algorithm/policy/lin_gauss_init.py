@@ -1,7 +1,7 @@
 """ Initializations for linear Gaussian controllers. """
 import copy
 import numpy as np
-import numpy.linalg as LinAlgError
+from numpy.linalg import LinAlgError
 import scipy as sp
 
 from gps.algorithm.dynamics.dynamics_utils import guess_dynamics, guess_dynamics_robust

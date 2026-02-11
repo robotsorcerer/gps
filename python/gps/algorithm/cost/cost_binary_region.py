@@ -53,7 +53,7 @@ class CostBinaryRegion(Cost):
 
             # Compute binary region penalty.
             dist = np.abs(x - tgt)
-            for t in xrange(T):
+            for t in range(T):
                 # If at least one of the coordinates is outside of 
                 # the region assign outside_cost, otherwise inside_cost.
                 if np.sum(dist[t]) > max_distance:

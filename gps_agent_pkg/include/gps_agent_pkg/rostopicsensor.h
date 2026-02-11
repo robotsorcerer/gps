@@ -3,7 +3,6 @@
 */
 #pragma once
 #include <std_msgs/Float64MultiArray.h>
-#include <boost/shared_ptr.hpp>
 #include <Eigen/Dense>
 // Superclass.
 #include "gps_agent_pkg/sensor.h"
@@ -34,8 +33,8 @@ namespace gps_control
 	// Configure the sensor (for sensor-specific trial settings).
 	virtual void configure_sensor(OptionsMap &options);
 	// Set data format and meta data on the provided sample.
-	virtual void set_sample_data_format(boost::scoped_ptr<Sample>& sample);
+	virtual void set_sample_data_format(std::unique_ptr<Sample>& sample);
 	// Set data on the provided sample.
-	virtual void set_sample_data(boost::scoped_ptr<Sample>& sample, int t);
+	virtual void set_sample_data(std::unique_ptr<Sample>& sample, int t);
     };
 }

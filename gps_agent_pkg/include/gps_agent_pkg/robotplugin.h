@@ -5,10 +5,9 @@ with the robot.
 #pragma once
 
 // Headers.
+#include <memory>
 #include <vector>
 #include <Eigen/Dense>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 #include <kdl/chain.hpp>
@@ -30,7 +29,7 @@ with the robot.
 #include "gps/proto/gps.pb.h"
 
 // Convenience defines.
-#define ros_publisher_ptr(X) boost::scoped_ptr<realtime_tools::RealtimePublisher<X> >
+#define ros_publisher_ptr(X) std::unique_ptr<realtime_tools::RealtimePublisher<X>>
 #define MAX_TRIAL_LENGTH 2000
 
 namespace gps_control
@@ -60,25 +59,25 @@ protected:
     // Temporary storage for passive arm torques to be applied at each step.
     Eigen::VectorXd  passive_arm_torques_;
     // Position controller for passive arm.
-    boost::scoped_ptr<PositionController> passive_arm_controller_;
+    std::unique_ptr<PositionController> passive_arm_controller_;
     // Position controller for active arm.
-    boost::scoped_ptr<PositionController> active_arm_controller_;
+    std::unique_ptr<PositionController> active_arm_controller_;
     // Current trial controller (if any).
-    boost::scoped_ptr<TrialController> trial_controller_;
+    std::unique_ptr<TrialController> trial_controller_;
     // Sensor data for the current time step.
-    boost::scoped_ptr<Sample> current_time_step_sample_;
+    std::unique_ptr<Sample> current_time_step_sample_;
     // Auxiliary Sensor data for the current time step.
-    boost::scoped_ptr<Sample> aux_current_time_step_sample_;
+    std::unique_ptr<Sample> aux_current_time_step_sample_;
     // Sensors.
-    std::vector<boost::shared_ptr<Sensor> > sensors_;
+    std::vector<std::shared_ptr<Sensor> > sensors_;
     // Auxiliary Sensors.
-    std::vector<boost::shared_ptr<Sensor> > aux_sensors_;
+    std::vector<std::shared_ptr<Sensor> > aux_sensors_;
     // KDL chains for the end-effectors.
     KDL::Chain passive_arm_fk_chain_, active_arm_fk_chain_;
     // KDL solvers for the end-effectors.
-    boost::shared_ptr<KDL::ChainFkSolverPos> passive_arm_fk_solver_, active_arm_fk_solver_;
+    std::shared_ptr<KDL::ChainFkSolverPos> passive_arm_fk_solver_, active_arm_fk_solver_;
     // KDL solvers for end-effector Jacobians.
-    boost::shared_ptr<KDL::ChainJntToJacSolver> passive_arm_jac_solver_, active_arm_jac_solver_;
+    std::shared_ptr<KDL::ChainJntToJacSolver> passive_arm_jac_solver_, active_arm_jac_solver_;
     // Subscribers.
     // Subscriber for position control commands.
     ros::Subscriber position_subscriber_;
@@ -118,14 +117,14 @@ public:
     // Initialize all of the sensors (this also includes FK computation objects).
     virtual void initialize_sensors(ros::NodeHandle& n);
     // TODO: Comment
-    virtual void initialize_sample(boost::scoped_ptr<Sample>& sample, gps::ActuatorType actuator_type);
+    virtual void initialize_sample(std::unique_ptr<Sample>& sample, gps::ActuatorType actuator_type);
 
     //Helper method to configure all sensors
     virtual void configure_sensors(OptionsMap &opts);
 
     // Report publishers
     // Publish a sample with data from up to T timesteps
-    virtual void publish_sample_report(boost::scoped_ptr<Sample>& sample, int T=1);
+    virtual void publish_sample_report(std::unique_ptr<Sample>& sample, int T=1);
 
     // Subscriber callbacks.
     // Position command callback.
@@ -153,7 +152,7 @@ public:
     // Get current encoder readings (robot-dependent).
     virtual void get_joint_encoder_readings(Eigen::VectorXd &angles, gps::ActuatorType arm) const = 0;
     // Get forward kinematics solver.
-    virtual void get_fk_solver(boost::shared_ptr<KDL::ChainFkSolverPos> &fk_solver, boost::shared_ptr<KDL::ChainJntToJacSolver> &jac_solver, gps::ActuatorType arm);
+    virtual void get_fk_solver(std::shared_ptr<KDL::ChainFkSolverPos> &fk_solver, std::shared_ptr<KDL::ChainJntToJacSolver> &jac_solver, gps::ActuatorType arm);
 
     //tf controller commands.
     //tf publish observation command.

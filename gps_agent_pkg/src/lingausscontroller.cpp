@@ -29,17 +29,17 @@ void LinearGaussianController::configure_controller(OptionsMap &options)
     TrialController::configure_controller(options);
 
     // TODO: Update K_
-    int T = boost::get<int>(options["T"]);
+    int T = std::get<int>(options["T"]);
 
     //TODO Don't do this hacky string indexing
     K_.resize(T);
     for(int i=0; i<T; i++){
-        K_[i] = boost::get<Eigen::MatrixXd>(options["K_"+to_string(i)]);
+        K_[i] = std::get<Eigen::MatrixXd>(options["K_"+to_string(i)]);
     }
 
     k_.resize(T);
     for(int i=0; i<T; i++){
-        k_[i] = boost::get<Eigen::VectorXd>(options["k_"+to_string(i)]);
+        k_[i] = std::get<Eigen::VectorXd>(options["k_"+to_string(i)]);
     }
     ROS_INFO_STREAM("Set LG parameters");
     is_configured_ = true;

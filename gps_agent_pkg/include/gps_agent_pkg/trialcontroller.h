@@ -7,7 +7,6 @@ a subclass.
 // Headers.
 #include <vector>
 #include <Eigen/Dense>
-#include <boost/scoped_ptr.hpp>
 
 #include "gps/proto/gps.pb.h"
 
@@ -28,9 +27,9 @@ private:
     // Holds the last step of a trial
     int trial_end_step_;
     // Current time step.
-    boost::scoped_ptr<Sample> current_step_;
+    std::unique_ptr<Sample> current_step_;
     // Trajectory sample.
-    boost::scoped_ptr<Sample> sample_;
+    std::unique_ptr<Sample> sample_;
     // State and obs datatypes
     std::vector<gps::SampleType> state_datatypes_;
     std::vector<gps::SampleType> obs_datatypes_;
@@ -48,7 +47,7 @@ public:
     // Compute the action at the current time step.
     virtual void get_action(int t, const Eigen::VectorXd &X, const Eigen::VectorXd &obs, Eigen::VectorXd &U) = 0;
     // Update the controller (take an action).
-    virtual void update(RobotPlugin *plugin, ros::Time current_time, boost::scoped_ptr<Sample>& sample, Eigen::VectorXd &torques);
+    virtual void update(RobotPlugin *plugin, ros::Time current_time, std::unique_ptr<Sample>& sample, Eigen::VectorXd &torques);
     // Configure the controller.
     virtual void configure_controller(OptionsMap &options);
     // Check if controller is finished with its current task.

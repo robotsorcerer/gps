@@ -48,7 +48,7 @@ void TfController::configure_controller(OptionsMap &options)
     last_command_id_received = 0;
     last_command_id_acted_upon = 0;
     failed_attempts = 0;
-    int dU = boost::get<int>(options["dU"]);
+    int dU = std::get<int>(options["dU"]);
     last_action_command_received.resize(dU);
     for (int i = 0; i < dU; ++i)
     {

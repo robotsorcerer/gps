@@ -21,8 +21,6 @@ class CostState(Cost):
         Args:
             sample:  A single sample
         """
-        self.gamma = 5
-        self.mode = 'antagonist'
         T = sample.T
         Du = sample.dU
         Dx = sample.dX
@@ -34,7 +32,7 @@ class CostState(Cost):
         final_lxx = np.zeros((T, Dx, Dx))
         final_lux = np.zeros((T, Du, Dx))
 
-        l1l2term = evall1l2term #if self.mode == 'protagonist' else evallogl2term_ant
+        l1l2term = evall1l2term
 
         for data_type in self._hyperparams['data_types']:
             config = self._hyperparams['data_types'][data_type]
@@ -64,5 +62,5 @@ class CostState(Cost):
             sample.agent.pack_data_x(final_lx, ls, data_types=[data_type])
             sample.agent.pack_data_x(final_lxx, lss,
                                      data_types=[data_type, data_type])
-            #No need to call mode here since evall1l2 term does the check
-            return final_l, final_lx, final_lu, final_lxx, final_luu, final_lux
+
+        return final_l, final_lx, final_lu, final_lxx, final_luu, final_lux

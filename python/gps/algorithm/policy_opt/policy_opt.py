@@ -2,9 +2,8 @@
 import abc
 
 
-class PolicyOpt(object):
+class PolicyOpt(abc.ABC):
     """ Policy optimization superclass. """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, hyperparams, dO, dU, dV):
         self._hyperparams = hyperparams

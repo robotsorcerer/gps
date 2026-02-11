@@ -222,7 +222,7 @@ def test_policy_opt_live():
 
 
 def main():
-    print 'running tf policy opt tests'
+    print('running tf policy opt tests')
     test_policy_save()
     test_policy_load()
     test_policy_opt_tf_init()
@@ -231,7 +231,7 @@ def main():
     test_policy_opt_backwards()
     test_euclidean_loss_layer()
     test_policy_opt_live()
-    print 'tf policy opt tests passed'
+    print('tf policy opt tests passed')
 
 
 if __name__ == '__main__':

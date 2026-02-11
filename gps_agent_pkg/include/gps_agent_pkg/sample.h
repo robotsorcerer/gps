@@ -8,8 +8,8 @@ from it.
 #pragma once
 
 // Headers.
+#include <variant>
 #include <vector>
-#include <boost/variant.hpp>
 
 // This contains the list of data types.
 #define RUN_ON_ROBOT
@@ -33,7 +33,7 @@ enum SampleDataFormat
     SampleDataFormatEigenVector
 };
 
-typedef boost::variant<bool,uint8_t,std::vector<int>,int,double,Eigen::MatrixXd,Eigen::VectorXd> SampleVariant;
+typedef std::variant<bool,uint8_t,std::vector<int>,int,double,Eigen::MatrixXd,Eigen::VectorXd> SampleVariant;
 typedef std::vector<SampleVariant> SampleList;
 typedef std::map<gps::SampleType, SampleList> SampleMap;
 

@@ -53,9 +53,9 @@ public:
     // This function is used to set resolution, cropping, topic to listen to...
     virtual void configure_sensor(const OptionsMap &options);
     // Set data format and meta data on the provided sample.
-    virtual void set_sample_data_format(boost::scoped_ptr<Sample> sample) const;
+    virtual void set_sample_data_format(std::unique_ptr<Sample> sample) const;
     // Set data on the provided sample.
-    virtual void set_sample_data(boost::scoped_ptr<Sample> sample) const;
+    virtual void set_sample_data(std::unique_ptr<Sample> sample) const;
 };
 
 }

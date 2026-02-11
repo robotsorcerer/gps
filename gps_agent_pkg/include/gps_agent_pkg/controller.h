@@ -4,7 +4,6 @@ Base class for a controller. Controllers take in sensor readings and choose the 
 #pragma once
 
 // Headers.
-#include <boost/scoped_ptr.hpp>
 #include <ros/ros.h>
 #include <time.h>
 #include <ros/time.h>
@@ -32,7 +31,7 @@ public:
     // Destructor.
     virtual ~Controller();
     // Update the controller (take an action).
-    virtual void update(RobotPlugin *plugin, ros::Time current_time, boost::scoped_ptr<Sample>& sample, Eigen::VectorXd &torques) = 0;
+    virtual void update(RobotPlugin *plugin, ros::Time current_time, std::unique_ptr<Sample>& sample, Eigen::VectorXd &torques) = 0;
     // Configure the controller.
     virtual void configure_controller(OptionsMap &options);
     // Set update delay on the controller.

@@ -9,7 +9,6 @@ Joint encoder sensor: returns joint angles and, optionally, their velocities.
 #include <kdl/chain.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
-#include <boost/shared_ptr.hpp>
 #include <Eigen/Dense>
 
 #include "gps/proto/gps.pb.h"
@@ -52,10 +51,10 @@ private:
     Eigen::MatrixXd point_jacobians_;
     Eigen::MatrixXd point_jacobians_rot_;
 
-    boost::shared_ptr<KDL::ChainFkSolverPos> fk_solver_;
-    boost::shared_ptr<KDL::ChainJntToJacSolver> jac_solver_;
+    std::shared_ptr<KDL::ChainFkSolverPos> fk_solver_;
+    std::shared_ptr<KDL::ChainJntToJacSolver> jac_solver_;
 
-    boost::scoped_ptr<EncoderFilter> joint_filter_;
+    std::unique_ptr<EncoderFilter> joint_filter_;
 
     // End-effector points in the space of the end-effector.
     Eigen::MatrixXd end_effector_points_;
@@ -88,9 +87,9 @@ public:
     // Configure the sensor (for sensor-specific trial settings).
     virtual void configure_sensor(OptionsMap &options);
     // Set data format and meta data on the provided sample.
-    virtual void set_sample_data_format(boost::scoped_ptr<Sample>& sample);
+    virtual void set_sample_data_format(std::unique_ptr<Sample>& sample);
     // Set data on the provided sample.
-    virtual void set_sample_data(boost::scoped_ptr<Sample>& sample, int t);
+    virtual void set_sample_data(std::unique_ptr<Sample>& sample, int t);
 };
 
 }

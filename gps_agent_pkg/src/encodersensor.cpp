@@ -166,7 +166,7 @@ void EncoderSensor::configure_sensor(OptionsMap &options)
     compute what the points should be! This will allow us to query positions
     and velocities each time. */
 
-    end_effector_points_ = boost::get<Eigen::MatrixXd>(options["ee_sites"]).transpose();
+    end_effector_points_ = std::get<Eigen::MatrixXd>(options["ee_sites"]).transpose();
     n_points_ = end_effector_points_.cols();
 
     if( end_effector_points_.cols() != 3){
@@ -175,7 +175,7 @@ void EncoderSensor::configure_sensor(OptionsMap &options)
                 (int)end_effector_points_.cols());
     }
 
-    end_effector_points_target_ = boost::get<Eigen::MatrixXd>(options["ee_points_tgt"]).transpose();
+    end_effector_points_target_ = std::get<Eigen::MatrixXd>(options["ee_points_tgt"]).transpose();
     int n_points_target_ = end_effector_points_target_.cols();
     if( end_effector_points_target_.cols() != 3){
         ROS_ERROR("EE tgt has more than 3 coordinates: Shape=(%d,%d)",
@@ -196,7 +196,7 @@ void EncoderSensor::configure_sensor(OptionsMap &options)
 }
 
 // Set data format and meta data on the provided sample.
-void EncoderSensor::set_sample_data_format(boost::scoped_ptr<Sample>& sample)
+void EncoderSensor::set_sample_data_format(std::unique_ptr<Sample>& sample)
 {
     // Set joint angles size and format.
     OptionsMap joints_metadata;
@@ -236,7 +236,7 @@ void EncoderSensor::set_sample_data_format(boost::scoped_ptr<Sample>& sample)
 }
 
 // Set data on the provided sample.
-void EncoderSensor::set_sample_data(boost::scoped_ptr<Sample>& sample, int t)
+void EncoderSensor::set_sample_data(std::unique_ptr<Sample>& sample, int t)
 {
     // Set joint angles.
     sample->set_data_vector(t,gps::JOINT_ANGLES,previous_angles_.data(),previous_angles_.size(),SampleDataFormatEigenVector);
