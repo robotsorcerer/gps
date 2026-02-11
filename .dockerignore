@@ -1,3 +1,21 @@
-.git/*
-experiments/pr2_example/data_files
-experiments/pr2_example/data_files/{hyperparams.pyc, log.txt}
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.git
+.github
+.pytest_cache
+.coverage
+htmlcov/
+*.log
+.DS_Store
+deprecated/
+docs/_build/
+*.md
+!README.md
