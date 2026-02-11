@@ -163,7 +163,7 @@ class PyTorchPolicy(Policy):
         pol_dict = pickle.load(open(policy_dict_path, "rb"))
 
         check_file = pol_dict['checkpoint_path_pytorch']
-        self.net.load_state_dict(torch.load(join(check_file))
+        self.net.load_state_dict(torch.load(join(check_file)))
 
         device_string = pol_dict['device_string']
 

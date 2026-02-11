@@ -820,12 +820,12 @@ class TrajOptLQRPython(TrajOpt):
                 invPSig_u[t, :, :]  = Qtt[t, idx_u, idx_u]
                 PSig_u[t, :, :]     = sp.linalg.solve_triangular(
                                         U_u, sp.linalg.solve_triangular(L_u, np.eye(dU), lower=True) )
-                                        cholPSig_u[t, :, :] = sp.linalg.cholesky(PSig_u[t, :, :])
+                cholPSig_u[t, :, :] = sp.linalg.cholesky(PSig_u[t, :, :])
 
                 invPSig_v[t, :, :]  = Qtt[t, idx_v, idx_v]
                 PSig_v[t, :, :]     = sp.linalg.solve_triangular(
                                         U_v, sp.linalg.solve_triangular(L_v, np.eye(dV), lower=True) )
-                                        cholPSig_v[t, :, :] = sp.linalg.cholesky(PSig_v[t, :, :])
+                cholPSig_v[t, :, :] = sp.linalg.cholesky(PSig_v[t, :, :])
 
                 inv_term = PSig_u[t, :, :] - PSig_u[t, :, :].dot(PSig_u[t, :, :].dot(Qtt[t, idx_u, idx_v]).\
                                 dot(PSig_v[t, :, :]).dot(Qtt[t, idx_u, idx_v].T))
