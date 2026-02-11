@@ -31,3 +31,7 @@ class DataLogger:
         except OSError:
             LOGGER.debug('Unpickle error. Cannot find file: %s', filename)
             return None
+        except (pickle.UnpicklingError, EOFError, ValueError, TypeError,
+                MemoryError) as exc:
+            LOGGER.debug('Unpickle error. Corrupted file %s: %s', filename, exc)
+            return None

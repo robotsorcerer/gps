@@ -39,16 +39,18 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Install protobuf compiler
-        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
-
-      - name: Compile proto files
-        run: |
-          cd gps_agent_pkg/proto
-          protoc --python_out=../../python/gps/proto gps.proto
-
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
+
+      - name: Compile proto files
+        # grpcio-tools ships a protoc binary compatible with protobuf 4.x.
+        # The system protoc on ubuntu-22.04 is 3.12 and is too old.
+        run: |
+          python -m grpc_tools.protoc \
+            -I gps_agent_pkg/proto \
+            --python_out=python/gps/proto \
+            gps_agent_pkg/proto/gps.proto
+          touch python/gps/proto/__init__.py
 
       - name: Run tests (unit + integration + fault)
         run: |
@@ -83,16 +85,16 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install protobuf compiler
-        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
 
       - name: Compile proto files
         run: |
-          cd gps_agent_pkg/proto
-          protoc --python_out=../../python/gps/proto gps.proto
-
-      - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+          python -m grpc_tools.protoc \
+            -I gps_agent_pkg/proto \
+            --python_out=python/gps/proto \
+            gps_agent_pkg/proto/gps.proto
+          touch python/gps/proto/__init__.py
 
       - name: Run load tests
         run: |

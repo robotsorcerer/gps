@@ -5,6 +5,7 @@ numpy>=1.24,<2.0
 scipy>=1.10,<2.0
 protobuf>=4.23,<5.0
 scikit-image>=0.21,<1.0
+grpcio-tools>=1.56    # needed to compile gps.proto in CI (system protoc is too old)
 
 # PyTorch CPU-only for CI (GPU variant installed separately in GPU jobs)
 torch>=2.1,<3.0

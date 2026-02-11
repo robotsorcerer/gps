@@ -1,0 +1,21 @@
+[run]
+source = python/gps
+omit =
+    */deprecated_caffe/*
+    */tests/*
+    */tests_tensorflow/*
+    */tests_gui/*
+    */proto/gps_pb2.py
+
+[report]
+exclude_lines =
+    # Standard non-executable constructs
+    pragma: no cover
+    def __repr__
+    def __str__
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    @abstractmethod
+
+[html]
+directory = htmlcov
