@@ -53,7 +53,7 @@ class PolicyOptCaffe(PolicyOpt):
         solver_param.random_seed = self._hyperparams['random_seed']
 
         # Pass in net parameter either by filename or protostring.
-        if isinstance(self._hyperparams['network_model'], basestring):
+        if isinstance(self._hyperparams['network_model'], str):
             self.solver = caffe.get_solver(self._hyperparams['network_model'])
         else:
             network_arch_params = self._hyperparams['network_arch_params']
