@@ -221,6 +221,20 @@ class PolicyOptPyTorch(PolicyOpt):
 
         self.pytorch_iter += iterations
 
+        # ---- Emit training metrics ----
+        # Stored on self so callers (GPS main loop, tests) can inspect them
+        # without changing the return type of update().
+        grad_norm = 0.0
+        for p in self._net.parameters():
+            if p.grad is not None:
+                grad_norm += p.grad.detach().norm().item() ** 2
+        self._last_grad_norm: float = grad_norm ** 0.5
+        self._last_loss: float = average_loss / max(1, iterations // 50 * 50 or iterations)
+        LOGGER.info(
+            'PolicyOptPyTorch update complete: iterations=%d  loss=%.6f  grad_norm=%.4f',
+            iterations, self._last_loss, self._last_grad_norm,
+        )
+
         # ---- Update diagonal variance ----
         A = np.sum(tgt_prc_orig, axis=0) + 2 * N * T * \
             self._hyperparams['ent_reg'] * np.ones((dU, dU))

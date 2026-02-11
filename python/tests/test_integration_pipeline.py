@@ -373,3 +373,89 @@ def test_proto_sample_encodes_action_array(sample_with_data, dims: dict):
 
     recovered = np.array(list(s2.U), dtype=np.float32).reshape(T, dU)
     np.testing.assert_allclose(recovered, u, rtol=1e-5, atol=1e-6)
+
+
+# ===========================================================================
+# Rec 7: training metrics stored on PolicyOptPyTorch after update()
+# ===========================================================================
+
+@pytest.mark.integration
+def test_update_stores_last_loss(trained_policy_opt):
+    """Rec 7: after update(), _last_loss must be a finite float."""
+    assert hasattr(trained_policy_opt, '_last_loss'), \
+        "PolicyOptPyTorch missing _last_loss after update()"
+    assert isinstance(trained_policy_opt._last_loss, float)
+    assert np.isfinite(trained_policy_opt._last_loss)
+
+
+@pytest.mark.integration
+def test_update_stores_last_grad_norm(trained_policy_opt):
+    """Rec 7: after update(), _last_grad_norm must be a non-negative finite float."""
+    assert hasattr(trained_policy_opt, '_last_grad_norm'), \
+        "PolicyOptPyTorch missing _last_grad_norm after update()"
+    assert isinstance(trained_policy_opt._last_grad_norm, float)
+    assert np.isfinite(trained_policy_opt._last_grad_norm)
+    assert trained_policy_opt._last_grad_norm >= 0.0
+
+
+# ===========================================================================
+# Rec 8: proto T > 0 validation helper
+# ===========================================================================
+
+@pytest.mark.integration
+def test_proto_validate_zero_T_raises():
+    """Rec 8: check_sample() must raise ValueError when T == 0 (proto3 default)."""
+    from gps.proto.gps_pb2 import Sample
+    from gps.utility.proto_validate import check_sample
+    s = Sample()   # T defaults to 0 in proto3
+    with pytest.raises(ValueError, match="T == 0"):
+        check_sample(s)
+
+
+@pytest.mark.integration
+def test_proto_validate_good_sample_passes():
+    """Rec 8: check_sample() must not raise on a well-formed Sample."""
+    from gps.proto.gps_pb2 import Sample
+    from gps.utility.proto_validate import check_sample
+    s = Sample()
+    s.T = 10
+    s.dU = 7
+    s.U.extend([0.0] * (10 * 7))
+    check_sample(s)   # must not raise
+
+
+@pytest.mark.integration
+def test_proto_validate_u_length_mismatch_raises():
+    """Rec 8: check_sample() must raise when U length != T*dU."""
+    from gps.proto.gps_pb2 import Sample
+    from gps.utility.proto_validate import check_sample
+    s = Sample()
+    s.T = 10
+    s.dU = 7
+    s.U.extend([0.0] * 42)   # wrong: should be 70
+    with pytest.raises(ValueError, match="T\\*dU"):
+        check_sample(s)
+
+
+# ===========================================================================
+# Rec 9: iDG antagonist None-guard in CostAction
+# ===========================================================================
+
+@pytest.mark.integration
+def test_cost_action_antagonist_none_sample_prot_raises(sample_with_data, dims: dict):
+    """Rec 9: CostAction in antagonist mode must raise ValueError when sample_prot is None."""
+    from gps.algorithm.cost.cost_action import CostAction
+    dU = dims["dU"]
+    cost = CostAction({"wu": np.ones(dU), "gamma": 1.0, "mode": "antagonist"})
+    with pytest.raises(ValueError, match="sample_prot"):
+        cost.eval(sample_with_data, sample_prot=None)
+
+
+@pytest.mark.integration
+def test_cost_action_antagonist_missing_kwarg_raises(sample_with_data, dims: dict):
+    """Rec 9: CostAction in antagonist mode must raise when sample_prot kwarg is absent."""
+    from gps.algorithm.cost.cost_action import CostAction
+    dU = dims["dU"]
+    cost = CostAction({"wu": np.ones(dU), "gamma": 1.0, "mode": "antagonist"})
+    with pytest.raises((ValueError, KeyError)):
+        cost.eval(sample_with_data)  # no sample_prot kwarg at all

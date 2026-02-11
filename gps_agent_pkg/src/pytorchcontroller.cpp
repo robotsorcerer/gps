@@ -4,6 +4,7 @@
 
 #include <ros/ros.h>
 #include <torch/version.h>
+#include <chrono>
 
 using namespace gps_control;
 
@@ -120,10 +121,24 @@ void PyTorchController::get_action(int t,
     }
 
     // ---- Forward pass (no_grad, CPU, eval mode) ----
+    // Time the inference and warn when it exceeds half a 100 Hz control period
+    // (5 ms).  Sustained overruns indicate the model is too large for this
+    // hardware and will cause missed deadlines.
+    static constexpr double kMaxInferenceMs = 5.0;
     torch::Tensor output;
     try {
         torch::NoGradGuard no_grad;
+        const auto t0 = std::chrono::high_resolution_clock::now();
         output = module_.forward({input}).toTensor();
+        const double elapsed_ms =
+            std::chrono::duration<double, std::milli>(
+                std::chrono::high_resolution_clock::now() - t0).count();
+        if (elapsed_ms > kMaxInferenceMs) {
+            ROS_WARN_THROTTLE(1.0,
+                "PyTorchController: inference took %.2f ms (threshold %.1f ms) "
+                "— consider a smaller model or faster hardware",
+                elapsed_ms, kMaxInferenceMs);
+        }
     } catch (const std::exception &e) {
         ROS_ERROR_THROTTLE(1.0, "PyTorchController: forward pass failed: %s",
                            e.what());

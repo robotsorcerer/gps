@@ -49,8 +49,13 @@ class CostAction(Cost):
                 lv = 0.5 * sum(wu * u^2) - 2 * gamma * wu * v
                 lvv = 0.5 * sum(wu * u^2) - 2 * gamma * wu
             """
-            sample_prot = kwargs['sample_prot']
-            # if sample_prot is not None:
+            sample_prot = kwargs.get('sample_prot')
+            if sample_prot is None:
+                raise ValueError(
+                    "CostAction in 'antagonist' mode requires the "
+                    "'sample_prot' keyword argument (protagonist sample). "
+                    "It is missing or None — check the iDG algorithm loop."
+                )
             sample_prot_u = sample_prot.get_U()
 
             # print('sample_prot_u: ', sample_prot_u.shape, ' | sample_u: ', sample_u.shape) #('sample_prot_u: ', (100, 7), ' | sample_u: ', (100, 7))
