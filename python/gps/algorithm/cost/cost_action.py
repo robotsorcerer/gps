@@ -1,6 +1,9 @@
 """ This file defines the torque (action) cost. """
 import copy, os
+from typing import Dict, Any, Tuple, Union
+
 import numpy as np
+import numpy.typing as npt
 
 from gps.algorithm.cost.config import COST_ACTION
 from gps.algorithm.cost.cost import Cost
@@ -8,14 +11,18 @@ from gps.algorithm.cost.cost import Cost
 
 class CostAction(Cost):
     """ Computes torque penalties. """
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: Dict[str, Any]) -> None:
         config = copy.deepcopy(COST_ACTION)
         config.update(hyperparams)
         Cost.__init__(self, config)
 
-        self._config = config
+        self._config: Dict[str, Any] = config
 
-    def eval(self, sample, **kwargs):
+    def eval(self, sample: Any, **kwargs: Any) -> Union[
+        Tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray],
+        Tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray,
+              npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, int]
+    ]:
         """
         Evaluate cost function and derivatives on a sample.
         Args:

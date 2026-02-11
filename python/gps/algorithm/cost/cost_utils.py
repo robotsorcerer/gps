@@ -1,5 +1,8 @@
 """ This file defines utility classes and functions for costs. """
+from typing import Tuple
+
 import numpy as np
+import numpy.typing as npt
 import time
 
 RAMP_CONSTANT = 1
@@ -7,7 +10,7 @@ RAMP_LINEAR = 2
 RAMP_QUADRATIC = 3
 RAMP_FINAL_ONLY = 4
 
-def get_ramp_multiplier(ramp_option, T, wp_final_multiplier=1.0):
+def get_ramp_multiplier(ramp_option: int, T: int, wp_final_multiplier: float = 1.0) -> npt.NDArray[np.float64]:
     """
     Return a time-varying multiplier.
     Returns:
@@ -27,7 +30,9 @@ def get_ramp_multiplier(ramp_option, T, wp_final_multiplier=1.0):
     wpm[-1] *= wp_final_multiplier
     return wpm
 
-def evall1l2term(wp, d, Jd, Jdd, l1, l2, alpha):
+def evall1l2term(wp: npt.NDArray[np.float64], d: npt.NDArray[np.float64],
+                 Jd: npt.NDArray[np.float64], Jdd: npt.NDArray[np.float64],
+                 l1: float, l2: float, alpha: float) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
     """
     Evaluate and compute derivatives for combined l1/l2 norm penalty.
     loss = (0.5 * l2 * d^2) + (l1 * sqrt(alpha + d^2))

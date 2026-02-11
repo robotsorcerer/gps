@@ -1,5 +1,8 @@
 """ This file defines linear regression with an arbitrary prior. """
+from typing import Dict, Any, Optional, Tuple
+
 import numpy as np
+import numpy.typing as npt
 
 from gps.algorithm.dynamics.dynamics import Dynamics
 from gps.algorithm.algorithm_utils import gauss_fit_joint_prior
@@ -7,33 +10,33 @@ from gps.algorithm.algorithm_utils import gauss_fit_joint_prior
 
 class DynamicsLRPrior(Dynamics):
     """ Dynamics with linear regression, with arbitrary prior. """
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: Dict[str, Any]) -> None:
         Dynamics.__init__(self, hyperparams)
-        self.Fm = None
-        self.fv = None
-        self.dyn_covar = None
-        self.prior = \
+        self.Fm: Optional[npt.NDArray[np.float64]] = None
+        self.fv: Optional[npt.NDArray[np.float64]] = None
+        self.dyn_covar: Optional[npt.NDArray[np.float64]] = None
+        self.prior: Any = \
                 self._hyperparams['prior']['type'](self._hyperparams['prior']) # DynamicsPriorGMM
 
-    def update_prior(self, samples):
+    def update_prior(self, samples: Any) -> None:
         """ Update dynamics prior. """
         X = samples.get_X()
         U = samples.get_U()
         self.prior.update(X, U)  #this is calling update in gmm_prior
 
-    def update_prior_robust(self, samples):
+    def update_prior_robust(self, samples: Any) -> None:
         """ Update dynamics prior. """
         X = samples.get_X()
         U = samples.get_U()
         V = samples.get_V()
         self.prior.update_robust(X, U, V)  #this is calling update in gmm_prior
 
-    def get_prior(self):
+    def get_prior(self) -> Any:
         """ Return the dynamics prior. """
         return self.prior
 
     #TODO: Merge this with DynamicsLR.fit - lots of duplicated code.
-    def fit(self, X, U):
+    def fit(self, X: npt.NDArray[np.float64], U: npt.NDArray[np.float64]) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
         """ Fit dynamics. """
         N, T, dX = X.shape
         dU = U.shape[2]
@@ -62,7 +65,8 @@ class DynamicsLRPrior(Dynamics):
             self.dyn_covar[t, :, :] = dyn_covar
         return self.Fm, self.fv, self.dyn_covar
 
-    def fit_robust(self, X, U, V):
+    def fit_robust(self, X: npt.NDArray[np.float64], U: npt.NDArray[np.float64],
+                   V: npt.NDArray[np.float64]) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
         """ Fit dynamics. """
         N, T, dX = X.shape
         dU, dV = U.shape[2], V.shape[2]

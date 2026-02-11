@@ -1,7 +1,9 @@
 """ This file defines the forward kinematics cost function. """
 import copy, os, csv
+from typing import Dict, Any, Union, Tuple, List
 
 import numpy as np
+import numpy.typing as npt
 
 from gps.algorithm.cost.config import COST_FK
 from gps.algorithm.cost.cost import Cost
@@ -15,14 +17,18 @@ class CostFK(Cost):
     Forward kinematics cost function. Used for costs involving the end
     effector position.
     """
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: Dict[str, Any]) -> None:
         config = copy.deepcopy(COST_FK)
         config.update(hyperparams)
         Cost.__init__(self, config)
 
-        dist_array = []
+        dist_array: List[Any] = []
 
-    def eval(self, sample):
+    def eval(self, sample: Any) -> Union[
+        Tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray],
+        Tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray,
+              npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray]
+    ]:
         """
         Evaluate forward kinematics (end-effector penalties) cost.
         Temporary note: This implements the 'joint' penalty type from

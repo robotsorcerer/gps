@@ -1,7 +1,9 @@
 """ This file defines the state target cost. """
 import copy
+from typing import Dict, Any, Tuple
 
 import numpy as np
+import numpy.typing as npt
 
 from gps.algorithm.cost.config import COST_STATE
 from gps.algorithm.cost.cost import Cost
@@ -10,12 +12,13 @@ from gps.algorithm.cost.cost_utils import evall1l2term, get_ramp_multiplier#eval
 
 class CostState(Cost):
     """ Computes l1/l2 distance to a fixed target state. """
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: Dict[str, Any]) -> None:
         config = copy.deepcopy(COST_STATE)
         config.update(hyperparams)
         Cost.__init__(self, config)
 
-    def eval(self, sample):
+    def eval(self, sample: Any) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray,
+                                          npt.NDArray, npt.NDArray, npt.NDArray]:
         """
         Evaluate cost function and derivatives on a sample.
         Args:
