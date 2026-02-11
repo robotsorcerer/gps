@@ -125,7 +125,7 @@ class TfSolver:
             batch_dict = {}
             start = i
             end = min(i+batch_size, num_values)
-            for k,v in feed_dict.iteritems():
+            for k,v in feed_dict.items():
                 batch_dict[k] = v[start:end]
             batch_vals = sess.run(self.last_conv_vars, batch_dict)
             values.append(batch_vals)
@@ -141,7 +141,7 @@ class TfSolver:
             batch_dict = {}
             start = i
             end = min(i+batch_size, num_values)
-            for k,v in feed_dict.iteritems():
+            for k,v in feed_dict.items():
                 batch_dict[k] = v[start:end]
             batch_vals = sess.run(var, batch_dict)
             values.append(batch_vals)

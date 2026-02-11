@@ -35,7 +35,7 @@ keyboard_bindings = {
     'oti'  : 'p',   # overlay target image
 }
 inverted_keyboard_bindings = {value: key
-                              for key, value in keyboard_bindings.iteritems()}
+                              for key, value in keyboard_bindings.items()}
 
 # Mappings from actions to their corresponding PS3 controller bindings.
 ps3_bindings = {
@@ -65,10 +65,10 @@ ps3_bindings = {
     'oii'  : (PS3_BUTTON['cross_up']    ,),
     'oti'  : (PS3_BUTTON['cross_down']  ,),
 }
-inverted_ps3_bindings = {value: key for key, value in ps3_bindings.iteritems()}
+inverted_ps3_bindings = {value: key for key, value in ps3_bindings.items()}
 
 permuted_inverted_ps3_bindings = {}
-for key, value in list(inverted_ps3_bindings.iteritems()):
+for key, value in list(inverted_ps3_bindings.items()):
     for permuted_key in itertools.permutations(key, len(key)):
         permuted_inverted_ps3_bindings[permuted_key] = value
 
