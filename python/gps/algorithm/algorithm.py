@@ -3,9 +3,11 @@
 import abc
 import copy
 import logging
+from typing import Dict, List, Optional, Any, Tuple
 
 import random
 import numpy as np
+import numpy.typing as npt
 
 from gps.algorithm.config import ALG
 from gps.algorithm.algorithm_utils import IterationData, TrajectoryInfo
@@ -19,28 +21,33 @@ class Algorithm(object):
     """ Algorithm superclass. """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: Dict[str, Any]) -> None:
         config = copy.deepcopy(ALG) #cost is none here
         config.update(hyperparams)  #cost becomes a dict
-        self._hyperparams = config
+        self._hyperparams: Dict[str, Any] = config
 
         if 'train_conditions' in hyperparams:
-            self._cond_idx = hyperparams['train_conditions']  #Non existent for mjc_mdgps
-            self.M = len(self._cond_idx)
+            self._cond_idx: Any = hyperparams['train_conditions']  #Non existent for mjc_mdgps
+            self.M: int = len(self._cond_idx)
         else:
-            self.M = hyperparams['conditions']  #will be 4
-            self._cond_idx = range(self.M)
+            self.M: int = hyperparams['conditions']  #will be 4
+            self._cond_idx: range = range(self.M)
             self._hyperparams['train_conditions'] = self._cond_idx
             self._hyperparams['test_conditions'] = self._cond_idx
-        self.iteration_count = 0
+        self.iteration_count: int = 0
 
         # Grab a few values from the agent.
         agent = self._hyperparams['agent']
-        self.T = self._hyperparams['T'] = agent.T
-        self.dU = self._hyperparams['dU'] = agent.dU # agent.py#L25. will be 7
-        self.dX = self._hyperparams['dX'] = agent.dX # agent.py#L40
-        self.dO = self._hyperparams['dO'] = agent.dO #not found
-        self.dV = self._hyperparams['dV'] = agent.dV #if self._hyperparams['mode'] == 'robust' else None
+        self.T: int = agent.T
+        self._hyperparams['T'] = self.T
+        self.dU: int = agent.dU # agent.py#L25. will be 7
+        self._hyperparams['dU'] = self.dU
+        self.dX: int = agent.dX # agent.py#L40
+        self._hyperparams['dX'] = self.dX
+        self.dO: int = agent.dO #not found
+        self._hyperparams['dO'] = self.dO
+        self.dV: int = agent.dV #if self._hyperparams['mode'] == 'robust' else None
+        self._hyperparams['dV'] = self.dV
 
         init_traj_distr = config['init_traj_distr']
         init_traj_distr['x0'] = agent.x0
@@ -85,22 +92,22 @@ class Algorithm(object):
         self.base_kl_step = self._hyperparams['kl_step']
 
     @abc.abstractmethod
-    def iteration(self, sample_list):
+    def iteration(self, sample_list: Any) -> None:
         """ Run iteration of the algorithm. """
         raise NotImplementedError("Must be implemented in subclass")
 
     @abc.abstractmethod
-    def iteration_cl(self, sample_lists_prot, sample_list):
+    def iteration_cl(self, sample_lists_prot: Any, sample_list: Any) -> None:
         """ Run iteration of the algorithm. """
         raise NotImplementedError("Must be implemented in subclass")
 
     @abc.abstractmethod
-    def iteration_idg(self, sample_lists_prot, sample_list):
+    def iteration_idg(self, sample_lists_prot: Any, sample_list: Any) -> None:
         """ Run iteration of the algorithm. """
         raise NotImplementedError("Must be implemented in subclass")
 
 
-    def _update_dynamics(self):
+    def _update_dynamics(self) -> None:
         """
         Instantiate dynamics objects and update prior. Fit dynamics to
         current samples.
@@ -131,7 +138,7 @@ class Algorithm(object):
                         Phi + (N*priorm) / (N+priorm) * \
                         np.outer(x0mu-mu0, x0mu-mu0) / (N+n0)
 
-    def _update_dynamics_idg(self):
+    def _update_dynamics_idg(self) -> None:
         """
         Instantiate dynamics objects and update prior. Fit dynamics to
         current samples.
@@ -165,7 +172,7 @@ class Algorithm(object):
                         Phi + (N*priorm) / (N+priorm) * \
                         np.outer(x0mu-mu0, x0mu-mu0) / (N+n0)
 
-    def _update_trajectories(self):
+    def _update_trajectories(self) -> None:
         """
         Compute new linear Gaussian controllers.
         """
@@ -177,7 +184,7 @@ class Algorithm(object):
             self.new_traj_distr[cond], self.cur[cond].eta = \
                     self.traj_opt.update(cond, self)
 
-    def _update_trajectories_robust(self):
+    def _update_trajectories_robust(self) -> None:
         """
         Compute new linear Gaussian controllers.
         """
@@ -195,7 +202,7 @@ class Algorithm(object):
             LOGGER.debug("C-Step: Computing local control laws.")
             self.traj_opt.update_robust(cond, self)
 
-    def _eval_cost(self, cond):
+    def _eval_cost(self, cond: int) -> None:
         """
         Evaluate costs for all samples for a condition.
         Args:
@@ -242,7 +249,7 @@ class Algorithm(object):
 
         self.cur[cond].cs = cs  # True value of cost.
 
-    def _eval_cost_idg(self, cond):
+    def _eval_cost_idg(self, cond: int) -> None:
         """
         Evaluate costs for all samples for a condition.
         Args:
@@ -298,7 +305,7 @@ class Algorithm(object):
         self.cur[cond].cs = cs  # True value of cost.
 
 
-    def _eval_cost_cl(self, cond, sample_lists_prot=None):
+    def _eval_cost_cl(self, cond: int, sample_lists_prot: Optional[Any] = None) -> None:
         """
         Evaluate costs for all samples for a condition.
         Args:
@@ -360,7 +367,7 @@ class Algorithm(object):
 
         self.cur[cond].cs = cs  # True value of cost.
 
-    def _advance_iteration_variables(self):
+    def _advance_iteration_variables(self) -> None:
         """
         Move all 'cur' variables to 'prev', and advance iteration
         counter.
@@ -379,7 +386,7 @@ class Algorithm(object):
             self.cur[m].traj_distr = self.new_traj_distr[m]
         delattr(self, 'new_traj_distr')
 
-    def _set_new_mult(self, predicted_impr, actual_impr, m):
+    def _set_new_mult(self, predicted_impr: float, actual_impr: float, m: int) -> None:
         """
         Adjust step size multiplier according to the predicted versus
         actual improvement.
@@ -404,7 +411,7 @@ class Algorithm(object):
         else:
             LOGGER.debug('Decreasing step size multiplier to %f', new_step)
 
-    def _measure_ent(self, m):
+    def _measure_ent(self, m: int) -> float:
         """ Measure the entropy of the current trajectory. """
         ent = 0
         for t in range(self.T):
@@ -414,14 +421,14 @@ class Algorithm(object):
         return ent
 
     # For pickling.
-    def __getstate__(self):
+    def __getstate__(self) -> Dict[str, Any]:
         state = self.__dict__.copy()
         state['_random_state'] = random.getstate()
         state['_np_random_state'] = np.random.get_state()
         return state
 
     # For unpickling.
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]) -> None:
         self.__dict__ = state
         random.setstate(state.pop('_random_state'))
         np.random.set_state(state.pop('_np_random_state'))
