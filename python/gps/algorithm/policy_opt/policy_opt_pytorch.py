@@ -201,7 +201,15 @@ class PolicyOptPyTorch(PolicyOpt):
                 pred, mu_t[idx_i], prc_t[idx_i],
                 torch.FloatTensor(tgt_wt[idx_i]).to(self._device),
             )
+            if not torch.isfinite(loss):
+                LOGGER.warning(
+                    'NaN/Inf loss at iteration %d (value=%s) — skipping backward pass',
+                    i, loss.item()
+                )
+                self._optimizer.zero_grad()
+                continue
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(self._net.parameters(), max_norm=10.0)
             self._optimizer.step()
 
             average_loss += loss.item()
@@ -318,6 +326,7 @@ class PolicyOptPyTorch(PolicyOpt):
 
         return {
             'model_bytes': model_bytes,
+            'torch_version': torch.__version__,   # for C++ version handshake
             'scale': scale_diag,
             'bias': bias,
             'noise': [],       # caller fills per-trial noise

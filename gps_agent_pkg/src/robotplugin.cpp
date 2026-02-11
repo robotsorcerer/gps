@@ -422,7 +422,8 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
             controller_params["noise_" + to_string(t)] = noise;
         }
 
-        controller_params["model_bytes"] = params.model_bytes;
+        controller_params["model_bytes"]    = params.model_bytes;
+        controller_params["torch_version"] = params.torch_version;
         controller_params["scale"] = scale_diag;
         controller_params["bias"]  = bias;
         controller_params["T"]     = static_cast<int>(msg->T);
@@ -436,9 +437,12 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
         controller_params["dU"] = dU;
         trial_controller_-> configure_controller(controller_params);
     }
-    else{
+    else {
         ROS_ERROR("Unknown trial controller type: %d",
                   static_cast<int>(msg->controller.controller_to_execute));
+        // Ensure no stale controller remains active, then abort this trial.
+        trial_controller_.reset();
+        return;
     }
 
     // Configure sensor for trial

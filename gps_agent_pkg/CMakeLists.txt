@@ -8,6 +8,18 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# ---------------------------------------------------------------------------
+# Treat warnings as errors; suppress two categories that are endemic to
+# legacy ROS code (signed/unsigned loop indices, unused callback params).
+# ---------------------------------------------------------------------------
+add_compile_options(
+    -Wall
+    -Wextra
+    -Werror
+    -Wno-sign-compare       # int i < container.size() patterns throughout
+    -Wno-unused-parameter   # ROS callback signatures carry unused args
+)
+
 set(ROS_DEFAULT_DIR /opt/ros/$ENV{ROS_DISTRO}/share/)
 
 set(orocos_kdl_DIR                ${ROS_DEFAULT_DIR}/orocos_kdl)

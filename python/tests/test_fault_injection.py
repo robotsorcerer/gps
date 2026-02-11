@@ -281,3 +281,78 @@ def test_proto3_total_controller_types_value():
     """TOTAL_CONTROLLER_TYPES must equal 4 (LIN_GAUSS, CAFFE, TF, PYTORCH)."""
     from gps.proto.gps_pb2 import TOTAL_CONTROLLER_TYPES
     assert TOTAL_CONTROLLER_TYPES == 4
+
+
+# ===========================================================================
+# Regression tests for the 6 blocking items fixed in this sprint
+# ===========================================================================
+
+@pytest.mark.fault
+def test_nan_loss_does_not_corrupt_weights():
+    """
+    FIX 1: update() with precision matrices that produce NaN loss must not
+    propagate NaN into the network weights.
+    """
+    from gps.algorithm.policy_opt.policy_opt_pytorch import PolicyOptPyTorch
+    opt = PolicyOptPyTorch(
+        {"random_seed": 0, "iterations": 5, "batch_size": 4,
+         "lr": 1e-3, "weight_decay": 0.0, "ent_reg": 0.0,
+         "init_var": 0.1, "init_var_v": 0.1},
+        _dO, _dU,
+    )
+    rng = np.random.default_rng(77)
+    obs = rng.standard_normal((_N, _T, _dO)).astype(np.float32)
+    mu = rng.standard_normal((_N, _T, _dU)).astype(np.float32)
+    # All-zero weights: normalisation produces NaN (division by zero in mn)
+    wt = np.zeros((_N, _T), dtype=np.float32)
+    prc = np.tile(np.eye(_dU, dtype=np.float32), (_N, _T, 1, 1))
+
+    try:
+        opt.update(obs, mu, prc, wt)
+    except (ValueError, RuntimeError, ZeroDivisionError):
+        return  # raising is also acceptable
+
+    # If no exception, weights must remain finite.
+    for name, param in opt._net.named_parameters():
+        assert torch.isfinite(param).all(), \
+            f"Parameter '{name}' has NaN/Inf after degenerate update()"
+
+
+@pytest.mark.fault
+def test_gradient_clipping_applied():
+    """
+    FIX 1: verify clip_grad_norm_ is called — large-magnitude targets produce
+    finite updates rather than exploding weights.
+    """
+    from gps.algorithm.policy_opt.policy_opt_pytorch import PolicyOptPyTorch
+    opt = PolicyOptPyTorch(
+        {"random_seed": 0, "iterations": 20, "batch_size": 4,
+         "lr": 1.0, "weight_decay": 0.0, "ent_reg": 0.0,
+         "init_var": 0.1, "init_var_v": 0.1},
+        _dO, _dU,
+    )
+    rng = np.random.default_rng(88)
+    obs = rng.standard_normal((_N, _T, _dO)).astype(np.float32)
+    # Very large target: without clipping would cause exploding updates.
+    mu = np.full((_N, _T, _dU), 1e6, dtype=np.float32)
+    prc = np.tile(np.eye(_dU, dtype=np.float32) * 1e4, (_N, _T, 1, 1))
+    wt = np.ones((_N, _T), dtype=np.float32)
+
+    opt.update(obs, mu, prc, wt)
+
+    for name, param in opt._net.named_parameters():
+        assert torch.isfinite(param).all(), \
+            f"Exploding gradient: parameter '{name}' has NaN/Inf after large-target update"
+
+
+@pytest.mark.fault
+def test_get_torch_params_dict_contains_torch_version(trained_opt):
+    """FIX 4: get_torch_params_dict() must include 'torch_version' key."""
+    d = trained_opt.get_torch_params_dict()
+    assert 'torch_version' in d, "get_torch_params_dict() missing 'torch_version'"
+    version_str = d['torch_version']
+    assert isinstance(version_str, str) and len(version_str) > 0
+    # Must parse as major.minor
+    parts = version_str.split('.')
+    assert len(parts) >= 2, f"torch_version '{version_str}' does not look like X.Y.Z"
+    assert parts[0].isdigit() and parts[1].isdigit()

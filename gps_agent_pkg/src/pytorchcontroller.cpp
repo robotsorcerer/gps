@@ -3,6 +3,7 @@
 #include "gps_agent_pkg/util.h"
 
 #include <ros/ros.h>
+#include <torch/version.h>
 
 using namespace gps_control;
 
@@ -27,6 +28,26 @@ void PyTorchController::configure_controller(OptionsMap &options)
     // Let the base class handle T, state/obs datatypes, ee_tgt, etc.
     TrialController::configure_controller(options);
 
+    // ---- Validate Python/C++ torch version compatibility ---------------
+    const std::string python_torch_version =
+        std::get<std::string>(options.at("torch_version"));
+    int py_major = 0, py_minor = 0;
+    std::sscanf(python_torch_version.c_str(), "%d.%d", &py_major, &py_minor);
+    if (py_major != TORCH_VERSION_MAJOR) {
+        ROS_ERROR(
+            "PyTorchController: TorchScript major version mismatch: "
+            "Python torch %d.%d vs C++ LibTorch %d.%d — refusing to load model",
+            py_major, py_minor, TORCH_VERSION_MAJOR, TORCH_VERSION_MINOR);
+        is_configured_ = false;
+        return;
+    }
+    if (py_minor != TORCH_VERSION_MINOR) {
+        ROS_WARN(
+            "PyTorchController: TorchScript minor version mismatch: "
+            "Python torch %d.%d vs C++ LibTorch %d.%d — attempting to load anyway",
+            py_major, py_minor, TORCH_VERSION_MAJOR, TORCH_VERSION_MINOR);
+    }
+
     // ---- Load TorchScript model from raw bytes -------------------------
     const std::string model_bytes =
         std::get<std::string>(options.at("model_bytes"));
@@ -36,7 +57,7 @@ void PyTorchController::configure_controller(OptionsMap &options)
         module_ = torch::jit::load(stream, torch::kCPU);
         module_.eval();
         module_loaded_ = true;
-    } catch (const c10::Error &e) {
+    } catch (const std::exception &e) {
         ROS_ERROR("PyTorchController: failed to load TorchScript model: %s",
                   e.what());
         module_loaded_ = false;
@@ -103,7 +124,7 @@ void PyTorchController::get_action(int t,
     try {
         torch::NoGradGuard no_grad;
         output = module_.forward({input}).toTensor();
-    } catch (const c10::Error &e) {
+    } catch (const std::exception &e) {
         ROS_ERROR_THROTTLE(1.0, "PyTorchController: forward pass failed: %s",
                            e.what());
         U.setZero(dU_);

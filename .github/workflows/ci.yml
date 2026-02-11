@@ -104,7 +104,48 @@ jobs:
             -v
 
   # =========================================================================
-  # 3. Linting (ruff + mypy)
+  # 3. GPU memory-growth test (self-hosted runner with CUDA required)
+  #    Validates that act() does not accumulate device tensors across 1000
+  #    inference calls.  Must pass before enabling use_gpu: 1 in production.
+  # =========================================================================
+  gpu-tests:
+    name: GPU memory test
+    # Self-hosted runner with an NVIDIA GPU and nvidia-docker.
+    # Replace with your GPU runner label.  Skipped on public runners.
+    runs-on: [self-hosted, gpu]
+    if: ${{ vars.ENABLE_GPU_TESTS == 'true' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies (CUDA wheel)
+        run: |
+          pip install -r requirements-dev.txt
+          pip install torch==2.1.2+cu121 \
+            --index-url https://download.pytorch.org/whl/cu121
+
+      - name: Compile proto files
+        run: |
+          python -m grpc_tools.protoc \
+            -I gps_agent_pkg/proto \
+            --python_out=python/gps/proto \
+            gps_agent_pkg/proto/gps.proto
+          touch python/gps/proto/__init__.py
+
+      - name: Run GPU tests
+        run: |
+          pytest python/tests \
+            -m "gpu" \
+            --timeout=120 \
+            -v
+
+  # =========================================================================
+  # 4. Linting (ruff + mypy)
   # =========================================================================
   lint:
     name: Lint

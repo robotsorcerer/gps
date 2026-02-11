@@ -3,6 +3,7 @@
 # sends the raw bytes here; the C++ side calls torch::jit::load() from a
 # std::istringstream.
 string model_bytes     # TorchScript model serialised to a byte string
+string torch_version   # torch.__version__ from the Python exporter (e.g. "2.1.2+cu121")
 float32[] bias         # Observation normalisation bias  (length dO)
 float32[] scale        # Observation normalisation scale (length dO*dO, row-major)
 float32[] noise        # Pre-sampled Gaussian noise, shape [T * dU], row-major

@@ -196,8 +196,10 @@ def test_concurrent_prob_calls_thread_safe(trained_opt):
 def test_repeated_inferences_no_memory_leak():
     """
     Running 1000 act() calls must not cause unbounded tensor allocation.
-    PyTorch should not accumulate computation graph nodes during inference.
+    Tracks RSS (resident set size) on CPU via psutil; GPU memory separately
+    in test_gpu_inference_no_memory_growth.
     """
+    import psutil, os
     opt = _make_opt(iters=2)
     _train_once(opt, N=2, T=3)
 
@@ -206,20 +208,67 @@ def test_repeated_inferences_no_memory_leak():
     obs = rng.standard_normal(dO).astype(np.float32)
     noise = rng.standard_normal(dU).astype(np.float32)
 
-    # Warm up
-    for _ in range(10):
+    proc = psutil.Process(os.getpid())
+
+    # Warm up — let allocators stabilise before measuring.
+    for _ in range(20):
         opt.policy.act(None, obs, 0, noise)
 
-    before = torch.cuda.memory_allocated() if torch.cuda.is_available() else 0
+    rss_before_mb = proc.memory_info().rss / 1e6
 
     for _ in range(1000):
         opt.policy.act(None, obs, 0, noise)
 
-    after = torch.cuda.memory_allocated() if torch.cuda.is_available() else 0
+    rss_after_mb = proc.memory_info().rss / 1e6
+    delta_mb = rss_after_mb - rss_before_mb
 
-    # On CPU this is always 0; on GPU the delta should be negligible.
-    delta_mb = (after - before) / 1e6
-    assert delta_mb < 10.0, f"GPU memory grew by {delta_mb:.1f}MB over 1000 inferences"
+    assert delta_mb < 50.0, (
+        f"Process RSS grew by {delta_mb:.1f} MB over 1000 inferences — "
+        "possible tensor accumulation (threshold: 50 MB)"
+    )
+
+
+@pytest.mark.gpu
+def test_gpu_inference_no_memory_growth():
+    """
+    CUDA-specific: 1000 act() calls on a GPU-placed model must not grow
+    device memory beyond 10 MB.  Skipped when no CUDA device is available.
+    """
+    if not torch.cuda.is_available():
+        pytest.skip("No CUDA device available — skipping GPU memory test")
+
+    opt = _make_opt(iters=2)
+    # Force GPU placement by overriding use_cuda and _device directly.
+    opt.use_cuda = True
+    opt._device = torch.device("cuda:0")
+    opt._net = opt._net.to(opt._device)
+    opt.policy.with_gpu = True
+    _train_once(opt, N=2, T=3)
+
+    rng = np.random.default_rng(42)
+    dO, dU = opt._dO, opt._dU
+    obs = rng.standard_normal(dO).astype(np.float32)
+    noise = rng.standard_normal(dU).astype(np.float32)
+
+    # Warm up
+    for _ in range(20):
+        opt.policy.act(None, obs, 0, noise)
+
+    torch.cuda.synchronize()
+    torch.cuda.reset_peak_memory_stats()
+    before_mb = torch.cuda.memory_allocated() / 1e6
+
+    for _ in range(1000):
+        opt.policy.act(None, obs, 0, noise)
+
+    torch.cuda.synchronize()
+    after_mb = torch.cuda.memory_allocated() / 1e6
+    delta_mb = after_mb - before_mb
+
+    assert delta_mb < 10.0, (
+        f"GPU memory grew by {delta_mb:.1f} MB over 1000 inferences — "
+        "possible tensor accumulation (threshold: 10 MB)"
+    )
 
 
 # ===========================================================================
