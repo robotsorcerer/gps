@@ -1,10 +1,11 @@
 """ This file defines the base algorithm class. """
+from __future__ import annotations
 
 import abc
 import copy
 import logging
-
 import random
+
 import numpy as np
 
 from gps.algorithm.config import ALG
@@ -18,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 class Algorithm(abc.ABC):
     """ Algorithm superclass. """
 
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: dict) -> None:
         config = copy.deepcopy(ALG) #cost is none here
         config.update(hyperparams)  #cost becomes a dict
         self._hyperparams = config
@@ -71,7 +72,7 @@ class Algorithm(abc.ABC):
         self.traj_opt = hyperparams['traj_opt']['type'](
             hyperparams['traj_opt']
         )
-        if type(hyperparams['cost']) == list: #see config.py
+        if isinstance(hyperparams['cost'], list): #see config.py
             self.cost = [
                 hyperparams['cost'][i]['type'](hyperparams['cost'][i])  #cost is a list of CostSum
                 for i in range(self.M)
@@ -84,17 +85,17 @@ class Algorithm(abc.ABC):
         self.base_kl_step = self._hyperparams['kl_step']
 
     @abc.abstractmethod
-    def iteration(self, sample_list):
+    def iteration(self, sample_list: list) -> None:
         """ Run iteration of the algorithm. """
         raise NotImplementedError("Must be implemented in subclass")
 
     @abc.abstractmethod
-    def iteration_cl(self, sample_lists_prot, sample_list):
+    def iteration_cl(self, sample_lists_prot: list, sample_list: list) -> None:
         """ Run iteration of the algorithm. """
         raise NotImplementedError("Must be implemented in subclass")
 
     @abc.abstractmethod
-    def iteration_idg(self, sample_lists_prot, sample_list):
+    def iteration_idg(self, sample_lists_prot: list, sample_list: list) -> None:
         """ Run iteration of the algorithm. """
         raise NotImplementedError("Must be implemented in subclass")
 

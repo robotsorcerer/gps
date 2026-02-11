@@ -1,8 +1,14 @@
 """ Initializations for linear Gaussian controllers. """
+from __future__ import annotations
+
 import copy
+import logging
+
 import numpy as np
 from numpy.linalg import LinAlgError
 import scipy as sp
+
+LOGGER = logging.getLogger(__name__)
 
 from gps.algorithm.dynamics.dynamics_utils import guess_dynamics, guess_dynamics_robust
 from gps.algorithm.policy.lin_gauss_policy import LinearGaussianPolicy, LinearGaussianPolicyRobust

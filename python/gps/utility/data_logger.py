@@ -1,12 +1,15 @@
 """ This file defines the data logger. """
+from __future__ import annotations
+
 import logging
 import pickle
+from typing import Any
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-class DataLogger(object):
+class DataLogger:
     """
     This class pickles data into files and unpickles data from files.
     TODO: Handle logging text to terminal, GUI text, and/or log file at
@@ -14,15 +17,13 @@ class DataLogger(object):
     TODO: Handle logging data to terminal, GUI text/plots, and/or data
           files.
     """
-    def __init__(self):
-        pass
 
-    def pickle(self, filename, data):
+    def pickle(self, filename: str, data: Any) -> None:
         """ Pickle data into file specified by filename. """
         with open(filename, 'wb') as f:
             pickle.dump(data, f)
 
-    def unpickle(self, filename):
+    def unpickle(self, filename: str) -> Any | None:
         """ Unpickle data from file specified by filename. """
         try:
             with open(filename, 'rb') as f:

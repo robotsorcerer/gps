@@ -1,28 +1,30 @@
+from __future__ import annotations
+
 import matplotlib as mpl
 mpl.use('Qt5Agg')
 
+import argparse
+import copy
+import importlib.util
+import logging
 import os
 import sys
-import importlib.util
-import copy
-import time
-import os.path
-import logging
-import argparse
 import threading
+import time
 import traceback
-
+from pathlib import Path
 from random import shuffle
 
 # Add gps/python to path so that imports work.
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(str(Path(__file__).parent.parent))
 from gps.gui.gps_training_gui import GPSTrainingGUI
 from gps.utility.data_logger import DataLogger
 from gps.sample.sample_list import SampleList
 
-class GPSMain(object):
+class GPSMain:
     """ Main class to run algorithms and experiments. """
-    def __init__(self, config, closeloop, robust, test=False, quit_on_end=False):
+    def __init__(self, config: dict, closeloop: bool, robust: bool,
+                 test: bool = False, quit_on_end: bool = False) -> None:
         """
         Initialize GPSMain
         Args:
@@ -127,11 +129,11 @@ class GPSMain(object):
             self._end()
 
     def run_cl(self, itr, itr_load=None):
-        protag_algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
+        protag_algorithm_file = f'{self._data_files_dir}algorithm_itr_{itr:02d}.pkl'
         self.protag_algorithm = self.data_logger.unpickle(protag_algorithm_file)
 
         if self.protag_algorithm is None:
-            print("Error: cannot find '%s.'" % protag_algorithm_file)
+            print(f"Error: cannot find '{protag_algorithm_file}'.")
             os._exit(1)
 
         try:
@@ -139,8 +141,8 @@ class GPSMain(object):
             itr_start, itr_load = 1, 40
             # self._initialize(itr_load)
 
-            self.protag_traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
-                ('traj_sample_itr_%02d.pkl' % itr)) # we don't need this.
+            self.protag_traj_sample_lists = self.data_logger.unpickle(
+                f'{self._data_files_dir}traj_sample_itr_{itr:02d}.pkl') # we don't need this.
 
             for itr in range(itr_start, self._hyperparams['iterations']):
                 self.closeloop = True
@@ -184,24 +186,24 @@ class GPSMain(object):
         Returns: None
         """
         # print('itr: ', itr) # is 41
-        protag_algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
+        protag_algorithm_file = f'{self._data_files_dir}algorithm_itr_{itr:02d}.pkl'
         self.protag_algorithm = self.data_logger.unpickle(protag_algorithm_file)
 
         if self.protag_algorithm is None:
-            print("Error: cannot find '%s.'" % protag_algorithm_file)
+            print(f"Error: cannot find '{protag_algorithm_file}'.")
             os._exit(1)
 
-        algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr
+        algorithm_file = f'{self._data_files_dir}algorithm_itr_{itr:02d}.pkl'
         self.algorithm = self.data_logger.unpickle(algorithm_file)
         if self.algorithm is None:
-            print("Error: cannot find '%s.'" % algorithm_file)
+            print(f"Error: cannot find '{algorithm_file}'.")
             os._exit(1) # called instead of sys.exit(), since t
-        traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
-            ('traj_sample_itr_%02d.pkl' % itr))
+        traj_sample_lists = self.data_logger.unpickle(
+            f'{self._data_files_dir}traj_sample_itr_{itr:02d}.pkl')
 
         pol_sample_lists = self._take_policy_samples(N)
         self.data_logger.pickle(
-            self._data_files_dir + ('pol_sample_itr_%02d.pkl' % itr),
+            f'{self._data_files_dir}pol_sample_itr_{itr:02d}.pkl',
             copy.copy(pol_sample_lists)
         )
 
@@ -212,9 +214,9 @@ class GPSMain(object):
             else:
                 self.gui.update(itr, self.algorithm, self.agent,
                     traj_sample_lists, pol_sample_lists, protag_pol_samples=self.protag_pol_samples)
-            self.gui.set_status_text(('Took %d policy sample(s) from ' +
-                'algorithm state at iteration %d.\n' +
-                'Saved to: data_files/pol_sample_itr_%02d.pkl.\n') % (N, itr, itr))
+            self.gui.set_status_text(
+                f'Took {N} policy sample(s) from algorithm state at iteration {itr}.\n'
+                f'Saved to: data_files/pol_sample_itr_{itr:02d}.pkl.\n')
 
     def _initialize(self, itr_load):
         """
@@ -230,23 +232,23 @@ class GPSMain(object):
                 self.gui.set_status_text('Press \'go\' to begin.')
             return 0
         else:
-            algorithm_file = self._data_files_dir + 'algorithm_itr_%02d.pkl' % itr_load
+            algorithm_file = f'{self._data_files_dir}algorithm_itr_{itr_load:02d}.pkl'
             self.algorithm = self.data_logger.unpickle(algorithm_file)
             if self.algorithm is None:
-                print("Error: cannot find '%s.'" % algorithm_file)
+                print(f"Error: cannot find '{algorithm_file}'.")
                 os._exit(1) # called instead of sys.exit(), since this is in a thread
 
             if self.gui:
-                traj_sample_lists = self.data_logger.unpickle(self._data_files_dir +
-                    ('traj_sample_itr_%02d.pkl' % itr_load))
+                traj_sample_lists = self.data_logger.unpickle(
+                    f'{self._data_files_dir}traj_sample_itr_{itr_load:02d}.pkl')
                 if self.algorithm.cur[0].pol_info:
-                    pol_sample_lists = self.data_logger.unpickle(self._data_files_dir +
-                        ('pol_sample_itr_%02d.pkl' % itr_load))
+                    pol_sample_lists = self.data_logger.unpickle(
+                        f'{self._data_files_dir}pol_sample_itr_{itr_load:02d}.pkl')
                 else:
                     pol_sample_lists = None
                 self.gui.set_status_text(
-                    ('Resuming training from algorithm state at iteration %d.\n' +
-                    'Press \'go\' to begin.') % itr_load)
+                    f"Resuming training from algorithm state at iteration {itr_load}.\n"
+                    f"Press 'go' to begin.")
             return itr_load + 1
 
     def _take_sample(self, itr, cond, i):
@@ -292,8 +294,7 @@ class GPSMain(object):
                     self.gui.process_mode()  # Complete request.
 
                 self.gui.set_status_text(
-                    'Sampling: iteration %d, condition %d, sample %d.' %
-                    (itr, cond, i)
+                    f'Sampling: iteration {itr}, condition {cond}, sample {i}.'
                 )
 
                 #take adversary samples if we are in close loop
@@ -441,21 +442,21 @@ class GPSMain(object):
                 self.gui.update(itr, self.algorithm, self.agent,
                                 traj_sample_lists, pol_sample_lists)
             self.gui.save_figure(
-                self._data_files_dir + ('figure_itr_%02d.png' % itr)
+                f'{self._data_files_dir}figure_itr_{itr:02d}.png'
             )
         if 'no_sample_logging' in self._hyperparams['common']:
             return
         self.data_logger.pickle(
-            self._data_files_dir + ('algorithm_itr_%02d.pkl' % itr),
+            f'{self._data_files_dir}algorithm_itr_{itr:02d}.pkl',
             copy.copy(self.algorithm)
         )
         self.data_logger.pickle(
-            self._data_files_dir + ('traj_sample_itr_%02d.pkl' % itr),
+            f'{self._data_files_dir}traj_sample_itr_{itr:02d}.pkl',
             copy.copy(traj_sample_lists)
         )
         if pol_sample_lists:
             self.data_logger.pickle(
-                self._data_files_dir + ('pol_sample_itr_%02d.pkl' % itr),
+                f'{self._data_files_dir}pol_sample_itr_{itr:02d}.pkl',
                 copy.copy(pol_sample_lists)
             )
 
@@ -498,9 +499,8 @@ def main():
     run_cl_policy       = args.closeloop
 
     from gps import __file__ as gps_filepath
-    gps_filepath = os.path.abspath(gps_filepath)
-    gps_dir = '/'.join(str.split(gps_filepath, '/')[:-3]) + '/'
-    exp_dir = gps_dir + 'experiments/' + exp_name + '/'
+    gps_dir = Path(gps_filepath).resolve().parents[2]
+    exp_dir = str(gps_dir / 'experiments' / exp_name) + '/'
     hyperparams_file = exp_dir + 'hyperparams.py'
 
     print(args)
@@ -514,8 +514,7 @@ def main():
         from shutil import copy
 
         if os.path.exists(exp_dir):
-            sys.exit("Experiment '%s' already exists.\nPlease remove '%s'." %
-                     (exp_name, exp_dir))
+            sys.exit(f"Experiment '{exp_name}' already exists.\nPlease remove '{exp_dir}'.")
         os.makedirs(exp_dir)
 
         prev_exp_file = '.previous_experiment'
@@ -526,22 +525,20 @@ def main():
             copy(prev_exp_dir + 'hyperparams.py', exp_dir)
             if os.path.exists(prev_exp_dir + 'targets.npz'):
                 copy(prev_exp_dir + 'targets.npz', exp_dir)
-        except IOError as e:
+        except IOError:
             with open(hyperparams_file, 'w') as f:
                 f.write('# To get started, copy over hyperparams from another experiment.\n' +
                         '# Visit rll.berkeley.edu/gps/hyperparams.html for documentation.')
         with open(prev_exp_file, 'w') as f:
             f.write(exp_dir)
 
-        exit_msg = ("Experiment '%s' created.\nhyperparams file: '%s'" %
-                    (exp_name, hyperparams_file))
+        exit_msg = f"Experiment '{exp_name}' created.\nhyperparams file: '{hyperparams_file}'"
         if prev_exp_dir and os.path.exists(prev_exp_dir):
-            exit_msg += "\ncopied from     : '%shyperparams.py'" % prev_exp_dir
+            exit_msg += f"\ncopied from     : '{prev_exp_dir}hyperparams.py'"
         sys.exit(exit_msg)
 
     if not os.path.exists(hyperparams_file):
-        sys.exit("Experiment '%s' does not exist.\nDid you create '%s'?" %
-                 (exp_name, hyperparams_file))
+        sys.exit(f"Experiment '{exp_name}' does not exist.\nDid you create '{hyperparams_file}'?")
 
     spec = importlib.util.spec_from_file_location('hyperparams', hyperparams_file)
     hyperparams = importlib.util.module_from_spec(spec)

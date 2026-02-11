@@ -1,10 +1,9 @@
 """ Default configuration for policy optimization. """
-try:
-    from gps.algorithm.policy_opt.policy_opt_utils import construct_fc_network
-except ImportError:
-    construct_fc_network = None
+from __future__ import annotations
 
-import os
+# policy_opt_utils was part of the Caffe backend and is now in deprecated_caffe/.
+# The construct_fc_network factory is not used by the PyTorch backend.
+construct_fc_network = None
 
 # config options shared by both caffe and tf.
 GENERIC_CONFIG = {
@@ -21,37 +20,31 @@ GENERIC_CONFIG = {
     'weight_decay': 0.005,  # Weight decay.
     'solver_type': 'Adam',  # Solver type (e.g. 'SGD', 'Adam', etc.).
     # set gpu usage.
-    'use_gpu': 0,  # Whether or not to use the GPU for caffe training.
+    'use_gpu': 0,  # Whether or not to use the GPU for training.
     'gpu_id': 0,
     'random_seed': 1,
 }
 
 
-POLICY_OPT_CAFFE = {
-    # Other hyperparameters.
-    'network_model': construct_fc_network,  # Either a filename string
-                                            # or a function to call to
-                                            # create NetParameter.
-    'network_arch_params': {},  # Arguments to pass to method above.
+# Deprecated — kept for backwards-compat with any pickled configs that
+# reference POLICY_OPT_CAFFE.  The caffe backend has been removed.
+POLICY_OPT_CAFFE: dict = {
+    'network_model': construct_fc_network,
+    'network_arch_params': {},
     'weights_file_prefix': '',
 }
-
 POLICY_OPT_CAFFE.update(GENERIC_CONFIG)
 
 
-POLICY_OPT_TF = {
-    # Other hyperparameters.
+POLICY_OPT_TF: dict = {
     'copy_param_scope': 'conv_params',
     'fc_only_iterations': 0,
 }
-
 POLICY_OPT_TF.update(GENERIC_CONFIG)
 
 
-POLICY_OPT_PYTORCH = {
-    # Other hyperparameters.
+POLICY_OPT_PYTORCH: dict = {
     'copy_param_scope': 'conv_params',
     'fc_only_iterations': 0,
 }
-
 POLICY_OPT_PYTORCH.update(GENERIC_CONFIG)

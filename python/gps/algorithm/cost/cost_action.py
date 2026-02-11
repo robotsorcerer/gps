@@ -1,5 +1,7 @@
 """ This file defines the torque (action) cost. """
-import copy, os
+from __future__ import annotations
+
+import copy
 import numpy as np
 
 from gps.algorithm.cost.config import COST_ACTION
@@ -15,7 +17,7 @@ class CostAction(Cost):
 
         self._config = config
 
-    def eval(self, sample, **kwargs):
+    def eval(self, sample: object, **kwargs: object) -> tuple:
         """
         Evaluate cost function and derivatives on a sample.
         Args:

@@ -1,12 +1,17 @@
 """ This file defines the base class for the policy. """
+from __future__ import annotations
+
 import abc
+
+import numpy as np
 
 
 class Policy(abc.ABC):
     """ Computes actions from states/observations. """
 
     @abc.abstractmethod
-    def act(self, x, obs, t, noise):
+    def act(self, x: np.ndarray, obs: np.ndarray, t: int,
+            noise: np.ndarray | None) -> np.ndarray:
         """
         Args:
             x: State vector.
@@ -18,7 +23,7 @@ class Policy(abc.ABC):
         """
         raise NotImplementedError("Must be implemented in subclass.")
 
-    def set_meta_data(self, meta):
+    def set_meta_data(self, meta: object) -> None:
         """
         Set meta data for policy (e.g., domain image, multi modal observation sizes)
         Args:

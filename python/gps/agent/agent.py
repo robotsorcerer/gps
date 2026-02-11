@@ -1,6 +1,11 @@
 """ This file defines the base agent class. """
+from __future__ import annotations
+
 import abc
 import copy
+from typing import Any
+
+import numpy as np
 
 from gps.agent.config import AGENT
 from gps.proto.gps_pb2 import ACTION
@@ -13,7 +18,7 @@ class Agent(abc.ABC):
     collect samples.
     """
 
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: dict) -> None:
         config = copy.deepcopy(AGENT)
         config.update(hyperparams)
         self._hyperparams = config
@@ -63,18 +68,20 @@ class Agent(abc.ABC):
                                                    self._meta_idx)}
 
     @abc.abstractmethod
-    def sample(self, policy, condition, verbose=True, save=True, noisy=True):
+    def sample(self, policy: Any, condition: int, verbose: bool = True,
+               save: bool = True, noisy: bool = True) -> Any:
         """
         Draw a sample from the environment, using the specified policy
         and under the specified condition, with or without noise.
         """
         raise NotImplementedError("Must be implemented in subclass.")
 
-    def reset(self, condition):
+    def reset(self, condition: int) -> None:
         """ Reset environment to the specified condition. """
         pass  # May be overridden in subclass.
 
-    def get_samples(self, condition, start=0, end=None):
+    def get_samples(self, condition: int, start: int = 0,
+                    end: int | None = None) -> SampleList:
         """
         Return the requested samples based on the start and end indices.
         Args:
@@ -84,7 +91,8 @@ class Agent(abc.ABC):
         return (SampleList(self._samples[condition][start:]) if end is None
                 else SampleList(self._samples[condition][start:end]))
 
-    def get_samples_adv(self, condition, start=0, end=None):
+    def get_samples_adv(self, condition: int, start: int = 0,
+                        end: int | None = None) -> SampleList:
         """
         Return the requested samples based on the start and end indices.
         Args:
@@ -94,7 +102,7 @@ class Agent(abc.ABC):
         return (SampleList(self._samples[condition][start:], self._samples_adv[condition][start:]) if end is None
                 else SampleList(self._samples[condition][start:end], self._samples_adv[condition][start:end]))
 
-    def clear_samples(self, condition=None):
+    def clear_samples(self, condition: int | None = None) -> None:
         """
         Reset the samples for a given condition, defaulting to all conditions.
         Args:
@@ -105,7 +113,7 @@ class Agent(abc.ABC):
         else:
             self._samples[condition] = []
 
-    def clear_samples_adv(self, condition=None):
+    def clear_samples_adv(self, condition: int | None = None) -> None:
         """
         Reset the samples for a given condition, defaulting to all conditions.
         Args:
@@ -116,11 +124,11 @@ class Agent(abc.ABC):
         else:
             self._samples_adv[condition] = []
 
-    def delete_last_sample(self, condition):
+    def delete_last_sample(self, condition: int) -> None:
         """ Delete the last sample from the specified condition. """
         self._samples[condition].pop()
 
-    def get_idx_x(self, sensor_name):
+    def get_idx_x(self, sensor_name: Any) -> list[int]:
         """
         Return the indices corresponding to a certain state sensor name.
         Args:
@@ -128,7 +136,7 @@ class Agent(abc.ABC):
         """
         return self._x_data_idx[sensor_name]
 
-    def get_idx_obs(self, sensor_name):
+    def get_idx_obs(self, sensor_name: Any) -> list[int]:
         """
         Return the indices corresponding to a certain observation sensor name.
         Args:
@@ -136,8 +144,8 @@ class Agent(abc.ABC):
         """
         return self._obs_data_idx[sensor_name]
 
-    def pack_data_obs(self, existing_mat, data_to_insert, data_types,
-                      axes=None):
+    def pack_data_obs(self, existing_mat: np.ndarray, data_to_insert: np.ndarray,
+                      data_types: list, axes: list[int] | None = None) -> None:
         """
         Update the observation matrix with new data.
         Args:
@@ -154,8 +162,7 @@ class Agent(abc.ABC):
             # Make sure number of sensors and axes are consistent.
             if num_sensor != len(axes):
                 raise ValueError(
-                    'Length of sensors (%d) must equal length of axes (%d)',
-                    num_sensor, len(axes)
+                    f'Length of sensors ({num_sensor}) must equal length of axes ({len(axes)})'
                 )
 
         # Shape checks.
@@ -163,12 +170,12 @@ class Agent(abc.ABC):
         for i in range(num_sensor):
             # Make sure to slice along X.
             if existing_mat.shape[axes[i]] != self.dO:
-                raise ValueError('Axes must be along an dX=%d dimensional axis',
-                                 self.dO)
+                raise ValueError(
+                    f'Axes must be along a dO={self.dO} dimensional axis')
             insert_shape[axes[i]] = len(self._obs_data_idx[data_types[i]])
         if tuple(insert_shape) != data_to_insert.shape:
-            raise ValueError('Data has shape %s. Expected %s',
-                             data_to_insert.shape, tuple(insert_shape))
+            raise ValueError(
+                f'Data has shape {data_to_insert.shape}. Expected {tuple(insert_shape)}')
 
         # Actually perform the slice.
         index = [slice(None) for _ in range(len(existing_mat.shape))]
@@ -195,8 +202,7 @@ class Agent(abc.ABC):
             # Make sure number of sensors and axes are consistent.
             if num_sensor != len(axes):
                 raise ValueError(
-                    'Length of sensors (%d) must equal length of axes (%d)',
-                    num_sensor, len(axes)
+                    f'Length of sensors ({num_sensor}) must equal length of axes ({len(axes)})'
                 )
 
         # Shape checks.
@@ -204,12 +210,12 @@ class Agent(abc.ABC):
         for i in range(num_sensor):
             # Make sure to slice along X.
             if existing_mat.shape[axes[i]] != self.dM:
-                raise ValueError('Axes must be along an dX=%d dimensional axis',
-                                 self.dM)
+                raise ValueError(
+                    f'Axes must be along a dM={self.dM} dimensional axis')
             insert_shape[axes[i]] = len(self._meta_data_idx[data_types[i]])
         if tuple(insert_shape) != data_to_insert.shape:
-            raise ValueError('Data has shape %s. Expected %s',
-                             data_to_insert.shape, tuple(insert_shape))
+            raise ValueError(
+                f'Data has shape {data_to_insert.shape}. Expected {tuple(insert_shape)}')
 
         # Actually perform the slice.
         index = [slice(None) for _ in range(len(existing_mat.shape))]
@@ -235,8 +241,7 @@ class Agent(abc.ABC):
             # Make sure number of sensors and axes are consistent.
             if num_sensor != len(axes):
                 raise ValueError(
-                    'Length of sensors (%d) must equal length of axes (%d)',
-                    num_sensor, len(axes)
+                    f'Length of sensors ({num_sensor}) must equal length of axes ({len(axes)})'
                 )
 
         # Shape checks.
@@ -244,12 +249,12 @@ class Agent(abc.ABC):
         for i in range(num_sensor):
             # Make sure to slice along X.
             if existing_mat.shape[axes[i]] != self.dX:
-                raise ValueError('Axes must be along an dX=%d dimensional axis',
-                                 self.dX)
+                raise ValueError(
+                    f'Axes must be along a dX={self.dX} dimensional axis')
             insert_shape[axes[i]] = len(self._x_data_idx[data_types[i]])
         if tuple(insert_shape) != data_to_insert.shape:
-            raise ValueError('Data has shape %s. Expected %s',
-                             data_to_insert.shape, tuple(insert_shape))
+            raise ValueError(
+                f'Data has shape {data_to_insert.shape}. Expected {tuple(insert_shape)}')
 
         # Actually perform the slice.
         index = [slice(None) for _ in range(len(existing_mat.shape))]
@@ -274,16 +279,15 @@ class Agent(abc.ABC):
             # Make sure number of sensors and axes are consistent.
             if num_sensor != len(axes):
                 raise ValueError(
-                    'Length of sensors (%d) must equal length of axes (%d)',
-                    num_sensor, len(axes)
+                    f'Length of sensors ({num_sensor}) must equal length of axes ({len(axes)})'
                 )
 
         # Shape checks.
         for i in range(num_sensor):
             # Make sure to slice along X.
             if existing_mat.shape[axes[i]] != self.dX:
-                raise ValueError('Axes must be along an dX=%d dimensional axis',
-                                 self.dX)
+                raise ValueError(
+                    f'Axes must be along a dX={self.dX} dimensional axis')
 
         # Actually perform the slice.
         index = [slice(None) for _ in range(len(existing_mat.shape))]
