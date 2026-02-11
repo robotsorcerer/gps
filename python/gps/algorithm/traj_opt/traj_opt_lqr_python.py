@@ -1,8 +1,10 @@
 """ This file defines code for iLQG-based trajectory optimization. """
 import logging
 import copy
+from typing import Dict, Any, Tuple
 
 import numpy as np
+import numpy.typing as npt
 from numpy.linalg import LinAlgError
 import scipy as sp
 
@@ -23,18 +25,18 @@ LOGGER = logging.getLogger(__name__)
 
 class TrajOptLQRPython(TrajOpt):
     """ LQR trajectory optimization, Python implementation. """
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: Dict[str, Any]) -> None:
         config = copy.deepcopy(TRAJ_OPT_LQR)
         config.update(hyperparams)
 
         TrajOpt.__init__(self, config)
 
-        self.cons_per_step = config['cons_per_step'] #enforce kl distrib per time step
-        self._use_prev_distr = config['use_prev_distr']
-        self._update_in_bwd_pass = config['update_in_bwd_pass']
+        self.cons_per_step: bool = config['cons_per_step'] #enforce kl distrib per time step
+        self._use_prev_distr: bool = config['use_prev_distr']
+        self._update_in_bwd_pass: bool = config['update_in_bwd_pass']
 
     # TODO - Add arg and return spec on this function.
-    def update(self, m, algorithm):
+    def update(self, m: int, algorithm: Any) -> Tuple[Any, float]:
         """ Run dual gradient decent to optimize trajectories. """
         T = algorithm.T
         eta = algorithm.cur[m].eta

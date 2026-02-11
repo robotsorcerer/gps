@@ -1,8 +1,10 @@
 """ This file defines the MD-based GPS algorithm. """
 import copy
 import logging
+from typing import Dict, Any, List
 
 import numpy as np
+import numpy.typing as npt
 import scipy as sp
 
 from gps.algorithm.algorithm import Algorithm
@@ -19,11 +21,11 @@ class AlgorithmMDGPS(Algorithm):
     Sample-based joint policy learning and trajectory optimization with
     (approximate) mirror descent guided policy search algorithm.
     """
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: Dict[str, Any]) -> None:
         config = copy.deepcopy(ALG_MDGPS)
         config.update(hyperparams)
         Algorithm.__init__(self, config)
-        self.itr = 0
+        self.itr: int = 0
 
         policy_prior = self._hyperparams['policy_prior'] #self._hyperparams is from algorithm.py
         for m in range(self.M):  #self.M= # conditions
@@ -36,14 +38,14 @@ class AlgorithmMDGPS(Algorithm):
             self.cur[m].pol_info.policy_prior = \
                     policy_prior['type'](policy_prior) # in hyperparams = PolicyPriorGMM
 
-        self.policy_opt = self._hyperparams['policy_opt']['type']( #will be PolicyOptCaffe
+        self.policy_opt: Any = self._hyperparams['policy_opt']['type']( #will be PolicyOptCaffe
             self._hyperparams['policy_opt'], self.dO, self.dU, self.dV #dO and dX are from hyperparams
         )
         # print(self._hyperparams.keys())
-        self._dists_filename = self._hyperparams['cost']['dists_filename']
-        self._points_filename = self._hyperparams['cost']['points_filename']
+        self._dists_filename: str = self._hyperparams['cost']['dists_filename']
+        self._points_filename: str = self._hyperparams['cost']['points_filename']
 
-    def iteration(self, sample_lists):
+    def iteration(self, sample_lists: List[SampleList]) -> None:
         """
             Run iteration of MDGPS-based guided policy search.
 
