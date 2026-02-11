@@ -11,11 +11,6 @@ Controller::Controller()
 {
 }
 
-// Destructor.
-Controller::~Controller()
-{
-}
-
 void Controller::configure_controller(OptionsMap &options)
 {
 }
