@@ -1,4 +1,6 @@
 """ This file defines the MDGPS with PI2 + LQR-based trajectory optimization method. """
+from __future__ import division, print_function
+
 import copy
 import logging
 import numpy as np

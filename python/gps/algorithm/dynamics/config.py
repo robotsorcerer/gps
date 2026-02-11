@@ -2,6 +2,8 @@
 
 
 # DynamicsPriorGMM
+from __future__ import division, print_function
+
 DYN_PRIOR_GMM = {
     'min_samples_per_cluster': 20,
     'max_clusters': 100,

@@ -1,4 +1,6 @@
 """ This file defines a GMM prior for policy linearization. """
+from __future__ import division, print_function
+
 import copy
 import logging
 

@@ -1,4 +1,6 @@
 """ This file defines the sample class. """
+from __future__ import division, print_function
+
 import numpy as np
 from gps.proto.gps_pb2 import ACTION, ACTION_V
 

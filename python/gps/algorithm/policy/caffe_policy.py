@@ -1,4 +1,6 @@
 """ This file defines a neural network policy implemented in Caffe. """
+from __future__ import division, print_function
+
 import tempfile
 
 import numpy as np

@@ -1,4 +1,6 @@
 """ This file defines code for iLQG-based trajectory optimization. """
+from __future__ import division, print_function
+
 import logging
 import copy
 

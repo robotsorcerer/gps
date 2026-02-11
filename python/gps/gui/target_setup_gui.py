@@ -16,6 +16,8 @@ Image Visualizer            displays images received from a rostopic
 
 For more detailed documentation, visit: rll.berkeley.edu/gps/gui
 """
+from __future__ import division, print_function
+
 import os
 import subprocess
 import signal

@@ -1,4 +1,6 @@
 """ This file defines an agent for the MuJoCo simulator environment. """
+from __future__ import division, print_function
+
 import copy
 
 import numpy as np

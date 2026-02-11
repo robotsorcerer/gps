@@ -5,6 +5,8 @@ The Realtime Plotter expects to be constantly given values to plot in realtime.
 It assumes the values are an array and plots different indices at different
 colors according to the spectral colormap.
 """
+from __future__ import division, print_function
+
 import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.gridspec as gridspec

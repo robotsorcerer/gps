@@ -1,4 +1,6 @@
 """ Initializations for linear Gaussian controllers. """
+from __future__ import division, print_function
+
 import copy
 import numpy as np
 import numpy.linalg as LinAlgError

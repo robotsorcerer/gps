@@ -3,6 +3,8 @@
 
 # Initial Linear Gaussian Trajectory Distributions, PD-based initializer.
 # Note, PD is the default initializer type.
+from __future__ import division, print_function
+
 INIT_LG_PD = {
     'init_var': 10.0,
     'pos_gains': 10.0, # position gains

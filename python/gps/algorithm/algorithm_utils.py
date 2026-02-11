@@ -1,4 +1,6 @@
 """ This file defines utility classes and functions for algorithms. """
+from __future__ import division, print_function
+
 import numpy as np
 
 from gps.utility.general_utils import BundleType

@@ -1,4 +1,6 @@
 """ Default configuration for policy optimization. """
+from __future__ import division, print_function
+
 try:
     from gps.algorithm.policy_opt.policy_opt_utils import construct_fc_network
 except ImportError:

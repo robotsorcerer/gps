@@ -1,4 +1,6 @@
 """ This file defines utilities for trajectory optimization. """
+from __future__ import division, print_function
+
 import abc
 import logging
 

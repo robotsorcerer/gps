@@ -1,4 +1,6 @@
 """ This file defines the torque (action) cost. """
+from __future__ import division, print_function
+
 import copy, os
 import numpy as np
 

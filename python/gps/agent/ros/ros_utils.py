@@ -1,4 +1,6 @@
 """ This file defines utilities for the ROS agents. """
+from __future__ import division, print_function
+
 import numpy as np
 
 import rospy

@@ -1,4 +1,6 @@
 """ This file interfaces to C++ iLQG-based trajectory optimization. """
+from __future__ import division, print_function
+
 from gps.algorithm.traj_opt.traj_opt import TrajOpt
 
 

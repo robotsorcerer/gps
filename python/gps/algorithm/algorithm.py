@@ -1,5 +1,7 @@
 """ This file defines the base algorithm class. """
 
+from __future__ import division, print_function
+
 import abc
 import copy
 import logging

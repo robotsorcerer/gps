@@ -1,5 +1,7 @@
 """ This file provides an example tensorflow network used to define a policy. """
 
+from __future__ import division, print_function
+
 import tensorflow as tf
 from gps.algorithm.policy_opt.tf_utils import TfMap
 import numpy as np

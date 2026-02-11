@@ -1,4 +1,6 @@
 """ This file defines the base trajectory optimization class. """
+from __future__ import division, print_function
+
 import abc
 
 

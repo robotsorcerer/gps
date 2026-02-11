@@ -1,4 +1,6 @@
 """ This file defines a Gaussian mixture model class. """
+from __future__ import division, print_function
+
 import logging
 
 import numpy as np

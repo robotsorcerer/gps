@@ -2,6 +2,8 @@
 
 
 # TrajOptLQRPython
+from __future__ import division, print_function
+
 TRAJ_OPT_LQR = {
     # Dual variable updates for non-PD Q-function.
     'del0': 1e-4,
