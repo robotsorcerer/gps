@@ -1,0 +1,110 @@
+# Dockerfile for Testing with GPU Support
+# Purpose: Full integration testing with CUDA support
+
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+# Install Python 3.11
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update
+
+# Install dependencies
+RUN apt-get install -y \
+    python3.11 \
+    python3.11-dev \
+    python3-pip \
+    build-essential \
+    cmake \
+    git \
+    wget \
+    curl \
+    ninja-build \
+    ccache \
+    clang-14 \
+    clang-tidy-14 \
+    cppcheck \
+    valgrind \
+    gdb \
+    libboost-all-dev \
+    libeigen3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Python 3.11 as default
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+
+# Install ROS Noetic
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list' && \
+    apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
+    apt-get update && \
+    apt-get install -y \
+    ros-noetic-desktop-full \
+    python3-catkin-tools \
+    python3-rosdep \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages (pinned versions)
+COPY docker/requirements-test.txt /tmp/
+RUN python3.11 -m pip install --upgrade pip && \
+    python3.11 -m pip install -r /tmp/requirements-test.txt
+
+# Install testing tools
+RUN python3.11 -m pip install \
+    pytest==7.4.0 \
+    pytest-cov==4.1.0 \
+    pytest-xdist==3.3.1 \
+    pytest-timeout==2.1.0 \
+    pytest-benchmark==4.0.0 \
+    hypothesis==6.82.0 \
+    locust==2.15.1 \
+    memory-profiler==0.61.0 \
+    line-profiler==4.0.3 \
+    pyinstrument==4.5.1
+
+# Install C++ testing tools
+RUN apt-get update && apt-get install -y \
+    libgtest-dev \
+    libgmock-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build and install GTest
+RUN cd /usr/src/gtest && \
+    cmake . && \
+    make && \
+    cp lib/*.a /usr/lib
+
+# Install MuJoCo 3.x
+RUN mkdir -p /root/.mujoco && \
+    cd /tmp && \
+    wget https://github.com/deepmind/mujoco/releases/download/3.1.1/mujoco-3.1.1-linux-x86_64.tar.gz && \
+    tar -xzf mujoco-3.1.1-linux-x86_64.tar.gz -C /root/.mujoco && \
+    rm mujoco-3.1.1-linux-x86_64.tar.gz && \
+    python3.11 -m pip install mujoco==3.1.1
+
+# Set up catkin workspace
+RUN mkdir -p /catkin_ws/src
+WORKDIR /catkin_ws
+
+# Initialize ROS
+RUN rosdep init || true && rosdep update
+RUN echo "source /opt/ros/noetic/setup.bash" >> /root/.bashrc
+
+# Environment variables
+ENV PYTHONPATH=/catkin_ws/src/gps/python:$PYTHONPATH
+ENV GPS_ROOT_DIR=/catkin_ws/src/gps
+ENV MUJOCO_PATH=/root/.mujoco/mujoco-3.1.1
+ENV LD_LIBRARY_PATH=/root/.mujoco/mujoco-3.1.1/lib:$LD_LIBRARY_PATH
+ENV ROS_PYTHON_VERSION=3
+
+# Copy GPS codebase
+COPY . /catkin_ws/src/gps/
+
+# Create test results directory
+RUN mkdir -p /test_results
+
+# Default command runs tests
+CMD ["/bin/bash"]

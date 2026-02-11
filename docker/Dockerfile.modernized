@@ -1,0 +1,115 @@
+# Dockerfile for Python 3.11 + ROS Noetic Modernized Environment
+# Purpose: Run modernized GPS code with full dependencies
+
+FROM osrf/ros:noetic-desktop-full
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Python 3.11 (from deadsnakes PPA for Ubuntu 20.04)
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update
+
+# Install Python 3.11 and development tools
+RUN apt-get install -y \
+    python3.11 \
+    python3.11-dev \
+    python3.11-venv \
+    python3-pip \
+    build-essential \
+    cmake \
+    git \
+    wget \
+    curl \
+    libboost-all-dev \
+    libeigen3-dev \
+    libgl1-mesa-dev \
+    libglu1-mesa-dev \
+    libglfw3-dev \
+    patchelf \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Python 3.11 as default python3
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
+    update-alternatives --set python3 /usr/bin/python3.11
+
+# Upgrade pip for Python 3.11
+RUN python3.11 -m pip install --upgrade pip setuptools wheel
+
+# Install Python dependencies for modernized code
+RUN python3.11 -m pip install \
+    numpy==1.24.3 \
+    scipy==1.11.1 \
+    matplotlib==3.7.2 \
+    scikit-image==0.21.0 \
+    tensorflow==2.15.0 \
+    torch==2.1.0 \
+    torchvision==0.16.0 \
+    protobuf==4.24.3 \
+    opencv-python==4.8.0.76 \
+    visdom==0.2.4 \
+    pytest==7.4.0 \
+    pytest-cov==4.1.0 \
+    pytest-xdist==3.3.1 \
+    mypy==1.5.1 \
+    black==23.7.0 \
+    pylint==2.17.5 \
+    ipython==8.14.0
+
+# Install ROS Python 3 packages
+RUN apt-get update && apt-get install -y \
+    python3-catkin-tools \
+    python3-rosdep \
+    python3-rosinstall \
+    python3-rosinstall-generator \
+    python3-wstool \
+    ros-noetic-cv-bridge \
+    ros-noetic-image-transport \
+    ros-noetic-control-toolbox \
+    ros-noetic-realtime-tools \
+    ros-noetic-pr2-mechanism-model \
+    ros-noetic-pr2-controller-interface \
+    ros-noetic-pr2-controllers-msgs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install MuJoCo 3.x (latest stable)
+RUN mkdir -p /root/.mujoco && \
+    cd /tmp && \
+    wget https://github.com/deepmind/mujoco/releases/download/3.1.1/mujoco-3.1.1-linux-x86_64.tar.gz && \
+    tar -xzf mujoco-3.1.1-linux-x86_64.tar.gz -C /root/.mujoco && \
+    rm mujoco-3.1.1-linux-x86_64.tar.gz
+
+# Install MuJoCo Python bindings
+RUN python3.11 -m pip install mujoco==3.1.1
+
+# Install pybind11 for C++ bindings
+RUN python3.11 -m pip install pybind11[global]==2.11.1
+
+# Set up catkin workspace
+RUN mkdir -p /catkin_ws/src
+WORKDIR /catkin_ws
+
+# Copy GPS codebase
+COPY . /catkin_ws/src/gps/
+
+# Source ROS setup
+RUN echo "source /opt/ros/noetic/setup.bash" >> /root/.bashrc
+
+# Set environment variables
+ENV PYTHONPATH=/catkin_ws/src/gps/python:$PYTHONPATH
+ENV GPS_ROOT_DIR=/catkin_ws/src/gps
+ENV MUJOCO_PATH=/root/.mujoco/mujoco-3.1.1
+ENV LD_LIBRARY_PATH=/root/.mujoco/mujoco-3.1.1/lib:$LD_LIBRARY_PATH
+ENV ROS_PYTHON_VERSION=3
+
+# Initialize rosdep
+RUN rosdep init || true && \
+    rosdep update
+
+# Build workspace (will be done after code is ready)
+# RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && catkin build"
+
+# Default command
+CMD ["/bin/bash"]

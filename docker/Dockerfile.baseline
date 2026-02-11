@@ -1,0 +1,49 @@
+# Dockerfile for Python 2.7 Baseline Environment
+# Purpose: Run original GPS code to generate validation baselines
+
+FROM ubuntu:16.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Python 2.7 and essential packages
+RUN apt-get update && apt-get install -y \
+    python2.7 \
+    python-pip \
+    python-dev \
+    python-numpy \
+    python-scipy \
+    python-matplotlib \
+    build-essential \
+    cmake \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python 2.7 packages
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install \
+    tensorflow==1.15.0 \
+    protobuf==3.6.1 \
+    scikit-image==0.14.5 \
+    visdom==0.1.8.9
+
+# Install MuJoCo 1.31 (original version)
+RUN mkdir -p /root/.mujoco && \
+    cd /root/.mujoco && \
+    wget https://www.roboti.us/download/mjpro131_linux.zip 2>/dev/null || \
+    echo "Note: MuJoCo 1.31 download requires license - please mount manually"
+
+# Set up working directory
+WORKDIR /gps
+
+# Copy GPS codebase
+COPY . /gps/
+
+# Set environment variables
+ENV PYTHONPATH=/gps/python:$PYTHONPATH
+ENV GPS_ROOT_DIR=/gps
+ENV LD_LIBRARY_PATH=/root/.mujoco/mjpro131/bin:$LD_LIBRARY_PATH
+
+# Default command
+CMD ["/bin/bash"]

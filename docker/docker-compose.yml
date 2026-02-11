@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Baseline Python 2.7 environment for validation
+  gps-baseline:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.baseline
+    container_name: gps-baseline
+    volumes:
+      - ../:/gps
+      - baseline-data:/gps/data
+    environment:
+      - PYTHONPATH=/gps/python
+      - GPS_ROOT_DIR=/gps
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+
+  # Modernized Python 3.11 + ROS Noetic environment
+  gps-modernized:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.modernized
+    container_name: gps-modernized
+    volumes:
+      - ../:/catkin_ws/src/gps
+      - modernized-data:/catkin_ws/data
+    environment:
+      - PYTHONPATH=/catkin_ws/src/gps/python
+      - GPS_ROOT_DIR=/catkin_ws/src/gps
+      - ROS_PYTHON_VERSION=3
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+    depends_on:
+      - roscore
+
+  # ROS master node
+  roscore:
+    image: osrf/ros:noetic-desktop-full
+    container_name: gps-roscore
+    command: roscore
+    networks:
+      - ros-network
+
+  # Testing environment with GPU support
+  gps-test:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.test
+    container_name: gps-test
+    runtime: nvidia
+    volumes:
+      - ../:/catkin_ws/src/gps
+      - test-results:/test_results
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - PYTHONPATH=/catkin_ws/src/gps/python
+      - GPS_ROOT_DIR=/catkin_ws/src/gps
+      - ROS_PYTHON_VERSION=3
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+    depends_on:
+      - roscore
+    networks:
+      - ros-network
+
+networks:
+  ros-network:
+    driver: bridge
+
+volumes:
+  baseline-data:
+  modernized-data:
+  test-results:
