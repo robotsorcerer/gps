@@ -1,44 +1,47 @@
 """ This file defines the sample list wrapper and sample writers. """
-import cPickle
+from typing import List, Optional, Union
+import pickle
 import logging
 
 import numpy as np
+import numpy.typing as npt
 
 from gps.proto.gps_pb2 import NOISE
+from gps.sample.sample import Sample
+
 LOGGER = logging.getLogger(__name__)
 
 
 class SampleList(object):
     """ Class that handles writes and reads to sample data. """
-    def __init__(self, samples):
-        self._samples = samples #will be empty lists
-        # self._samples = samples_adv #samples_adv
+    def __init__(self, samples: List[Sample]) -> None:
+        self._samples: List[Sample] = samples
 
-    def get_X(self, idx=None):
+    def get_X(self, idx: Optional[List[int]] = None) -> npt.NDArray[np.float64]:
         """ Returns N x T x dX numpy array of states. """
         if idx is None:
             idx = range(len(self._samples))
         return np.asarray([self._samples[i].get_X() for i in idx])
 
-    def get_U(self, idx=None):
+    def get_U(self, idx: Optional[List[int]] = None) -> npt.NDArray[np.float64]:
         """ Returns N x T x dU numpy array of actions. """
         if idx is None:
             idx = range(len(self._samples))
         return np.asarray([self._samples[i].get_U() for i in idx])
 
-    def get_V(self, idx=None):
+    def get_V(self, idx: Optional[List[int]] = None) -> npt.NDArray[np.float64]:
         """ Returns N x T x dV numpy array of disturbances. """
         if idx is None:
             idx = range(len(self._samples))
         return np.asarray([self._samples[i].get_V() for i in idx])
 
-    def get_noise(self, idx=None):
+    def get_noise(self, idx: Optional[List[int]] = None) -> npt.NDArray[np.float64]:
         """ Returns N x T x dU numpy array of noise generated during rollouts. """
         if idx is None:
             idx = range(len(self._samples))
         return np.asarray([self._samples[i].get(NOISE) for i in idx])
 
-    def get_obs(self, idx=None):
+    def get_obs(self, idx: Optional[List[int]] = None) -> npt.NDArray[np.float64]:
         """ Returns N x T x dO numpy array of features. """
         if idx is None:
             idx = range(len(self._samples))
@@ -50,13 +53,13 @@ class SampleList(object):
             idx = range(len(self._samples))
         return np.asarray([self._samples[i].get_obs_adv() for i in idx])
 
-    def get_samples(self, idx=None):
+    def get_samples(self, idx: Optional[List[int]] = None) -> List[Sample]:
         """ Returns N sample objects. """
         if idx is None:
             idx = range(len(self._samples))
         return [self._samples[i] for i in idx]
 
-    def num_samples(self):
+    def num_samples(self) -> int:
         """ Returns number of samples. """
         return len(self._samples)
 

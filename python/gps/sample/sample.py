@@ -1,5 +1,7 @@
 """ This file defines the sample class. """
+from typing import Dict, Optional, Union, Any
 import numpy as np
+import numpy.typing as npt
 from gps.proto.gps_pb2 import ACTION, ACTION_V
 
 
@@ -9,27 +11,28 @@ class Sample(object):
     single trajectory.
     Note: must be serializable for easy saving, no C++ references!
     """
-    def __init__(self, agent):
-        self.agent = agent
+    def __init__(self, agent: Any) -> None:
+        self.agent: Any = agent
 
-        self.T = agent.T
-        self.dX = agent.dX
-        self.dU = agent.dU
-        self.dV = agent.dV
-        self.dO = agent.dO
-        self.dM = agent.dM
+        self.T: int = agent.T
+        self.dX: int = agent.dX
+        self.dU: int = agent.dU
+        self.dV: int = agent.dV
+        self.dO: int = agent.dO
+        self.dM: int = agent.dM
 
         # Dictionary containing the sample data from various sensors.
-        self._data = {}
+        self._data: Dict[int, npt.NDArray[np.float64]] = {}
 
-        self._X = np.empty((self.T, self.dX))
+        self._X: npt.NDArray[np.float64] = np.empty((self.T, self.dX))
         self._X.fill(np.nan)
-        self._obs = np.empty((self.T, self.dO))
+        self._obs: npt.NDArray[np.float64] = np.empty((self.T, self.dO))
         self._obs.fill(np.nan)
-        self._meta = np.empty(self.dM)
+        self._meta: npt.NDArray[np.float64] = np.empty(self.dM)
         self._meta.fill(np.nan)
 
-    def set(self, sensor_name, sensor_data, t=None):
+    def set(self, sensor_name: int, sensor_data: npt.NDArray[np.float64],
+            t: Optional[int] = None) -> None:
         """ Set trajectory data for a particular sensor. """
         if t is None:
             self._data[sensor_name] = sensor_data
@@ -45,12 +48,12 @@ class Sample(object):
             self._X[t, :].fill(np.nan)
             self._obs[t, :].fill(np.nan)
 
-    def get(self, sensor_name, t=None):
+    def get(self, sensor_name: int, t: Optional[int] = None) -> npt.NDArray[np.float64]:
         """ Get trajectory data for a particular sensor. """
         return (self._data[sensor_name] if t is None
                 else self._data[sensor_name][t, :])
 
-    def get_X(self, t=None):
+    def get_X(self, t: Optional[int] = None) -> npt.NDArray[np.float64]:
         """ Get the state. Put it together if not precomputed. """
         X = self._X if t is None else self._X[t, :]
         if np.any(np.isnan(X)):
@@ -62,15 +65,15 @@ class Sample(object):
                 self.agent.pack_data_x(X, data, data_types=[data_type])
         return X
 
-    def get_U(self, t=None):
+    def get_U(self, t: Optional[int] = None) -> npt.NDArray[np.float64]:
         """ Get the action. """
         return self._data[ACTION] if t is None else self._data[ACTION][t, :]
 
-    def get_V(self, t=None):
-        """ Get the action. """
-        return self._data[ACTION_V] if t is None else self._data[ACTION_V][t, :] #this is the adversarial action
+    def get_V(self, t: Optional[int] = None) -> npt.NDArray[np.float64]:
+        """ Get the adversarial action. """
+        return self._data[ACTION_V] if t is None else self._data[ACTION_V][t, :]
 
-    def get_obs(self, t=None):
+    def get_obs(self, t: Optional[int] = None) -> npt.NDArray[np.float64]:
         """ Get the observation. Put it together if not precomputed. """
         obs = self._obs if t is None else self._obs[t, :]
         if np.any(np.isnan(obs)):
