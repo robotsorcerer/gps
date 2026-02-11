@@ -176,45 +176,66 @@ jobs:
                || true   # non-blocking until mypy baseline is clean
 
   # =========================================================================
-  # 4. C++ build with -Werror (catkin / CMake)
+  # 5. C++ build + unit tests — ROS Noetic (official ros:noetic-robot image)
+  #    Uses the canonical ROS 1 Docker image so catkin_make, the PR2 packages,
+  #    and the ROS dependency tree all match the target runtime environment.
+  #    CPU LibTorch is installed via pip; TORCH_ROOT locates the cmake config.
   # =========================================================================
   cpp-build:
-    name: C++17 build
+    name: C++17 / ROS Noetic build + tests
     runs-on: ubuntu-22.04
+    container:
+      image: ros:noetic-robot
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install ROS 2 (for catkin_make) and build tools
+      - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            cmake build-essential \
-            libboost-all-dev \
+          apt-get update -q
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            python3-pip \
+            libprotobuf-dev protobuf-compiler \
             libeigen3-dev \
-            protobuf-compiler libprotobuf-dev \
-            ros-humble-desktop \
-            python3-catkin-tools || true
-          # Source ROS environment
-          source /opt/ros/humble/setup.bash || true
+            libgtest-dev \
+            libboost-system-dev \
+            ros-noetic-pr2-controller-interface \
+            ros-noetic-pr2-controller-manager \
+            ros-noetic-pr2-controllers \
+            ros-noetic-pr2-mechanism-model \
+            ros-noetic-control-toolbox \
+            ros-noetic-realtime-tools \
+            ros-noetic-orocos-kdl \
+            ros-noetic-pluginlib \
+            ros-noetic-tf
 
-      - name: Build with catkin
+      - name: Install CPU LibTorch
+        run: pip3 install --upgrade pip && pip3 install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Build catkin workspace
         run: |
-          source /opt/ros/humble/setup.bash || true
-          mkdir -p /tmp/catkin_ws/src
-          cp -r gps_agent_pkg /tmp/catkin_ws/src/
-          cd /tmp/catkin_ws
-          catkin_make \
-            -DCMAKE_CXX_STANDARD=17 \
-            -DCMAKE_CXX_FLAGS="-Werror -Wall -Wextra" \
-            2>&1 | tee build.log
-          grep -q "Error" build.log && exit 1 || true
+          . /opt/ros/noetic/setup.sh
+          export TORCH_ROOT=$(python3 -c "import torch, os; print(os.path.dirname(torch.__file__))")
+          mkdir -p /ros_ws/src
+          cp -r $GITHUB_WORKSPACE/gps_agent_pkg /ros_ws/src/
+          cd /ros_ws
+          catkin_make -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+      - name: Run C++ unit tests
+        run: |
+          . /opt/ros/noetic/setup.sh
+          export TORCH_ROOT=$(python3 -c "import torch, os; print(os.path.dirname(torch.__file__))")
+          cd /ros_ws
+          catkin_make run_tests
+          catkin_test_results
 
   # =========================================================================
-  # 5. ThreadSanitizer (TSan) — detects C++ data races
+  # 6. ThreadSanitizer (TSan) — standalone test build, no ROS / LibTorch
+  #    Only the three unit tests under gps_agent_pkg/test/ are compiled.
+  #    LibTorch is intentionally excluded: it is incompatible with TSan.
   # =========================================================================
   tsan:
-    name: ThreadSanitizer
+    name: ThreadSanitizer (C++ data-race detection)
     runs-on: ubuntu-22.04
     needs: cpp-build
 
@@ -223,26 +244,32 @@ jobs:
 
       - name: Install build tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake build-essential \
-            libboost-all-dev libeigen3-dev \
-            protobuf-compiler libprotobuf-dev \
-            clang-15
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            cmake build-essential \
+            clang-15 \
+            libeigen3-dev \
+            libgtest-dev
 
-      - name: Build with TSan
+      - name: Build standalone tests with TSan
         run: |
-          mkdir -p /tmp/tsan_build && cd /tmp/tsan_build
-          cp -r $GITHUB_WORKSPACE/gps_agent_pkg .
-          cmake gps_agent_pkg \
+          mkdir -p /tmp/tsan_build
+          cd /tmp/tsan_build
+          cmake $GITHUB_WORKSPACE/gps_agent_pkg/test \
             -DCMAKE_CXX_STANDARD=17 \
             -DCMAKE_CXX_FLAGS="-fsanitize=thread -g -O1" \
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
             -DCMAKE_C_COMPILER=clang-15 \
-            -DCMAKE_CXX_COMPILER=clang++-15 || true
-          make -j$(nproc) 2>&1 | tail -50
+            -DCMAKE_CXX_COMPILER=clang++-15
+          make -j$(nproc)
+
+      - name: Run tests under TSan
+        run: |
+          cd /tmp/tsan_build
+          ctest -V
 
   # =========================================================================
-  # 6. Soak test (nightly only — NOT on every push)
+  # 7. Soak test (nightly only — NOT on every push)
   # =========================================================================
   soak-nightly:
     name: Soak test (nightly)
