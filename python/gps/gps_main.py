@@ -1,5 +1,3 @@
-from __future__ import division, print_function
-
 import matplotlib as mpl
 mpl.use('Qt5Agg')
 

@@ -1,6 +1,4 @@
 """ This file defines linear regression for dynamics estimation. """
-from __future__ import division, print_function
-
 import numpy as np
 
 from gps.algorithm.dynamics.dynamics import Dynamics

@@ -1,6 +1,4 @@
 """ This file defines the forward kinematics cost function. """
-from __future__ import division, print_function
-
 import copy, os, csv
 
 import numpy as np

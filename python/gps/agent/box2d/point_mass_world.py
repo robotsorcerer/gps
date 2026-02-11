@@ -1,6 +1,4 @@
 """ This file defines an environment for the Box2D PointMass simulator. """
-from __future__ import division, print_function
-
 import numpy as np
 import Box2D as b2
 from framework import Framework

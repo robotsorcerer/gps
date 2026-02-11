@@ -1,6 +1,4 @@
 """ This file defines utility classes and functions for dynamics. """
-from __future__ import division, print_function
-
 import numpy as np
 
 

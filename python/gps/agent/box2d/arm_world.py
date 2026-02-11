@@ -1,6 +1,4 @@
 """ This file defines an environment for the Box2D 2 Link Arm simulator. """
-from __future__ import division, print_function
-
 import Box2D as b2
 import numpy as np
 from framework import Framework

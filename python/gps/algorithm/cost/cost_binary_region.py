@@ -1,6 +1,4 @@
 """ This file defines the binary region cost. """
-from __future__ import division, print_function
-
 import copy
 
 import numpy as np

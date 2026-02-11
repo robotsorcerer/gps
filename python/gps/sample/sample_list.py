@@ -1,6 +1,4 @@
 """ This file defines the sample list wrapper and sample writers. """
-from __future__ import division, print_function
-
 import cPickle
 import logging
 

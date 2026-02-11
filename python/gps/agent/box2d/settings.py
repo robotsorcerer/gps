@@ -22,10 +22,6 @@
 # misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 
-from __future__ import division, print_function
-
-from __future__ import division, print_function
-
 class fwSettings(object):
     """ This class contains the settings for Box2D's framwork. """
     backend = 'pygame'

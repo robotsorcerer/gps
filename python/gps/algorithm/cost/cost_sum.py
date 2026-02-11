@@ -1,6 +1,4 @@
 """ This file defines a cost sum of arbitrary other costs. """
-from __future__ import division, print_function
-
 import copy, os
 import numpy as np
 from gps.algorithm.cost.config import COST_SUM

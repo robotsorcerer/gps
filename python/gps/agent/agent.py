@@ -1,6 +1,4 @@
 """ This file defines the base agent class. """
-from __future__ import division, print_function
-
 import abc
 import copy
 

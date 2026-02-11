@@ -3,8 +3,6 @@
 # documentation: http://wiki.ros.org/ps3joy
 
 # Mappings from PS3 buttons to their corresponding array indices.
-from __future__ import division, print_function
-
 PS3_BUTTON = {
     'select': 0,
     'stick_left': 1,

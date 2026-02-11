@@ -1,6 +1,4 @@
 """ Default configuration and hyperparameter values for costs. """
-from __future__ import division, print_function
-
 import numpy as np
 
 from gps.algorithm.cost.cost_utils import RAMP_CONSTANT, evallogl2term

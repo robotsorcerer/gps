@@ -1,6 +1,4 @@
 """ This file defines the linear Gaussian policy class. """
-from __future__ import division, print_function
-
 import numpy as np
 
 from gps.algorithm.policy.policy import Policy

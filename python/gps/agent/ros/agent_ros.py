@@ -1,6 +1,4 @@
 """ This file defines an agent for the PR2 ROS environment. """
-from __future__ import division, print_function
-
 import copy
 import time
 import numpy as np

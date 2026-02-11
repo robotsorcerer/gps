@@ -6,8 +6,6 @@ setting the text, appending text, or changing the background color.
 If a log filename is given, all text displayed by the Textbox is also placed
 within the log file.
 """
-from __future__ import division, print_function
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec

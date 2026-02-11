@@ -1,6 +1,4 @@
 """ Default configuration and hyperparameters for agent objects. """
-from __future__ import division, print_function
-
 import logging
 
 import numpy as np

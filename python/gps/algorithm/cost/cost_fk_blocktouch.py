@@ -1,6 +1,4 @@
 # TODO: This cost function is hard-coded and not easy to generalize.
-from __future__ import division, print_function
-
 import copy
 
 import numpy as np

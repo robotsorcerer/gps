@@ -1,6 +1,4 @@
 """ This file defines code for PILQR. """
-from __future__ import division, print_function
-
 import logging
 import copy
 

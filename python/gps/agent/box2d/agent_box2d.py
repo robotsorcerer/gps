@@ -1,6 +1,4 @@
 """ This file defines an agent for the Box2D simulator. """
-from __future__ import division, print_function
-
 from copy import deepcopy
 import numpy as np
 from gps.agent.agent import Agent

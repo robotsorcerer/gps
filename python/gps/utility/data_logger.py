@@ -1,6 +1,4 @@
 """ This file defines the data logger. """
-from __future__ import division, print_function
-
 import logging
 try:
    import cPickle as pickle

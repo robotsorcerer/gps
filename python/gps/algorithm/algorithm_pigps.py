@@ -4,8 +4,6 @@ Reference:
 Y. Chebotar, M. Kalakrishnan, A. Yahya, A. Li, S. Schaal, S. Levine. 
 Path Integral Guided Policy Search. 2016. https://arxiv.org/abs/1610.00529.
 """
-from __future__ import division, print_function
-
 import copy
 import logging
 

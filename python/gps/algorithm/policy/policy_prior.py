@@ -1,6 +1,4 @@
 """ This file defines the constant prior for policy linearization. """
-from __future__ import division, print_function
-
 import copy
 
 import numpy as np

@@ -9,8 +9,6 @@ The Image Visualizer can also overlay an initial image or target image on top
 of the realtime images. This is used for resetting the task space after each
 sample if the robot disturbed it during sampling.
 """
-from __future__ import division, print_function
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec

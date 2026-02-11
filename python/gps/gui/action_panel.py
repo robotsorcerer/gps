@@ -5,8 +5,6 @@ The Action Panel contains a set of Action's which can be activated through
 one of three methods: a clickable button, a keyboard shortcut, or a ps3
 controller binding (with ps3 controller button presses read through ROS).
 """
-from __future__ import division, print_function
-
 import numpy as np
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt

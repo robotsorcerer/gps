@@ -1,6 +1,4 @@
 """ This file defines policy optimization for a Caffe policy. """
-from __future__ import division, print_function
-
 import copy
 import logging
 import tempfile

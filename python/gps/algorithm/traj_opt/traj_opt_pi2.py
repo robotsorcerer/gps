@@ -9,8 +9,6 @@ References:
 [3] J. Peters, K. Mulling, and Y. Altun. Relative entropy policy search. 
     In AAAI, 2010.
  """
-from __future__ import division, print_function
-
 import copy
 import logging
 import numpy as np

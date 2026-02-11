@@ -22,10 +22,6 @@
 This file contains the Framework for the Box2D GUI
 """
 
-from __future__ import division, print_function
-
-from __future__ import division, print_function
-
 import Box2D as b2
 import pygame
 import framework

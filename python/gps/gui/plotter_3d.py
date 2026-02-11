@@ -7,8 +7,6 @@ plotting 3D points or 3D Gaussians, and clipping data based off axis limits.
 This is used to plot the 3D trajectories, including the trajectory samples,
 policy samples, and the linear Gaussian controllers.
 """
-from __future__ import division, print_function
-
 import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.gridspec as gridspec

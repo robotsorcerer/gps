@@ -1,6 +1,4 @@
 """ This file defines a neural network policy implemented in PyTorch. """
-from __future__ import division, print_function
-
 import tempfile
 import torch
 import numpy as np

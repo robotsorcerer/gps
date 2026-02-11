@@ -7,8 +7,6 @@ whereas the mean is a connected line.
 This is used to plot the mean cost after each iteration, along with the initial
 costs for each sample and condition.
 """
-from __future__ import division, print_function
-
 import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.gridspec as gridspec

@@ -1,6 +1,4 @@
 """ This file defines a few useful custom Caffe layers. """
-from __future__ import division, print_function
-
 import json
 
 import caffe

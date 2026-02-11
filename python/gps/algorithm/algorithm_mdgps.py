@@ -1,6 +1,4 @@
 """ This file defines the MD-based GPS algorithm. """
-from __future__ import division, print_function
-
 import copy
 import logging
 

@@ -23,10 +23,6 @@
 The file sets up the basics of a Box2d world.
 Future worlds should use this as the base class.
 """
-from __future__ import division, print_function
-
-from __future__ import division, print_function
-
 import Box2D as b2
 from time import time
 from gps.agent.box2d.settings import fwSettings

@@ -1,6 +1,4 @@
 """ Default configuration and hyperparameter values for GUI objects. """
-from __future__ import division, print_function
-
 import itertools
 
 from gps.proto.gps_pb2 import TRIAL_ARM, AUXILIARY_ARM
