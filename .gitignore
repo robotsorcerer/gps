@@ -103,3 +103,4 @@ experiments/**/*.png
 
 #mjpro keys
 3rdparty/mjpro/mjkey.txt
+deprecated/

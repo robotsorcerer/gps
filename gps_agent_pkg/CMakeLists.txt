@@ -12,8 +12,9 @@ set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
 set(Caffe_DIR                     $ENV{CAFFE_ROOT})
 
 OPTION(ENABLE_CXX11 "Enable C++11 support" ON)
-OPTION(USE_CAFFE "Enable Caffe support" OFF)
-OPTION(USE_CAFFE_GPU "Enable Caffe GPU support" OFF)
+# DEPRECATED: Caffe support removed (2026-02-10)
+# OPTION(USE_CAFFE "Enable Caffe support" OFF)
+# OPTION(USE_CAFFE_GPU "Enable Caffe GPU support" OFF)
 
 find_package(PkgConfig)
 pkg_search_module(Eigen3 REQUIRED eigen3)
@@ -79,32 +80,23 @@ catkin_package(
 ## Build ##
 ###########
 include_directories(include)
-# Include Caffe
-if (USE_CAFFE)
-    # add definitions for the C++ code
-    add_definitions(-DUSE_CAFFE)
-    if (USE_CAFFE_GPU)
-        add_definitions(-DCAFFE_GPU)
-        find_package(CUDA 5.5 REQUIRED)
-        include_directories(${CUDA_INCLUDE_DIRS})
-    else (USE_CAFFE_GPU)
-        add_definitions(-DCPU_ONLY)
-    endif (USE_CAFFE_GPU)
-    # add paths to CAFFE
-    link_directories(${CAFFE_LIBRARY_PATH})  # Should be set to /path/to/caffe/build/lib
-    include_directories(${CAFFE_INCLUDE_PATH})  # Should be set to /path/to/caffe/distribute/include
-    # extra header paths
-    include_directories(${CAFFE_EXTRA_PATH})
-    # add neural network to DDP controller files
-    set(DDP_FILES ${DDP_FILES} src/neuralnetworkcaffe.cpp src/caffenncontroller.cpp)
-    # compile Caffe test
-    #rosbuild_add_executable(caffe_test src/caffe_test.cpp src/neural_network_caffe.cpp)
-    #target_link_libraries(caffe_test caffe protobuf)
-
-    # compile image processor node
-    #rosbuild_add_executable(caffe_img_processor src/img_processor.cpp src/neural_network_caffe.cpp)
-    #target_link_libraries(caffe_img_processor caffe protobuf)
-endif (USE_CAFFE)
+# DEPRECATED: Caffe support removed (2026-02-10)
+# Caffe files moved to deprecated/caffe_legacy/
+# Use PyTorch or TensorFlow for neural network controllers instead
+# if (USE_CAFFE)
+#     add_definitions(-DUSE_CAFFE)
+#     if (USE_CAFFE_GPU)
+#         add_definitions(-DCAFFE_GPU)
+#         find_package(CUDA 5.5 REQUIRED)
+#         include_directories(${CUDA_INCLUDE_DIRS})
+#     else (USE_CAFFE_GPU)
+#         add_definitions(-DCPU_ONLY)
+#     endif (USE_CAFFE_GPU)
+#     link_directories(${CAFFE_LIBRARY_PATH})
+#     include_directories(${CAFFE_INCLUDE_PATH})
+#     include_directories(${CAFFE_EXTRA_PATH})
+#     set(DDP_FILES ${DDP_FILES} src/neuralnetworkcaffe.cpp src/caffenncontroller.cpp)
+# endif (USE_CAFFE)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
@@ -132,10 +124,10 @@ add_library(gps_agent_lib
    #src/${PROJECT_NAME}/gps_agent_pkg.cpp
 )
 
-# Include Caffe in controller
-if (USE_CAFFE)
-    target_link_libraries(gps_agent_lib caffe protobuf)
-endif (USE_CAFFE)
+# DEPRECATED: Caffe linking removed
+# if (USE_CAFFE)
+#     target_link_libraries(gps_agent_lib caffe protobuf)
+# endif (USE_CAFFE)
 
 target_link_libraries(gps_agent_lib pthread )
 

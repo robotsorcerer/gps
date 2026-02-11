@@ -1,12 +1,12 @@
 """ Default configuration for policy optimization. """
-try:
-    from gps.algorithm.policy_opt.policy_opt_utils import construct_fc_network
-except ImportError:
-    construct_fc_network = None
-
 import os
 
-# config options shared by both caffe and tf.
+# DEPRECATED: Caffe support removed (2026-02-10)
+# Caffe is no longer maintained. Use PyTorch or TensorFlow instead.
+# Legacy Caffe files moved to deprecated/caffe_legacy/
+construct_fc_network = None
+
+# Config options shared by PyTorch and TensorFlow
 GENERIC_CONFIG = {
     # Initialization.
     'init_var': 0.1,  # Initial policy variance.
@@ -27,16 +27,10 @@ GENERIC_CONFIG = {
 }
 
 
-POLICY_OPT_CAFFE = {
-    # Other hyperparameters.
-    'network_model': construct_fc_network,  # Either a filename string
-                                            # or a function to call to
-                                            # create NetParameter.
-    'network_arch_params': {},  # Arguments to pass to method above.
-    'weights_file_prefix': '',
-}
-
-POLICY_OPT_CAFFE.update(GENERIC_CONFIG)
+# DEPRECATED: Caffe configuration removed
+# Use POLICY_OPT_PYTORCH or POLICY_OPT_TF instead
+# If you need Caffe support, see deprecated/caffe_legacy/README.md
+POLICY_OPT_CAFFE = None
 
 
 POLICY_OPT_TF = {
