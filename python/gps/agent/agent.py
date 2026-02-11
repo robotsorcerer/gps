@@ -1,6 +1,9 @@
 """ This file defines the base agent class. """
 import abc
 import copy
+from typing import Dict, List, Optional, Any
+
+import numpy.typing as npt
 
 from gps.agent.config import AGENT
 from gps.proto.gps_pb2 import ACTION
@@ -14,68 +17,72 @@ class Agent(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: Dict[str, Any]) -> None:
         config = copy.deepcopy(AGENT)
         config.update(hyperparams)
-        self._hyperparams = config
+        self._hyperparams: Dict[str, Any] = config
         # Store samples, along with size/index information for samples.
-        self._samples = [[] for _ in range(self._hyperparams['conditions'])]
-        self._samples_adv = [[] for _ in range(self._hyperparams['conditions'])]
-        self.T = self._hyperparams['T']
-        self.dU = self._hyperparams['sensor_dims'][ACTION]
-        self.dV = self._hyperparams['sensor_dims'][ACTION] #if self._hyperparams['mode'] == 'robust' else None
+        self._samples: List[List[Any]] = [[] for _ in range(self._hyperparams['conditions'])]
+        self._samples_adv: List[List[Any]] = [[] for _ in range(self._hyperparams['conditions'])]
+        self.T: int = self._hyperparams['T']
+        self.dU: int = self._hyperparams['sensor_dims'][ACTION]
+        self.dV: int = self._hyperparams['sensor_dims'][ACTION] #if self._hyperparams['mode'] == 'robust' else None
 
-        self.x_data_types = self._hyperparams['state_include']
-        self.obs_data_types = self._hyperparams['obs_include']
+        self.x_data_types: List[Any] = self._hyperparams['state_include']
+        self.obs_data_types: List[Any] = self._hyperparams['obs_include']
         if 'meta_include' in self._hyperparams:
-            self.meta_data_types = self._hyperparams['meta_include']
+            self.meta_data_types: List[Any] = self._hyperparams['meta_include']
         else:
-            self.meta_data_types = []
+            self.meta_data_types: List[Any] = []
 
         # List of indices for each data type in state X.
+        self._state_idx: List[List[int]]
         self._state_idx, i = [], 0
         for sensor in self.x_data_types:
             dim = self._hyperparams['sensor_dims'][sensor]
             self._state_idx.append(list(range(i, i+dim)))
             i += dim
-        self.dX = i
+        self.dX: int = i
 
         # List of indices for each data type in observation.
+        self._obs_idx: List[List[int]]
         self._obs_idx, i = [], 0
         for sensor in self.obs_data_types:
             dim = self._hyperparams['sensor_dims'][sensor]
             self._obs_idx.append(list(range(i, i+dim)))
             i += dim
-        self.dO = i
+        self.dO: int = i
 
         # List of indices for each data type in meta data.
+        self._meta_idx: List[List[int]]
         self._meta_idx, i = [], 0
         for sensor in self.meta_data_types:
             dim = self._hyperparams['sensor_dims'][sensor]
             self._meta_idx.append(list(range(i, i+dim)))
             i += dim
-        self.dM = i
+        self.dM: int = i
 
-        self._x_data_idx = {d: i for d, i in zip(self.x_data_types,
+        self._x_data_idx: Dict[Any, List[int]] = {d: i for d, i in zip(self.x_data_types,
                                                  self._state_idx)}
-        self._obs_data_idx = {d: i for d, i in zip(self.obs_data_types,
+        self._obs_data_idx: Dict[Any, List[int]] = {d: i for d, i in zip(self.obs_data_types,
                                                    self._obs_idx)}
-        self._meta_data_idx = {d: i for d, i in zip(self.meta_data_types,
+        self._meta_data_idx: Dict[Any, List[int]] = {d: i for d, i in zip(self.meta_data_types,
                                                    self._meta_idx)}
 
     @abc.abstractmethod
-    def sample(self, policy, condition, verbose=True, save=True, noisy=True):
+    def sample(self, policy: Any, condition: int, verbose: bool = True,
+               save: bool = True, noisy: bool = True) -> Any:
         """
         Draw a sample from the environment, using the specified policy
         and under the specified condition, with or without noise.
         """
         raise NotImplementedError("Must be implemented in subclass.")
 
-    def reset(self, condition):
+    def reset(self, condition: int) -> None:
         """ Reset environment to the specified condition. """
         pass  # May be overridden in subclass.
 
-    def get_samples(self, condition, start=0, end=None):
+    def get_samples(self, condition: int, start: int = 0, end: Optional[int] = None) -> SampleList:
         """
         Return the requested samples based on the start and end indices.
         Args:
@@ -85,7 +92,7 @@ class Agent(object):
         return (SampleList(self._samples[condition][start:]) if end is None
                 else SampleList(self._samples[condition][start:end]))
 
-    def get_samples_adv(self, condition, start=0, end=None):
+    def get_samples_adv(self, condition: int, start: int = 0, end: Optional[int] = None) -> SampleList:
         """
         Return the requested samples based on the start and end indices.
         Args:
@@ -95,7 +102,7 @@ class Agent(object):
         return (SampleList(self._samples[condition][start:], self._samples_adv[condition][start:]) if end is None
     else SampleList(self._samples[condition][start:end], self._samples_adv[condition][start:end]))
 
-    def clear_samples(self, condition=None):
+    def clear_samples(self, condition: Optional[int] = None) -> None:
         """
         Reset the samples for a given condition, defaulting to all conditions.
         Args:
@@ -106,7 +113,7 @@ class Agent(object):
         else:
             self._samples[condition] = []
 
-    def clear_samples_adv(self, condition=None):
+    def clear_samples_adv(self, condition: Optional[int] = None) -> None:
         """
         Reset the samples for a given condition, defaulting to all conditions.
         Args:
@@ -117,11 +124,11 @@ class Agent(object):
         else:
             self._samples_adv[condition] = []
 
-    def delete_last_sample(self, condition):
+    def delete_last_sample(self, condition: int) -> None:
         """ Delete the last sample from the specified condition. """
         self._samples[condition].pop()
 
-    def get_idx_x(self, sensor_name):
+    def get_idx_x(self, sensor_name: Any) -> List[int]:
         """
         Return the indices corresponding to a certain state sensor name.
         Args:
@@ -129,7 +136,7 @@ class Agent(object):
         """
         return self._x_data_idx[sensor_name]
 
-    def get_idx_obs(self, sensor_name):
+    def get_idx_obs(self, sensor_name: Any) -> List[int]:
         """
         Return the indices corresponding to a certain observation sensor name.
         Args:
@@ -137,8 +144,8 @@ class Agent(object):
         """
         return self._obs_data_idx[sensor_name]
 
-    def pack_data_obs(self, existing_mat, data_to_insert, data_types,
-                      axes=None):
+    def pack_data_obs(self, existing_mat: npt.NDArray, data_to_insert: npt.NDArray,
+                      data_types: List[Any], axes: Optional[List[int]] = None) -> None:
         """
         Update the observation matrix with new data.
         Args:
@@ -178,8 +185,8 @@ class Agent(object):
                                    self._obs_data_idx[data_types[i]][-1] + 1)
         existing_mat[index] = data_to_insert
 
-    def pack_data_meta(self, existing_mat, data_to_insert, data_types,
-                       axes=None):
+    def pack_data_meta(self, existing_mat: npt.NDArray, data_to_insert: npt.NDArray,
+                       data_types: List[Any], axes: Optional[List[int]] = None) -> None:
         """
         Update the meta data matrix with new data.
         Args:
@@ -219,7 +226,8 @@ class Agent(object):
                                    self._meta_data_idx[data_types[i]][-1] + 1)
         existing_mat[index] = data_to_insert
 
-    def pack_data_x(self, existing_mat, data_to_insert, data_types, axes=None):
+    def pack_data_x(self, existing_mat: npt.NDArray, data_to_insert: npt.NDArray,
+                    data_types: List[Any], axes: Optional[List[int]] = None) -> None:
         """
         Update the state matrix with new data.
         Args:
@@ -259,7 +267,8 @@ class Agent(object):
                                    self._x_data_idx[data_types[i]][-1] + 1)
         existing_mat[index] = data_to_insert
 
-    def unpack_data_x(self, existing_mat, data_types, axes=None):
+    def unpack_data_x(self, existing_mat: npt.NDArray, data_types: List[Any],
+                      axes: Optional[List[int]] = None) -> npt.NDArray:
         """
         Returns the requested data from the state matrix.
         Args:
