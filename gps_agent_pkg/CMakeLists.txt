@@ -1,5 +1,10 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.8)
 project(gps_agent_pkg)
+
+# Set C++17 standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(ROS_DEFAULT_DIR /opt/ros/$ENV{ROS_DISTRO}/share/)
 
@@ -10,8 +15,6 @@ set(pr2_controller_manager_DIR    ${ROS_DEFAULT_DIR}/pr2_controller_manager/cmak
 set(pr2_controllers_msgs_DIR      ${ROS_DEFAULT_DIR}/pr2_controllers_msgs/cmake)
 set(pr2_mechanism_model_DIR      ${ROS_DEFAULT_DIR}/pr2_mechanism_model/cmake)
 set(Caffe_DIR                     $ENV{CAFFE_ROOT})
-
-OPTION(ENABLE_CXX11 "Enable C++11 support" ON)
 # DEPRECATED: Caffe support removed (2026-02-10)
 # OPTION(USE_CAFFE "Enable Caffe support" OFF)
 # OPTION(USE_CAFFE_GPU "Enable Caffe GPU support" OFF)

@@ -9,7 +9,9 @@ from it.
 
 // Headers.
 #include <vector>
-#include <boost/variant.hpp>
+#include <variant>
+#include <map>
+#include <utility>
 
 // This contains the list of data types.
 #define RUN_ON_ROBOT
@@ -22,20 +24,20 @@ namespace gps_control
 {
 
 // Types of data supported for internal data storage.
-enum SampleDataFormat
+enum class SampleDataFormat
 {
-    SampleDataFormatBool,
-    SampleDataFormatUInt8,
-    SampleDataFormatUInt16,
-    SampleDataFormatInt,
-    SampleDataFormatDouble,
-    SampleDataFormatEigenMatrix,
-    SampleDataFormatEigenVector
+    Bool,
+    UInt8,
+    UInt16,
+    Int,
+    Double,
+    EigenMatrix,
+    EigenVector
 };
 
-typedef boost::variant<bool,uint8_t,std::vector<int>,int,double,Eigen::MatrixXd,Eigen::VectorXd> SampleVariant;
-typedef std::vector<SampleVariant> SampleList;
-typedef std::map<gps::SampleType, SampleList> SampleMap;
+using SampleVariant = std::variant<bool, uint8_t, std::vector<int>, int, double, Eigen::MatrixXd, Eigen::VectorXd>;
+using SampleList = std::vector<SampleVariant>;
+using SampleMap = std::map<gps::SampleType, SampleList>;
 
 class Sample
 {
@@ -58,10 +60,10 @@ private:
     std::vector<std::pair<gps::SampleType,int> > obs_definition_;
 public:
     // Constructor.
-    Sample(int T);
+    explicit Sample(int T);
     // Construct state from message.
     // Destructor.
-    virtual ~Sample();
+    virtual ~Sample() = default;
 
     // Get sensor meta-data.
     virtual void get_meta_data(gps::SampleType type, int &data_size, SampleDataFormat &data_format, OptionsMap &meta_data_) const;
