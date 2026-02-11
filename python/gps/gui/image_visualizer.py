@@ -92,7 +92,7 @@ class ImageVisualizer(object):
         if self._crop_size:
             h, w = image.shape[0], image.shape[1]
             ch, cw = self._crop_size[0], self._crop_size[1]
-            image = image[(h/2-ch/2):(h/2-ch/2+ch), (w/2-cw/2):(w/2-cw/2+cw), :]
+            image = image[(h//2-ch//2):(h//2-ch//2+ch), (w//2-cw//2):(w//2-cw//2+cw), :]
 
         self._current_image = image
         self._plot.set_array(image)
