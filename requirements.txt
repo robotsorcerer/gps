@@ -1,7 +1,26 @@
-catkin_tools>=0.3.1
-protobuf
-scipy
-tensorflow
-numpy
-visdom
-scikit-image
+# Runtime dependencies for the GPS iDG codebase.
+# TensorFlow has been removed; PyTorch is the only supported neural-network
+# backend. Caffe has been retired.
+
+# --- Core scientific stack ---
+numpy>=1.24,<2.0
+scipy>=1.10,<2.0
+
+# --- Neural network backend ---
+torch>=2.1
+
+# --- Protocol buffers (Python runtime + gRPC tools for proto compilation) ---
+# grpcio-tools is required at build time to recompile gps.proto with protoc
+# shipped inside the pip wheel (the system protoc 3.12 is too old for pb4.x).
+protobuf>=4.23,<5.0
+grpcio-tools>=1.56
+
+# --- ROS catkin build tooling ---
+catkin-tools>=0.9
+
+# --- Visualisation ---
+visdom>=0.2
+scikit-image>=0.21
+
+# --- pybox2d (Box2D Python bindings used by the Box2D agent) ---
+pybox2d>=2.3

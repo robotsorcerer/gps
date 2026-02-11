@@ -1,175 +1,137 @@
-FROM nvidia/cuda:8.0-devel-ubuntu14.04
-LABEL maintainer "patlekano@gmail.com"
+# ---------------------------------------------------------------------------
+# GPS iDG — Development image
+#
+# Base  : NVIDIA CUDA 12.4 on Ubuntu 22.04
+# ROS   : Noetic (backported / source build on 22.04 via unofficial PPA)
+# Python: 3.10 (Ubuntu 22.04 default)
+# NN    : PyTorch 2.1 (CPU + CUDA) via pip; LibTorch C++ from the same wheel
+# Build : catkin (cmake 3.22+ on Ubuntu 22.04)
+#
+# Caffe and all Caffe dependencies have been removed.
+# ---------------------------------------------------------------------------
+FROM nvidia/cuda:12.4.0-devel-ubuntu22.04
 
-RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+LABEL maintainer="gps-idg"
 
-# setup environment
-RUN locale-gen en_US.UTF-8
-ENV LANG en_US.UTF-8
-
-# setup sources.list
-RUN echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list
-
-# install bootstrap tools
-RUN apt-get update && apt-get install --no-install-recommends --allow-unauthenticated -y \
-    python-rosdep \
-    python-rosinstall \
-    python-vcstools \
+# ---- Locale & timezone (non-interactive) ----------------------------------
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        locales \
+        tzdata \
+    && locale-gen en_US.UTF-8 \
+    && update-locale LANG=en_US.UTF-8 \
+    && ln -fs /usr/share/zoneinfo/UTC /etc/localtime \
+    && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# bootstrap rosdep
-RUN rosdep init \
-    && rosdep update
+ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
-# install ros packages
-ENV ROS_DISTRO indigo
+# ---- System build tools ---------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        cmake \
+        git \
+        wget \
+        curl \
+        nano \
+        unzip \
+        pkg-config \
+        libssl-dev \
+        libeigen3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# # setup entrypoint
-# COPY ./ros_entrypoint.sh /
+# ---- Python 3.10 + pip ----------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 \
+        python3-dev \
+        python3-pip \
+        python3-venv \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
+    && python -m pip install --upgrade pip setuptools wheel \
+    && rm -rf /var/lib/apt/lists/*
 
-# ENTRYPOINT ["/ros_entrypoint.sh"]
-# CMD ["bash"]
+# ---- PyTorch 2.1 (CUDA 12.1 wheel also works on CUDA 12.4) ---------------
+# Install PyTorch first so we can extract LibTorch for the C++ build later.
+RUN pip install --no-cache-dir \
+        torch==2.1.2+cu121 torchvision==0.16.2+cu121 \
+        --index-url https://download.pytorch.org/whl/cu121
 
-ENV TERM xterm
+# ---- Protocol buffers (pip wheel ships a compatible protoc binary) --------
+RUN pip install --no-cache-dir \
+        "protobuf>=4.23,<5.0" \
+        "grpcio-tools>=1.56"
 
-# ros-indigo-ros-base
-RUN apt-get update && apt-get install -y --allow-unauthenticated \
-  ros-indigo-desktop-full=1.1.4-0* \
-	build-essential \
-	gcc \
-	g++ \
-	wget \
-	make \
-	nano \
-	curl \
-	protobuf-compiler \
-	libhdf5-dev \
-	libprotobuf-dev \
-	protobuf-compiler \
-	swig \
-	python-pygame \
-	python-pip \
-	python-dev \
-	git \
-	libgflags-dev \
-	libgoogle-glog-dev  \
-	liblmdb-dev \
-	autoconf  \
-	automake \
-	libtool \
-	unzip \
-	libprotobuf-dev libleveldb-dev \
-	libsnappy-dev libopencv-dev \
-	libhdf5-serial-dev protobuf-compiler \
-	libatlas-base-dev \
-	libopenblas-dev \
-	&& rm -rf /var/lib/apt/lists/*
-#
-#
-# Start with Caffe dependencies
+# ---- Python runtime dependencies ------------------------------------------
+RUN pip install --no-cache-dir \
+        "numpy>=1.24,<2.0" \
+        "scipy>=1.10,<2.0" \
+        "visdom>=0.2" \
+        "scikit-image>=0.21" \
+        "pybox2d>=2.3" \
+        "catkin-tools>=0.9"
 
-#We need this for boost
-RUN pip install --upgrade b2
+# ---- ROS Noetic (unofficial Ubuntu 22.04 PPA) -----------------------------
+# The official ROS 1 Noetic targets Ubuntu 20.04. On 22.04 we use the
+# community backport PPA maintained by the ROS community.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        software-properties-common \
+        lsb-release \
+    && add-apt-repository -y ppa:v-launchpad-jochen-sprickerhof-de/ros \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        ros-noetic-ros-base \
+        ros-noetic-tf \
+        ros-noetic-realtime-tools \
+        ros-noetic-kdl-parser \
+        ros-noetic-pr2-controller-manager \
+        ros-noetic-pr2-mechanism-model \
+        ros-noetic-control-toolbox \
+        python3-rosdep \
+        python3-catkin-tools \
+        python3-wstool \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV ROOT_DIR=/root
+# ---- rosdep init ----------------------------------------------------------
+RUN rosdep init && rosdep update
 
-RUN cd $ROOT_DIR \
-    && wget https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz \
-    && tar -zvxf boost_1_61_0.tar.gz \
-    && cd boost_1_61_0 \
-    && ./bootstrap.sh --prefix=/usr/local --with-libraries=program_options atomic \
-		link=static runtime-link=shared threading=multi \
-    && ./b2 install \
-    && cd $ROOT_DIR && rm boost*.gz
-#
-#protobuf-compiler
-ENV PROTOBUF=/root/protobuf
-RUN git clone https://github.com/google/protobuf.git \
-		&& cd protobuf \
-		&& bash autogen.sh \
-		&& ./configure \
-		&& make -j \
-		&& make install \
-		&& ldconfig \
-		&& cd ../ \
-		&& rm -rf protobuf
+# ---- LibTorch path for CMake find_package(Torch) --------------------------
+# Point TORCH_ROOT at the pip-installed torch so catkin can find it.
+ENV TORCH_ROOT=/usr/local/lib/python3.10/dist-packages/torch
+ENV CMAKE_PREFIX_PATH="${TORCH_ROOT}:${CMAKE_PREFIX_PATH}"
 
-RUN cd /root \
-    && wget https://ecs.utdallas.edu/~opo140030/docker_files/cudnn.tar.gz \
-		&& tar -zvxf cudnn.tar.gz \
-		&& cd cudnnv5.1 \
-		&& cp include/cudnn.h /usr/local/cuda/include \
-		&& cp include/cudnn.h /usr/local/cuda-8.0/include \
-		&& cp lib64/*.* /usr/local/cuda-8.0/lib64 \
-		&& cp lib64/*.* /usr/local/cuda/lib64 \
-    && rm /root/cudnn* -rf
-
-#clone caffe
-ENV CAFFE_ROOT=/root/caffe/
-RUN cd ~ \
-    && git clone https://github.com/BVLC/caffe.git
-
-COPY CaffeCMake.txt $CAFFE_ROOT/CMakeLists.txt
-
-RUN cd $CAFFE_ROOT \
-		&& mkdir build && cd build \
-		&& cmake -DUSE_CUDNN=ON ..  \
-		&& make -j"$(nproc)" all \
-		&& make install
-
-# Setup catkin workspace
-RUN /bin/bash -c echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc \
-		&& /bin/bash -c echo "export PYTHONPATH=${PYTHONPATH:+:${PYTHONPATH}}:/root/caffe/python:/root/catkin_ws/src/gps" >> ~/.bashrc \
-		&& /bin/bash -c echo " source /usr/local/etc/bash_completion.d/catkin_tools-completion.bash" >> ~/.bashrc \
-		&& /bin/bash -c "source /root/.bashrc" \
-    && /bin/bash -c echo "export CAFFE_ROOT=/root/caffe/build"
-
-RUN wget https://bootstrap.pypa.io/get-pip.py \
-		&& python ./get-pip.py \
-		&& apt-get install python-pip \
-    && rm get-pip.py
-
-#install catkin build
-RUN pip install -U catkin_tools
-
+# ---- Catkin workspace setup -----------------------------------------------
+ENV ROS_DISTRO=noetic
 ENV CATKIN_WS=/root/catkin_ws
+RUN mkdir -p ${CATKIN_WS}/src
 
-RUN mkdir -p $CATKIN_WS/src && cd $CATKIN_WS/src \
-		&& mkdir gps
+# ---- Copy GPS source tree -------------------------------------------------
+COPY . ${CATKIN_WS}/src/gps
 
-COPY . $CATKIN_WS/src/gps
+# ---- Compile gps.proto using grpcio-tools protoc --------------------------
+RUN cd ${CATKIN_WS}/src/gps \
+    && python -m grpc_tools.protoc \
+        -I gps_agent_pkg/proto \
+        --python_out=python/gps/proto \
+        gps_agent_pkg/proto/gps.proto \
+    && touch python/gps/proto/__init__.py
 
-RUN /bin/bash -c "source /opt/ros/indigo/setup.bash" \
-		&& cd $CATKIN_WS/src/gps \
-    && rm CaffeCMake.txt \
-		&& ./compile_proto.sh \
-		&& cd gps_agent_pkg \
-		&& echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list \
-		&& apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116 \
-		&& apt-get update \
-		&& rosdep install --from-paths -r -y . \
- 		&& cd /root  \
-		&& git clone https://github.com/pybox2d/pybox2d  \
-		&& cd pybox2d  \
-		&& python setup.py build  \
-		&& python setup.py install \
-		&& rm -rf /root/pybox2d
+# ---- catkin build ---------------------------------------------------------
+SHELL ["/bin/bash", "-c"]
+RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+    && cd ${CATKIN_WS}/src/gps/gps_agent_pkg \
+    && rosdep install --from-paths . -r -y --ignore-src \
+    && cd ${CATKIN_WS} \
+    && catkin init \
+    && catkin config --cmake-args \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DTORCH_ROOT=${TORCH_ROOT} \
+    && catkin build --no-status
 
-# split this to help debugging during build process
-RUN cd $CATKIN_WS/src/gps \
-		&& chmod 777 *.sh \
-		&& cp *.sh $CATKIN_WS \
-		&& pip install -r requirements.txt \
-    && rm -rf /var/lib/apt/lists/*
+# ---- Environment setup in shell -------------------------------------------
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc \
+    && echo "source ${CATKIN_WS}/devel/setup.bash" >> ~/.bashrc \
+    && echo "export PYTHONPATH=${CATKIN_WS}/src/gps/python:\${PYTHONPATH}" >> ~/.bashrc \
+    && echo "export GPS_ROOT_DIR=${CATKIN_WS}/src/gps" >> ~/.bashrc \
+    && echo "export TORCH_ROOT=${TORCH_ROOT}" >> ~/.bashrc
 
-#ADD setup.sh $ROOT_DIR
-# 
-# RUN cd $ROOT_DIR \
-#     && bash setup.sh \
-#     && cd $CATKIN_WS/src \
-#     && catkin init \
-#     && cd $CATKIN_WS \
-#     && export CAFFE_ROOT=/root/caffe/ \
-#     && catkin build
-
-RUN  echo   " ===========  Build Complete  =========   "
+WORKDIR ${CATKIN_WS}/src/gps
+CMD ["bash"]
