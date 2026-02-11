@@ -1,0 +1,22 @@
+# UpdatePolicy.srv — typed ROS service for publishing a new TorchScript policy
+# to the C++ robot controller.
+#
+# Using a dedicated service (rather than embedding binary blobs in a topic
+# message) has three advantages:
+#   1. uint8[] is the correct ROS type for raw bytes — string was being misused.
+#   2. The service is synchronous: the Python trainer blocks until the C++ side
+#      confirms the model was loaded (or returns an error string).
+#   3. The call is fully introspectable via `rosservice call` and rosbag record.
+#
+# Python side sends:   UpdatePolicyRequest(torch_version=..., model_bytes=[...])
+# C++ side responds:   UpdatePolicyResponse(success=True/False, message="")
+
+# --- request ---
+string  torch_version  # torch.__version__ (e.g. "2.1.2+cu121"); used for ABI check
+uint8[] model_bytes    # TorchScript model from torch.jit.save() as raw bytes
+
+---
+
+# --- response ---
+bool   success   # True if the model was loaded without error
+string message   # Human-readable status or error description
