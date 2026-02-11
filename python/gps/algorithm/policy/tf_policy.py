@@ -3,7 +3,10 @@ import os
 import uuid
 
 import numpy as np
-import tensorflow as tf
+
+# TensorFlow 2.x compatibility mode
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 from gps.algorithm.policy.policy import Policy
 

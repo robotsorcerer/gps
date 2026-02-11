@@ -1,6 +1,9 @@
 """ This file provides an example tensorflow network used to define a policy. """
 
-import tensorflow as tf
+# TensorFlow 2.x compatibility mode
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 from gps.algorithm.policy_opt.tf_utils import TfMap
 import numpy as np
 
