@@ -1,5 +1,8 @@
 """ This file defines the linear Gaussian policy class. """
+from typing import Optional
+
 import numpy as np
+import numpy.typing as npt
 
 from gps.algorithm.policy.policy import Policy
 from gps.utility.general_utils import check_shape
@@ -10,26 +13,29 @@ class LinearGaussianPolicy(Policy):
     Time-varying linear Gaussian policy.
     U = K*x + k + noise, where noise ~ N(0, chol_pol_covar)
     """
-    def __init__(self, K, k, pol_covar, chol_pol_covar, inv_pol_covar):
+    def __init__(self, K: npt.NDArray[np.float64], k: npt.NDArray[np.float64],
+                 pol_covar: npt.NDArray[np.float64], chol_pol_covar: npt.NDArray[np.float64],
+                 inv_pol_covar: npt.NDArray[np.float64]) -> None:
         Policy.__init__(self)
 
         # Assume K has the correct shape, and make sure others match.
-        self.T = K.shape[0]
-        self.dU = K.shape[1]
-        self.dX = K.shape[2]
+        self.T: int = K.shape[0]
+        self.dU: int = K.shape[1]
+        self.dX: int = K.shape[2]
 
         check_shape(k, (self.T, self.dU))
         check_shape(pol_covar, (self.T, self.dU, self.dU))
         check_shape(chol_pol_covar, (self.T, self.dU, self.dU))
         check_shape(inv_pol_covar, (self.T, self.dU, self.dU))
 
-        self.K = K
-        self.k = k
-        self.pol_covar = pol_covar
-        self.chol_pol_covar = chol_pol_covar
-        self.inv_pol_covar = inv_pol_covar
+        self.K: npt.NDArray[np.float64] = K
+        self.k: npt.NDArray[np.float64] = k
+        self.pol_covar: npt.NDArray[np.float64] = pol_covar
+        self.chol_pol_covar: npt.NDArray[np.float64] = chol_pol_covar
+        self.inv_pol_covar: npt.NDArray[np.float64] = inv_pol_covar
 
-    def act(self, x, obs, t, noise=None):
+    def act(self, x: npt.NDArray, obs: npt.NDArray, t: int,
+            noise: Optional[npt.NDArray] = None) -> npt.NDArray:
         """
         Return an action for a state.
         Args:
@@ -42,7 +48,7 @@ class LinearGaussianPolicy(Policy):
         u += self.chol_pol_covar[t].T.dot(noise)
         return u
 
-    def fold_k(self, noise):
+    def fold_k(self, noise: npt.NDArray) -> npt.NDArray:
         """
         Fold noise into k.
         Args:
@@ -56,7 +62,7 @@ class LinearGaussianPolicy(Policy):
             k[i] = scaled_noise + self.k[i]
         return k
 
-    def nans_like(self):
+    def nans_like(self) -> 'LinearGaussianPolicy':
         """
         Returns:
             A new linear Gaussian policy object with the same dimensions
@@ -82,15 +88,19 @@ class LinearGaussianPolicyRobust(Policy):
     v^* = gv + Gv * x + noise_v, where noise_v ~ N(0, chol_pol_covar_v) # local adversarial policy
     U   = g  + G  * x + noise,   where noise ~ N(0, chol_pol_covar)             # joint global policy
     """
-    def __init__(self, Gu, gu, pol_covar_u, chol_pol_covar_u, inv_pol_covar_u, \
-                       Gv, gv, pol_covar_v, chol_pol_covar_v, inv_pol_covar_v):
+    def __init__(self, Gu: npt.NDArray[np.float64], gu: npt.NDArray[np.float64],
+                 pol_covar_u: npt.NDArray[np.float64], chol_pol_covar_u: npt.NDArray[np.float64],
+                 inv_pol_covar_u: npt.NDArray[np.float64],
+                 Gv: npt.NDArray[np.float64], gv: npt.NDArray[np.float64],
+                 pol_covar_v: npt.NDArray[np.float64], chol_pol_covar_v: npt.NDArray[np.float64],
+                 inv_pol_covar_v: npt.NDArray[np.float64]) -> None:
         Policy.__init__(self)
 
         # Assume G has the correct shape, and make sure others match.
-        self.T = Gu.shape[0]
-        self.dU = Gu.shape[1]
-        self.dV = Gv.shape[1]
-        self.dX = Gu.shape[2]
+        self.T: int = Gu.shape[0]
+        self.dU: int = Gu.shape[1]
+        self.dV: int = Gv.shape[1]
+        self.dX: int = Gu.shape[2]
 
         check_shape(gu, (self.T, self.dU))
         check_shape(pol_covar_u, (self.T, self.dU, self.dU))
@@ -102,22 +112,24 @@ class LinearGaussianPolicyRobust(Policy):
         check_shape(chol_pol_covar_v, (self.T, self.dV, self.dV))
         check_shape(inv_pol_covar_v, (self.T, self.dV, self.dV))
 
-        self.Gu = Gu
-        self.gu = gu
-        self.pol_covar_u = pol_covar_u
-        self.chol_pol_covar_u = chol_pol_covar_u
-        self.inv_pol_covar_u = inv_pol_covar_u
+        self.Gu: npt.NDArray[np.float64] = Gu
+        self.gu: npt.NDArray[np.float64] = gu
+        self.pol_covar_u: npt.NDArray[np.float64] = pol_covar_u
+        self.chol_pol_covar_u: npt.NDArray[np.float64] = chol_pol_covar_u
+        self.inv_pol_covar_u: npt.NDArray[np.float64] = inv_pol_covar_u
 
-        self.Gv = Gv
-        self.gv = gv
-        self.pol_covar_v = pol_covar_v
-        self.chol_pol_covar_v = chol_pol_covar_v
-        self.inv_pol_covar_v = inv_pol_covar_v
-        
-    def act(self, x, obs, t, noise=None):
+        self.Gv: npt.NDArray[np.float64] = Gv
+        self.gv: npt.NDArray[np.float64] = gv
+        self.pol_covar_v: npt.NDArray[np.float64] = pol_covar_v
+        self.chol_pol_covar_v: npt.NDArray[np.float64] = chol_pol_covar_v
+        self.inv_pol_covar_v: npt.NDArray[np.float64] = inv_pol_covar_v
+
+    def act(self, x: npt.NDArray, obs: npt.NDArray, t: int,
+            noise: Optional[npt.NDArray] = None) -> npt.NDArray:
         raise NotImplementedError("act method is not implemented in the robust version")
 
-    def act_u(self, x, obs, t, noise=None):
+    def act_u(self, x: npt.NDArray, obs: npt.NDArray, t: int,
+              noise: Optional[npt.NDArray] = None) -> npt.NDArray:
         """
         Return an action for a state.
         Args:
@@ -130,7 +142,8 @@ class LinearGaussianPolicyRobust(Policy):
         u += self.chol_pol_covar_u[t].T.dot(noise)
         return u
 
-    def act_v(self, x, obs, t, noise=None):
+    def act_v(self, x: npt.NDArray, obs: npt.NDArray, t: int,
+              noise: Optional[npt.NDArray] = None) -> npt.NDArray:
         """
         Return an action for a state.
         Args:
@@ -143,7 +156,7 @@ class LinearGaussianPolicyRobust(Policy):
         v += self.chol_pol_covar_v[t].T.dot(noise)
         return v
 
-    def fold_gu(self, noise):
+    def fold_gu(self, noise: npt.NDArray) -> npt.NDArray:
         """
         Fold noise into gu.
         Args:
@@ -157,7 +170,7 @@ class LinearGaussianPolicyRobust(Policy):
             gu[i] = scaled_noise + self.gu[i]
         return gu
 
-    def fold_gv(self, noise):
+    def fold_gv(self, noise: npt.NDArray) -> npt.NDArray:
         """
         Fold noise into gv.
         Args:
@@ -171,7 +184,7 @@ class LinearGaussianPolicyRobust(Policy):
             gv[i] = scaled_noise + self.gv[i]
         return gv
 
-    def nans_like(self):
+    def nans_like(self) -> 'LinearGaussianPolicyRobust':
         """
         Returns:
             A new linear Gaussian policy object with the same dimensions
