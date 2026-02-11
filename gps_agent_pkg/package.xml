@@ -1,53 +1,69 @@
 <?xml version="1.0"?>
-<package>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd"
+            schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>gps_agent_pkg</name>
-  <version>0.0.0</version>
-  <description>The gps_agent_pkg catkinized package</description>
+  <version>0.1.0</version>
+  <description>
+    GPS (Guided Policy Search) robot-side agent package.
+    Provides TorchScript-based policy controllers and ROS message/service
+    definitions for the GPS iDG algorithm.  Supports both ROS 1 (catkin)
+    and ROS 2 (ament_cmake / colcon) builds via conditional dependencies.
+  </description>
 
   <maintainer email="patlekano@gmail.com">Olalekan Ogunmolu</maintainer>
-
   <license>BSD</license>
-
   <author email="cbfinn@eecs.berkeley.edu">Chelsea Finn</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>control_toolbox</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>orocos_kdl</build_depend>
-  <build_depend>pluginlib</build_depend>
-  <build_depend>pr2_controller_interface</build_depend>
-  <build_depend>pr2_controller_manager</build_depend>
-  <build_depend>pr2_controllers_msgs</build_depend>
-  <build_depend>pr2_mechanism_model</build_depend>
-  <build_depend>realtime_tools</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>roslib</build_depend>
-  <build_depend>rospy</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>tf</build_depend>  
-  <build_depend>message_generation</build_depend>
+  <!-- ── Build tools ──────────────────────────────────────────────────── -->
+  <!-- ROS 1 catkin build -->
+  <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+  <!-- ROS 2 ament_cmake / colcon build -->
+  <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
+
+  <!-- ── Message / service generation ──────────────────────────────────── -->
+  <build_depend condition="$ROS_VERSION == 1">message_generation</build_depend>
+  <exec_depend  condition="$ROS_VERSION == 1">message_runtime</exec_depend>
+  <build_depend condition="$ROS_VERSION == 2">rosidl_default_generators</build_depend>
+  <exec_depend  condition="$ROS_VERSION == 2">rosidl_default_runtime</exec_depend>
+  <member_of_group condition="$ROS_VERSION == 2">rosidl_interface_packages</member_of_group>
+
+  <!-- ── Standard ROS packages (both versions) ──────────────────────────── -->
+  <depend condition="$ROS_VERSION == 1">geometry_msgs</depend>
+  <depend condition="$ROS_VERSION == 1">sensor_msgs</depend>
+  <depend condition="$ROS_VERSION == 1">std_msgs</depend>
+
+  <depend condition="$ROS_VERSION == 2">geometry_msgs</depend>
+  <depend condition="$ROS_VERSION == 2">sensor_msgs</depend>
+  <depend condition="$ROS_VERSION == 2">std_msgs</depend>
+
+  <!-- ── ROS 1-only (PR2 / catkin-only) ────────────────────────────────── -->
+  <depend condition="$ROS_VERSION == 1">control_toolbox</depend>
+  <depend condition="$ROS_VERSION == 1">orocos_kdl</depend>
+  <depend condition="$ROS_VERSION == 1">pluginlib</depend>
+  <depend condition="$ROS_VERSION == 1">pr2_controller_interface</depend>
+  <depend condition="$ROS_VERSION == 1">pr2_controller_manager</depend>
+  <depend condition="$ROS_VERSION == 1">pr2_controllers_msgs</depend>
+  <depend condition="$ROS_VERSION == 1">pr2_mechanism_model</depend>
+  <depend condition="$ROS_VERSION == 1">realtime_tools</depend>
+  <depend condition="$ROS_VERSION == 1">roscpp</depend>
+  <depend condition="$ROS_VERSION == 1">roslib</depend>
+  <depend condition="$ROS_VERSION == 1">rospy</depend>
+  <depend condition="$ROS_VERSION == 1">tf</depend>
+
+  <!-- ── ROS 2-only ────────────────────────────────────────────────────── -->
+  <depend condition="$ROS_VERSION == 2">rclcpp</depend>
+  <depend condition="$ROS_VERSION == 2">rclpy</depend>
+  <depend condition="$ROS_VERSION == 2">tf2_ros</depend>
+
+  <!-- ── System / third-party (both versions) ──────────────────────────── -->
   <build_depend>eigen</build_depend>
 
-  <run_depend>control_toolbox</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>orocos_kdl</run_depend>
-  <run_depend>pluginlib</run_depend>
-  <run_depend>pr2_controller_interface</run_depend>
-  <run_depend>pr2_controller_manager</run_depend>
-  <run_depend>pr2_controllers_msgs</run_depend>
-  <run_depend>pr2_mechanism_model</run_depend>
-  <run_depend>realtime_tools</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>roslib</run_depend>
-  <run_depend>rospy</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>message_runtime</run_depend>
-<run_depend>eigen</run_depend>
-
+  <!-- ── ROS 1 plugin export ────────────────────────────────────────────── -->
   <export>
-    <pr2_controller_interface plugin="${prefix}/controller_plugins.xml" />
+    <build_type condition="$ROS_VERSION == 1">catkin</build_type>
+    <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
+    <!-- PR2 controller plugin manifest (ROS 1 only) -->
+    <!-- <pr2_controller_interface plugin="${prefix}/controller_plugins.xml" /> -->
   </export>
 </package>
