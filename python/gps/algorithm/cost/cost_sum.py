@@ -1,29 +1,37 @@
 """ This file defines a cost sum of arbitrary other costs. """
 import copy, os
+from typing import Dict, List, Optional, Any, Union, Tuple
+
 import numpy as np
+import numpy.typing as npt
+
 from gps.algorithm.cost.config import COST_SUM
 from gps.algorithm.cost.cost import Cost
 
 
 class CostSum(Cost):
     """ A wrapper cost function that adds other cost functions. """
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams: Dict[str, Any]) -> None:
         config = copy.deepcopy(COST_SUM)
         config.update(hyperparams)
         Cost.__init__(self, config)
 
-        self._costs = []
-        self._weights = self._hyperparams['weights']
+        self._costs: List[Cost] = []
+        self._weights: List[float] = self._hyperparams['weights']
         # print self._hyperparams['costs']
 
         # [torque_cost, fk_cost, final_cost] = [Cost_Action, Cost_FK, Cost_FK]
         for cost in self._hyperparams['costs']:
             self._costs.append(cost['type'](cost))
             # fix gamma and mode from hyperparams file
-            self.gamma = cost['gamma'] if 'gamma' in cost else None
-            self.mode = cost['mode'] if 'mode' in cost else None
+            self.gamma: Optional[float] = cost['gamma'] if 'gamma' in cost else None
+            self.mode: Optional[str] = cost['mode'] if 'mode' in cost else None
 
-    def eval(self, sample, **kwargs):
+    def eval(self, sample: Any, **kwargs: Any) -> Union[
+        Tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray],
+        Tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray,
+              npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray]
+    ]:
         """
         Evaluate cost function and derivatives.
         Args:
