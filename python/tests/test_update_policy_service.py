@@ -1,17 +1,17 @@
 """
-Tests for UpdatePolicyClient and UpdatePolicyServer (Arch 9.2).
+Tests for UpdatePolicyClient and UpdatePolicyServer (Arch 9.2 — rclpy).
 
-ROS is mocked throughout — no running ROS master required.
+ROS 2 / rclpy is mocked throughout — no running ROS daemon required.
 
 Covers:
 - UpdatePolicyClient.call() serialises torch_version + uint8[] model_bytes
 - UpdatePolicyClient.call_from_params() accepts get_torch_params_dict() output
 - UpdatePolicyClient raises RuntimeError when service call fails
-- UpdatePolicyClient raises RuntimeError when ROS unavailable
-- UpdatePolicyServer._ros_callback() invokes handler with correct args
-- UpdatePolicyServer._ros_callback() returns success=False on handler exception
+- UpdatePolicyClient raises RuntimeError when ROS 2 unavailable
+- UpdatePolicyServer._ros2_callback() invokes handler with correct args
+- UpdatePolicyServer._ros2_callback() returns success=False on handler exception
 - UpdatePolicyServer._default_handler returns (False, "no handler registered")
-- Round-trip: client call → server callback → handler
+- Round-trip: client serialises → server callback → handler receives correct bytes
 - UpdatePolicy.srv field types: uint8[] for model_bytes, string for torch_version
 """
 from __future__ import annotations
@@ -25,22 +25,35 @@ import pytest
 
 
 # ---------------------------------------------------------------------------
-# Helpers — minimal fake ROS & gps_agent_pkg.srv stubs
+# Helpers — minimal fake rclpy + gps_agent_pkg.srv stubs
 # ---------------------------------------------------------------------------
 
-def _make_fake_rospy():
-    """Return a minimal rospy-shaped module."""
-    rospy = types.ModuleType('rospy')
-    rospy.wait_for_service = MagicMock()
-    rospy.ServiceProxy = MagicMock()
-    rospy.Service = MagicMock()
-    return rospy
+def _make_fake_rclpy():
+    """Return a minimal rclpy-shaped module with spin helpers."""
+    rclpy = types.ModuleType('rclpy')
+    rclpy.ok = MagicMock(return_value=True)
+    rclpy.init = MagicMock()
+    rclpy.shutdown = MagicMock()
+    rclpy.spin_until_future_complete = MagicMock()
+    rclpy.node = types.ModuleType('rclpy.node')
+
+    class FakeNode:
+        def create_client(self, srv_type, srv_name):
+            return MagicMock()
+        def create_service(self, srv_type, srv_name, cb):
+            return MagicMock()
+        def destroy_service(self, handle):
+            pass
+
+    rclpy.node.Node = FakeNode
+    sys.modules['rclpy.node'] = rclpy.node
+    return rclpy
 
 
 def _make_srv_module():
     """Return a mock gps_agent_pkg.srv module with UpdatePolicy stubs."""
     pkg = types.ModuleType('gps_agent_pkg')
-    srv = types.ModuleType('gps_agent_pkg.srv')
+    srv_mod = types.ModuleType('gps_agent_pkg.srv')
 
     class UpdatePolicyRequest:
         def __init__(self, torch_version='', model_bytes=None):
@@ -53,51 +66,59 @@ def _make_srv_module():
             self.message = message
 
     class UpdatePolicy:
-        pass
+        Request = UpdatePolicyRequest
+        Response = UpdatePolicyResponse
 
-    srv.UpdatePolicyRequest = UpdatePolicyRequest
-    srv.UpdatePolicyResponse = UpdatePolicyResponse
-    srv.UpdatePolicy = UpdatePolicy
-    pkg.srv = srv
-    return pkg, srv
+    srv_mod.UpdatePolicyRequest = UpdatePolicyRequest
+    srv_mod.UpdatePolicyResponse = UpdatePolicyResponse
+    srv_mod.UpdatePolicy = UpdatePolicy
+    pkg.srv = srv_mod
+    return pkg, srv_mod
+
+
+def _make_fake_node():
+    """Return a MagicMock rclpy Node with the methods used by the client/server."""
+    node = MagicMock()
+    # create_client returns a client mock whose wait_for_service returns True
+    mock_client = MagicMock()
+    mock_client.wait_for_service.return_value = True
+    node.create_client.return_value = mock_client
+    # create_service returns a service handle mock
+    mock_svc_handle = MagicMock()
+    node.create_service.return_value = mock_svc_handle
+    return node, mock_client, mock_svc_handle
 
 
 @contextmanager
-def _ros_env():
+def _ros2_env():
     """
-    Context manager: inject fake rospy + gps_agent_pkg.srv into sys.modules,
-    patch _ROS_AVAILABLE to True, then restore on exit.
+    Context manager: inject fake rclpy + gps_agent_pkg.srv into sys.modules,
+    patch _ROS2_AVAILABLE to True, then restore on exit.
     """
     from gps.ros import update_policy_service as mod
 
-    fake_rospy = _make_fake_rospy()
+    fake_rclpy = _make_fake_rclpy()
     fake_pkg, fake_srv = _make_srv_module()
 
-    prev_rospy = sys.modules.get('rospy')
-    prev_pkg = sys.modules.get('gps_agent_pkg')
-    prev_srv = sys.modules.get('gps_agent_pkg.srv')
+    prev = {
+        k: sys.modules.get(k)
+        for k in ('rclpy', 'rclpy.node', 'gps_agent_pkg', 'gps_agent_pkg.srv')
+    }
 
-    sys.modules['rospy'] = fake_rospy
+    sys.modules['rclpy'] = fake_rclpy
+    sys.modules['rclpy.node'] = fake_rclpy.node
     sys.modules['gps_agent_pkg'] = fake_pkg
     sys.modules['gps_agent_pkg.srv'] = fake_srv
 
-    with patch.object(mod, '_ROS_AVAILABLE', True):
+    with patch.object(mod, '_ROS2_AVAILABLE', True):
         try:
-            yield fake_rospy, fake_srv
+            yield fake_rclpy, fake_srv
         finally:
-            # Restore originals (or remove if they weren't there before)
-            if prev_rospy is None:
-                sys.modules.pop('rospy', None)
-            else:
-                sys.modules['rospy'] = prev_rospy
-            if prev_pkg is None:
-                sys.modules.pop('gps_agent_pkg', None)
-            else:
-                sys.modules['gps_agent_pkg'] = prev_pkg
-            if prev_srv is None:
-                sys.modules.pop('gps_agent_pkg.srv', None)
-            else:
-                sys.modules['gps_agent_pkg.srv'] = prev_srv
+            for k, v in prev.items():
+                if v is None:
+                    sys.modules.pop(k, None)
+                else:
+                    sys.modules[k] = v
 
 
 # ---------------------------------------------------------------------------
@@ -106,36 +127,45 @@ def _ros_env():
 
 class TestUpdatePolicyClient:
 
-    def _make_client(self):
+    def _make_client(self, node=None):
         from gps.ros.update_policy_service import UpdatePolicyClient
-        return UpdatePolicyClient('/test/update_policy', timeout=1.0)
+        n = node or MagicMock()
+        return UpdatePolicyClient(n, '/test/update_policy', timeout=1.0)
 
     def test_call_sends_correct_fields(self):
-        client = self._make_client()
+        node, mock_client, _ = _make_fake_node()
+        client = self._make_client(node)
 
-        with _ros_env() as (fake_rospy, fake_srv):
-            proxy = MagicMock(return_value=fake_srv.UpdatePolicyResponse(
-                success=True, message='ok'
-            ))
-            fake_rospy.ServiceProxy.return_value = proxy
+        with _ros2_env() as (fake_rclpy, fake_srv):
+            # Simulate a successful future result
+            future = MagicMock()
+            future.done.return_value = True
+            resp = fake_srv.UpdatePolicyResponse(success=True, message='ok')
+            future.result.return_value = resp
+            mock_client.call_async.return_value = future
+            node.create_client.return_value = mock_client
 
             ok, msg = client.call('2.1.0', b'\x01\x02\x03')
 
         assert ok is True
         assert msg == 'ok'
-        req_arg = proxy.call_args[0][0]
+        req_arg = mock_client.call_async.call_args[0][0]
         assert req_arg.torch_version == '2.1.0'
         assert list(req_arg.model_bytes) == [1, 2, 3]
 
     def test_call_from_params(self):
         """call_from_params() extracts torch_version + model_bytes from dict."""
-        client = self._make_client()
+        node, mock_client, _ = _make_fake_node()
+        client = self._make_client(node)
 
-        with _ros_env() as (fake_rospy, fake_srv):
-            proxy = MagicMock(return_value=fake_srv.UpdatePolicyResponse(
+        with _ros2_env() as (fake_rclpy, fake_srv):
+            future = MagicMock()
+            future.done.return_value = True
+            future.result.return_value = fake_srv.UpdatePolicyResponse(
                 success=True, message='loaded'
-            ))
-            fake_rospy.ServiceProxy.return_value = proxy
+            )
+            mock_client.call_async.return_value = future
+            node.create_client.return_value = mock_client
 
             params = {
                 'torch_version': '2.3.1',
@@ -145,16 +175,17 @@ class TestUpdatePolicyClient:
             ok, msg = client.call_from_params(params)
 
         assert ok is True
-        req_arg = proxy.call_args[0][0]
+        req_arg = mock_client.call_async.call_args[0][0]
         assert req_arg.torch_version == '2.3.1'
         assert list(req_arg.model_bytes) == [10, 20, 30]
 
     def test_call_raises_on_service_exception(self):
-        client = self._make_client()
+        node, mock_client, _ = _make_fake_node()
+        client = self._make_client(node)
 
-        with _ros_env() as (fake_rospy, fake_srv):
-            proxy = MagicMock(side_effect=RuntimeError('service died'))
-            fake_rospy.ServiceProxy.return_value = proxy
+        with _ros2_env() as (fake_rclpy, fake_srv):
+            mock_client.call_async.side_effect = RuntimeError('service died')
+            node.create_client.return_value = mock_client
 
             with pytest.raises(RuntimeError, match='service died'):
                 client.call('2.1.0', b'bytes')
@@ -162,35 +193,43 @@ class TestUpdatePolicyClient:
     def test_connect_raises_when_ros_unavailable(self):
         from gps.ros import update_policy_service as mod
         client = self._make_client()
-        with patch.object(mod, '_ROS_AVAILABLE', False):
-            with pytest.raises(RuntimeError, match='rospy'):
+        with patch.object(mod, '_ROS2_AVAILABLE', False):
+            with pytest.raises(RuntimeError, match='rclpy'):
                 client.connect()
 
     def test_connect_called_implicitly_on_first_call(self):
-        """proxy is None before connect(); connect() is called inside call()."""
-        client = self._make_client()
-        assert client._proxy is None
+        """_client is None before connect(); connect() is called inside call()."""
+        node, mock_client, _ = _make_fake_node()
+        client = self._make_client(node)
+        assert client._client is None
 
-        with _ros_env() as (fake_rospy, fake_srv):
-            proxy = MagicMock(return_value=fake_srv.UpdatePolicyResponse(
+        with _ros2_env() as (fake_rclpy, fake_srv):
+            future = MagicMock()
+            future.done.return_value = True
+            future.result.return_value = fake_srv.UpdatePolicyResponse(
                 success=False, message='err'
-            ))
-            fake_rospy.ServiceProxy.return_value = proxy
+            )
+            mock_client.call_async.return_value = future
+            node.create_client.return_value = mock_client
 
             ok, msg = client.call('2.0.0', b'x')
 
         assert ok is False
         # wait_for_service was called during implicit connect
-        fake_rospy.wait_for_service.assert_called_once()
+        mock_client.wait_for_service.assert_called_once()
 
     def test_rejected_policy_returns_false(self):
-        client = self._make_client()
+        node, mock_client, _ = _make_fake_node()
+        client = self._make_client(node)
 
-        with _ros_env() as (fake_rospy, fake_srv):
-            proxy = MagicMock(return_value=fake_srv.UpdatePolicyResponse(
+        with _ros2_env() as (fake_rclpy, fake_srv):
+            future = MagicMock()
+            future.done.return_value = True
+            future.result.return_value = fake_srv.UpdatePolicyResponse(
                 success=False, message='version mismatch'
-            ))
-            fake_rospy.ServiceProxy.return_value = proxy
+            )
+            mock_client.call_async.return_value = future
+            node.create_client.return_value = mock_client
 
             ok, msg = client.call('1.0.0', b'old bytes')
 
@@ -206,11 +245,14 @@ class TestUpdatePolicyServer:
 
     def _make_server(self, handler=None):
         from gps.ros.update_policy_service import UpdatePolicyServer
-        return UpdatePolicyServer('/test/update_policy', handler=handler)
+        node = MagicMock()
+        mock_svc_handle = MagicMock()
+        node.create_service.return_value = mock_svc_handle
+        return UpdatePolicyServer(node, '/test/update_policy', handler=handler), node, mock_svc_handle
 
-    def test_ros_callback_invokes_handler(self):
+    def test_ros2_callback_invokes_handler(self):
         handler = MagicMock(return_value=(True, 'all good'))
-        server = self._make_server(handler=handler)
+        server, node, _ = self._make_server(handler=handler)
 
         fake_pkg, fake_srv = _make_srv_module()
         sys.modules['gps_agent_pkg.srv'] = fake_srv
@@ -219,15 +261,16 @@ class TestUpdatePolicyServer:
             torch_version='2.1.0',
             model_bytes=[5, 6, 7],
         )
-        resp = server._ros_callback(req)
+        resp = fake_srv.UpdatePolicyResponse()
+        result = server._ros2_callback(req, resp)
 
         handler.assert_called_once_with('2.1.0', bytes([5, 6, 7]))
-        assert resp.success is True
-        assert resp.message == 'all good'
+        assert result.success is True
+        assert result.message == 'all good'
 
-    def test_ros_callback_returns_failure_on_exception(self):
+    def test_ros2_callback_returns_failure_on_exception(self):
         handler = MagicMock(side_effect=RuntimeError('handler error'))
-        server = self._make_server(handler=handler)
+        server, node, _ = self._make_server(handler=handler)
 
         fake_pkg, fake_srv = _make_srv_module()
         sys.modules['gps_agent_pkg.srv'] = fake_srv
@@ -236,10 +279,11 @@ class TestUpdatePolicyServer:
             torch_version='2.1.0',
             model_bytes=[1],
         )
-        resp = server._ros_callback(req)
+        resp = fake_srv.UpdatePolicyResponse()
+        result = server._ros2_callback(req, resp)
 
-        assert resp.success is False
-        assert 'handler error' in resp.message
+        assert result.success is False
+        assert 'handler error' in result.message
 
     def test_default_handler_returns_false(self):
         from gps.ros.update_policy_service import UpdatePolicyServer
@@ -249,32 +293,33 @@ class TestUpdatePolicyServer:
 
     def test_start_raises_when_ros_unavailable(self):
         from gps.ros import update_policy_service as mod
-        server = self._make_server()
-        with patch.object(mod, '_ROS_AVAILABLE', False):
-            with pytest.raises(RuntimeError, match='rospy'):
+        server, node, _ = self._make_server()
+        with patch.object(mod, '_ROS2_AVAILABLE', False):
+            with pytest.raises(RuntimeError, match='rclpy'):
                 server.start()
 
     def test_start_registers_service(self):
-        server = self._make_server()
+        server, node, mock_svc_handle = self._make_server()
 
-        with _ros_env() as (fake_rospy, fake_srv):
-            mock_service = MagicMock()
-            fake_rospy.Service.return_value = mock_service
+        with _ros2_env() as (fake_rclpy, fake_srv):
             server.start()
-            fake_rospy.Service.assert_called_once()
-            assert fake_rospy.Service.call_args[0][0] == '/test/update_policy'
+            node.create_service.assert_called_once()
+            # First positional arg is the service type, second is the name
+            call_args = node.create_service.call_args
+            assert call_args[0][1] == '/test/update_policy'
+            assert server._service_handle is mock_svc_handle
 
     def test_stop_shuts_down_service(self):
-        server = self._make_server()
-        mock_service = MagicMock()
-        server._service = mock_service
+        server, node, mock_svc_handle = self._make_server()
+        server._service_handle = mock_svc_handle
         server.stop()
-        mock_service.shutdown.assert_called_once()
-        assert server._service is None
+        node.destroy_service.assert_called_once_with(mock_svc_handle)
+        assert server._service_handle is None
 
     def test_stop_is_noop_when_not_started(self):
-        server = self._make_server()
+        server, node, _ = self._make_server()
         server.stop()   # should not raise
+        node.destroy_service.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -296,15 +341,17 @@ class TestRoundTrip:
             received['mb'] = mb
             return True, 'ok'
 
-        server = UpdatePolicyServer('/rt', handler=handler)
+        node = MagicMock()
+        server = UpdatePolicyServer(node, '/rt', handler=handler)
 
         # Simulate what the client does: bytes → list[int]
         req = fake_srv.UpdatePolicyRequest(
             torch_version='2.1.0',
             model_bytes=list(model_bytes),
         )
-        resp = server._ros_callback(req)
+        resp = fake_srv.UpdatePolicyResponse()
+        result = server._ros2_callback(req, resp)
 
-        assert resp.success is True
+        assert result.success is True
         assert received['mb'] == model_bytes   # lossless round-trip
         assert received['tv'] == '2.1.0'
