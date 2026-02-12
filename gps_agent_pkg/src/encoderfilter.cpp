@@ -1,6 +1,7 @@
 #include "gps_agent_pkg/encoderfilter.h"
 #include "gps_agent_pkg/util.h"
-#include <stdlib.h>
+#include <cstdlib>
+#include <string>
 
 using namespace gps_control;
 
@@ -51,9 +52,9 @@ void EncoderFilter::configure(const std::string& params)
 
     for (int i = 0; i < filter_order; ++i) {
         for (int j = 0; j < filter_order; ++j) {
-            time_matrix_(i,j) = (double) atof(time_values[i + j*filter_order].c_str());
+            time_matrix_(i,j) = std::stod(time_values[static_cast<std::size_t>(i + j*filter_order)]);
         }
-        observation_vector_(i) = (double) atof(obs_values[i].c_str());
+        observation_vector_(i) = std::stod(obs_values[static_cast<std::size_t>(i)]);
     }
     is_configured_ = true;
     ROS_INFO("Joint kalman filter configured.");

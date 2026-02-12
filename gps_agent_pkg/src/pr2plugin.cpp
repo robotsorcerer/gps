@@ -87,7 +87,7 @@ bool GPSPR2Plugin::init(pr2_mechanism_model::RobotState* robot, ros::NodeHandle&
         // Push back the joint state and name.
         pr2_mechanism_model::JointState* jointState = robot_->getJointState(joint_name);
         active_arm_joint_state_.push_back(jointState);
-        if (jointState == NULL)
+        if (jointState == nullptr)
             ROS_INFO_STREAM("jointState: " + joint_name + " is null");
 
         active_arm_joint_names_.push_back(joint_name);
@@ -117,7 +117,7 @@ bool GPSPR2Plugin::init(pr2_mechanism_model::RobotState* robot, ros::NodeHandle&
         // Push back the joint state and name.
         pr2_mechanism_model::JointState* jointState = robot_->getJointState(joint_name);
         passive_arm_joint_state_.push_back(jointState);
-        if (jointState == NULL)
+        if (jointState == nullptr)
             ROS_INFO_STREAM("jointState: " + joint_name + " is null");
         passive_arm_joint_names_.push_back(joint_name);
 
@@ -166,7 +166,7 @@ void GPSPR2Plugin::starting()
     active_arm_controller_->reset(last_update_time_);
 
     // Reset trial controller, if any.
-    if (trial_controller_ != NULL) trial_controller_->reset(last_update_time_);
+    if (trial_controller_ != nullptr) trial_controller_->reset(last_update_time_);
 }
 
 // This is called by the controller manager before stopping the controller.
@@ -193,10 +193,10 @@ void GPSPR2Plugin::update()
     update_controllers(last_update_time_,is_controller_step);
 
     // Store the torques.
-    for (unsigned i = 0; i < active_arm_joint_state_.size(); i++)
+    for (std::size_t i = 0; i < active_arm_joint_state_.size(); ++i)
         active_arm_joint_state_[i]->commanded_effort_ = active_arm_torques_[i];
 
-    for (unsigned i = 0; i < passive_arm_joint_state_.size(); i++)
+    for (std::size_t i = 0; i < passive_arm_joint_state_.size(); ++i)
         passive_arm_joint_state_[i]->commanded_effort_ = passive_arm_torques_[i];
 }
 
@@ -211,17 +211,17 @@ void GPSPR2Plugin::get_joint_encoder_readings(Eigen::VectorXd &angles, gps::Actu
 {
     if (arm == gps::AUXILIARY_ARM)
     {
-        if (angles.rows() != passive_arm_joint_state_.size())
-            angles.resize(passive_arm_joint_state_.size());
-        for (unsigned i = 0; i < angles.size(); i++)
-            angles(i) = passive_arm_joint_state_[i]->position_;
+        if (angles.rows() != static_cast<Eigen::Index>(passive_arm_joint_state_.size()))
+            angles.resize(static_cast<Eigen::Index>(passive_arm_joint_state_.size()));
+        for (std::size_t i = 0; i < passive_arm_joint_state_.size(); ++i)
+            angles(static_cast<Eigen::Index>(i)) = passive_arm_joint_state_[i]->position_;
     }
     else if (arm == gps::TRIAL_ARM)
     {
-        if (angles.rows() != active_arm_joint_state_.size())
-            angles.resize(active_arm_joint_state_.size());
-        for (unsigned i = 0; i < angles.size(); i++)
-            angles(i) = active_arm_joint_state_[i]->position_;
+        if (angles.rows() != static_cast<Eigen::Index>(active_arm_joint_state_.size()))
+            angles.resize(static_cast<Eigen::Index>(active_arm_joint_state_.size()));
+        for (std::size_t i = 0; i < active_arm_joint_state_.size(); ++i)
+            angles(static_cast<Eigen::Index>(i)) = active_arm_joint_state_[i]->position_;
     }
     else
     {

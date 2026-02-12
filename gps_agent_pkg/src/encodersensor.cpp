@@ -72,19 +72,19 @@ void EncoderSensor::update(RobotPlugin *plugin, ros::Time current_time, bool is_
 
         // Compute end effector position, rotation, and Jacobian.
         // Save angles in KDL joint array.
-        for (unsigned i = 0; i < temp_joint_angles_.size(); i++)
+        for (std::size_t i = 0; i < temp_joint_angles_.size(); ++i)
             temp_joint_array_(i) = temp_joint_angles_[i];
         // Run the solvers.
         fk_solver_->JntToCart(temp_joint_array_, temp_tip_pose_);
         jac_solver_->JntToJac(temp_joint_array_, temp_jacobian_);
         // Store position, rotation, and Jacobian.
-        for (unsigned i = 0; i < 3; i++)
+        for (unsigned int i = 0; i < 3; ++i)
             previous_position_(i) = temp_tip_pose_.p(i);
-        for (unsigned j = 0; j < 3; j++)
-            for (unsigned i = 0; i < 3; i++)
+        for (unsigned int j = 0; j < 3; ++j)
+            for (unsigned int i = 0; i < 3; ++i)
                 previous_rotation_(i,j) = temp_tip_pose_.M(i,j);
-        for (unsigned j = 0; j < temp_jacobian_.columns(); j++)
-            for (unsigned i = 0; i < 6; i++)
+        for (unsigned int j = 0; j < temp_jacobian_.columns(); ++j)
+            for (unsigned int i = 0; i < 6; ++i)
                 previous_jacobian_(i,j) = temp_jacobian_(i,j);
 
         // IMPORTANT: note that the Python code will assume that the Jacobian is the Jacobian of the end effector points, not of the end
@@ -96,12 +96,12 @@ void EncoderSensor::update(RobotPlugin *plugin, ros::Time current_time, bool is_
         // TODO - This assumes we are using all joints.
         unsigned n_actuator = previous_angles_.size();
 
-        for(int i=0; i<n_points_; i++){
-            unsigned site_start = i*3;
+        for (int i = 0; i < n_points_; ++i) {
+            const unsigned int site_start = static_cast<unsigned int>(i) * 3;
             Eigen::VectorXd ovec = end_effector_points_.col(i);
 
-            for(unsigned j=0; j<3; j++){
-                for(unsigned k=0; k<n_actuator; k++){
+            for (unsigned int j = 0; j < 3; ++j) {
+                for (unsigned int k = 0; k < n_actuator; ++k) {
                     point_jacobians_(site_start+j, k) = temp_jacobian_(j,k);
                     point_jacobians_rot_(site_start+j, k) = temp_jacobian_(j+3,k);
                 }
@@ -109,7 +109,7 @@ void EncoderSensor::update(RobotPlugin *plugin, ros::Time current_time, bool is_
 
             // Compute site Jacobian.
             ovec = previous_rotation_*ovec;
-            for(unsigned k=0; k<n_actuator; k++){
+            for (unsigned int k = 0; k < n_actuator; ++k) {
                 point_jacobians_(site_start  , k) += point_jacobians_rot_(site_start+1, k)*ovec[2] - point_jacobians_rot_(site_start+2, k)*ovec[1];
                 point_jacobians_(site_start+1, k) += point_jacobians_rot_(site_start+2, k)*ovec[0] - point_jacobians_rot_(site_start  , k)*ovec[2];
                 point_jacobians_(site_start+2, k) += point_jacobians_rot_(site_start  , k)*ovec[1] - point_jacobians_rot_(site_start+1, k)*ovec[0];
@@ -134,14 +134,14 @@ void EncoderSensor::update(RobotPlugin *plugin, ros::Time current_time, bool is_
                 fabs(update_time)/sensor_step_length_ <= 2.0)
             {
                 previous_end_effector_point_velocities_ = (temp_end_effector_points_ - previous_end_effector_points_)/sensor_step_length_;
-                for (unsigned i = 0; i < previous_velocities_.size(); i++){
+                for (std::size_t i = 0; i < previous_velocities_.size(); ++i) {
                     previous_velocities_[i] = (temp_joint_angles_[i] - previous_angles_[i])/sensor_step_length_;
                 }
             }
             else
             {
                 previous_end_effector_point_velocities_ = (temp_end_effector_points_ - previous_end_effector_points_)/update_time;
-                for (unsigned i = 0; i < previous_velocities_.size(); i++){
+                for (std::size_t i = 0; i < previous_velocities_.size(); ++i) {
                     previous_velocities_[i] = (temp_joint_angles_[i] - previous_angles_[i])/update_time;
                 }
             }
@@ -149,7 +149,7 @@ void EncoderSensor::update(RobotPlugin *plugin, ros::Time current_time, bool is_
 
         // Move temporaries into the previous joint angles.
         previous_end_effector_points_ = temp_end_effector_points_;
-        for (unsigned i = 0; i < previous_angles_.size(); i++){
+        for (std::size_t i = 0; i < previous_angles_.size(); ++i) {
             previous_angles_[i] = temp_joint_angles_[i];
         }
 

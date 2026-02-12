@@ -1,5 +1,5 @@
 #include "gps_agent_pkg/rostopicsensor.h"
-#include <math.h>
+#include <cmath>
 
 using namespace gps_control;
 // Constructor.
@@ -31,14 +31,13 @@ void ROSTopicSensor::update_data_vector(const std_msgs::Float64MultiArray::Const
 	assert(latest_data_.size() == data_size_);
 	assert(msg->layout.dim[0].size == data_size_);
     }
-    for (int i = 0; i < data_size_; i++)
-	{
-	    if (isnan(msg->data[i])) {
-		    ROS_ERROR("data %d is nan %e", i, msg->data[i]);
-		}
-	    latest_data_[i] = msg->data[i];
-	    latest_data_eigen_[i] = msg->data[i];
-	}
+    for (int i = 0; i < data_size_; ++i) {
+        if (std::isnan(msg->data[i])) {
+            ROS_ERROR("data %d is nan %e", i, msg->data[i]);
+        }
+        latest_data_[i] = msg->data[i];
+        latest_data_eigen_[i] = msg->data[i];
+    }
 }
 // Update the sensor (called every tick).
 void ROSTopicSensor::update(RobotPlugin *plugin, ros::Time current_time, bool is_controller_step)

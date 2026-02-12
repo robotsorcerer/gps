@@ -32,14 +32,14 @@ void LinearGaussianController::configure_controller(OptionsMap &options)
     int T = std::get<int>(options["T"]);
 
     //TODO Don't do this hacky string indexing
-    K_.resize(T);
-    for(int i=0; i<T; i++){
-        K_[i] = std::get<Eigen::MatrixXd>(options["K_"+to_string(i)]);
+    K_.resize(static_cast<std::size_t>(T));
+    for (int i = 0; i < T; ++i) {
+        K_[static_cast<std::size_t>(i)] = std::get<Eigen::MatrixXd>(options["K_"+to_string(i)]);
     }
 
-    k_.resize(T);
-    for(int i=0; i<T; i++){
-        k_[i] = std::get<Eigen::VectorXd>(options["k_"+to_string(i)]);
+    k_.resize(static_cast<std::size_t>(T));
+    for (int i = 0; i < T; ++i) {
+        k_[static_cast<std::size_t>(i)] = std::get<Eigen::VectorXd>(options["k_"+to_string(i)]);
     }
     ROS_INFO_STREAM("Set LG parameters");
     is_configured_ = true;

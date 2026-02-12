@@ -5,7 +5,7 @@ Base class for a controller. Controllers take in sensor readings and choose the 
 
 // Headers.
 #include <ros/ros.h>
-#include <time.h>
+#include <ctime>
 #include <ros/time.h>
 #include <Eigen/Dense>
 

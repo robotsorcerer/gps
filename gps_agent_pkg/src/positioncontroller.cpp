@@ -103,7 +103,7 @@ void PositionController::update(RobotPlugin *plugin, ros::Time current_time, std
         pd_integral_ += temp_angles_ * update_time;
 
         // Clamp integral term
-        for (int i = 0; i < temp_angles_.rows(); i++){
+        for (Eigen::Index i = 0; i < temp_angles_.rows(); ++i) {
             if (pd_integral_(i) * pd_gains_i_(i) > i_clamp_(i)) {
                 pd_integral_(i) = i_clamp_(i) / pd_gains_i_(i);
             }
@@ -136,7 +136,7 @@ void PositionController::configure_controller(OptionsMap &options)
     if (mode_ != gps::NO_CONTROL){
         Eigen::VectorXd data = std::get<Eigen::VectorXd>(options["data"]);
         Eigen::MatrixXd pd_gains = std::get<Eigen::MatrixXd>(options["pd_gains"]);
-        for(int i=0; i<pd_gains.rows(); i++){
+        for (Eigen::Index i = 0; i < pd_gains.rows(); ++i) {
             pd_gains_p_(i) = pd_gains(i, 0);
             pd_gains_i_(i) = pd_gains(i, 1);
             pd_gains_d_(i) = pd_gains(i, 2);
