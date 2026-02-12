@@ -8,17 +8,17 @@
 #
 # Usage:
 #   mkdir -p build && cd build
-#   cmake .. -DCMAKE_CXX_STANDARD=17          # normal build
+#   cmake .. -DCMAKE_CXX_STANDARD=20          # normal build
 #   cmake .. -DCMAKE_CXX_FLAGS="-fsanitize=thread -g -O1" \
 #            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
-#            -DCMAKE_CXX_COMPILER=clang++-12  # TSan build
+#            -DCMAKE_CXX_COMPILER=clang++-15  # TSan build
 #   make -j$(nproc) && ctest -V
 # ---------------------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.14)
 project(gps_agent_pkg_tests)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -36,7 +36,7 @@ enable_testing()
 
 # ---------------------------------------------------------------------------
 # test_options_variant — tests OptionsVariant / OptionsMap (options.h)
-# Requires: Eigen3, GTest, C++17
+# Requires: Eigen3, GTest, C++20
 # ---------------------------------------------------------------------------
 add_executable(test_options_variant test_options_variant.cpp)
 target_include_directories(test_options_variant PRIVATE

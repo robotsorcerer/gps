@@ -1,10 +1,9 @@
 /**
- * test_options_variant.cpp
+ * @file test_options_variant.cpp
+ * @brief Unit tests for OptionsVariant and OptionsMap (options.h).
  *
- * Unit tests for OptionsVariant and OptionsMap (options.h).
- *
- * OptionsVariant is the central C++17 std::variant type used throughout the
- * GPS C++ controller to pass heterogeneous parameters.  It holds one of:
+ * OptionsVariant is the central C++20 std::variant type used throughout the
+ * GPS C++ controller to pass heterogeneous parameters. It holds one of:
  *   bool, uint8_t, std::vector<int>, int, double,
  *   Eigen::MatrixXd, Eigen::VectorXd, std::string
  *
@@ -15,18 +14,68 @@
  *   - Variant rebinding (assignment to a different type)
  *   - OptionsMap insert / retrieve / missing-key
  *   - Eigen matrix / vector round-trip through OptionsMap
+ *   - C++20 concepts (OptionValue, NumericOption, EigenOption)
+ *   - C++20 helper functions (get_option, get_option_or, has_option)
  *
  * No ROS or LibTorch headers are needed — options.h only depends on
- * the C++17 standard library and Eigen.
+ * the C++20 standard library and Eigen.
  */
 
 #include <gtest/gtest.h>
 #include "gps_agent_pkg/options.h"
 
+#include <concepts>
 #include <string>
 #include <vector>
 
 using namespace gps_control;
+
+// ---------------------------------------------------------------------------
+// C++20 Concept Tests
+// ---------------------------------------------------------------------------
+
+TEST(OptionsConcepts, OptionValueConceptSatisfied) {
+    // Verify that all expected types satisfy the OptionValue concept
+    static_assert(OptionValue<bool>);
+    static_assert(OptionValue<uint8_t>);
+    static_assert(OptionValue<std::vector<int>>);
+    static_assert(OptionValue<int>);
+    static_assert(OptionValue<double>);
+    static_assert(OptionValue<Eigen::MatrixXd>);
+    static_assert(OptionValue<Eigen::VectorXd>);
+    static_assert(OptionValue<std::string>);
+
+    // Verify that other types do NOT satisfy the concept
+    static_assert(!OptionValue<float>);
+    static_assert(!OptionValue<long>);
+    static_assert(!OptionValue<char*>);
+    static_assert(!OptionValue<std::vector<double>>);
+
+    SUCCEED();  // If we reach here, all static_asserts passed
+}
+
+TEST(OptionsConcepts, NumericOptionConceptSatisfied) {
+    static_assert(NumericOption<int>);
+    static_assert(NumericOption<double>);
+    static_assert(NumericOption<uint8_t>);
+
+    static_assert(!NumericOption<bool>);
+    static_assert(!NumericOption<std::string>);
+    static_assert(!NumericOption<Eigen::VectorXd>);
+
+    SUCCEED();
+}
+
+TEST(OptionsConcepts, EigenOptionConceptSatisfied) {
+    static_assert(EigenOption<Eigen::MatrixXd>);
+    static_assert(EigenOption<Eigen::VectorXd>);
+
+    static_assert(!EigenOption<int>);
+    static_assert(!EigenOption<double>);
+    static_assert(!EigenOption<std::string>);
+
+    SUCCEED();
+}
 
 // ---------------------------------------------------------------------------
 // std::holds_alternative — one test per variant alternative
@@ -170,7 +219,7 @@ TEST(OptionsVariantBadAccess, BoolAsUInt8) {
 }
 
 // ---------------------------------------------------------------------------
-// Variant rebinding — C++17 assignment changes the active alternative
+// Variant rebinding — C++20 assignment changes the active alternative
 // ---------------------------------------------------------------------------
 
 TEST(OptionsVariantRebind, IntToDouble) {
@@ -268,6 +317,116 @@ TEST(OptionsMap, SimulatedControllerConfig) {
     EXPECT_DOUBLE_EQ(std::get<Eigen::VectorXd>(opts.at("scale"))(0), 0.5);
     EXPECT_DOUBLE_EQ(std::get<Eigen::VectorXd>(opts.at("bias"))(0),  0.0);
 }
+
+// ---------------------------------------------------------------------------
+// C++20 Helper Functions Tests
+// ---------------------------------------------------------------------------
+
+TEST(OptionsHelpers, GetOptionReturnsValueWhenPresent) {
+    OptionsMap opts;
+    opts["count"] = 42;
+    opts["name"] = std::string("test");
+
+    auto count = get_option<int>(opts, "count");
+    ASSERT_TRUE(count.has_value());
+    EXPECT_EQ(*count, 42);
+
+    auto name = get_option<std::string>(opts, "name");
+    ASSERT_TRUE(name.has_value());
+    EXPECT_EQ(*name, "test");
+}
+
+TEST(OptionsHelpers, GetOptionReturnsNulloptWhenMissing) {
+    OptionsMap opts;
+    opts["count"] = 42;
+
+    auto missing = get_option<int>(opts, "missing");
+    EXPECT_FALSE(missing.has_value());
+}
+
+TEST(OptionsHelpers, GetOptionReturnsNulloptOnTypeMismatch) {
+    OptionsMap opts;
+    opts["count"] = 42;  // stored as int
+
+    auto as_double = get_option<double>(opts, "count");
+    EXPECT_FALSE(as_double.has_value());  // type mismatch
+}
+
+TEST(OptionsHelpers, GetOptionOrReturnsValueWhenPresent) {
+    OptionsMap opts;
+    opts["count"] = 42;
+
+    int result = get_option_or<int>(opts, "count", 0);
+    EXPECT_EQ(result, 42);
+}
+
+TEST(OptionsHelpers, GetOptionOrReturnsDefaultWhenMissing) {
+    OptionsMap opts;
+
+    int result = get_option_or<int>(opts, "missing", 99);
+    EXPECT_EQ(result, 99);
+}
+
+TEST(OptionsHelpers, GetOptionOrReturnsDefaultOnTypeMismatch) {
+    OptionsMap opts;
+    opts["count"] = 42;  // stored as int
+
+    double result = get_option_or<double>(opts, "count", 3.14);
+    EXPECT_DOUBLE_EQ(result, 3.14);  // default because type mismatch
+}
+
+TEST(OptionsHelpers, HasOptionReturnsTrueForMatchingType) {
+    OptionsMap opts;
+    opts["count"] = 42;
+    opts["name"] = std::string("test");
+
+    EXPECT_TRUE(has_option<int>(opts, "count"));
+    EXPECT_TRUE(has_option<std::string>(opts, "name"));
+}
+
+TEST(OptionsHelpers, HasOptionReturnsFalseForMissingKey) {
+    OptionsMap opts;
+    opts["count"] = 42;
+
+    EXPECT_FALSE(has_option<int>(opts, "missing"));
+}
+
+TEST(OptionsHelpers, HasOptionReturnsFalseForTypeMismatch) {
+    OptionsMap opts;
+    opts["count"] = 42;  // stored as int
+
+    EXPECT_FALSE(has_option<double>(opts, "count"));  // type mismatch
+    EXPECT_TRUE(has_option<int>(opts, "count"));      // correct type
+}
+
+TEST(OptionsHelpers, GetFormatReturnsCorrectEnum) {
+    OptionsVariant v_bool = true;
+    EXPECT_EQ(get_format(v_bool), OptionsDataFormat::Bool);
+
+    OptionsVariant v_int = 42;
+    EXPECT_EQ(get_format(v_int), OptionsDataFormat::Int);
+
+    OptionsVariant v_double = 3.14;
+    EXPECT_EQ(get_format(v_double), OptionsDataFormat::Double);
+
+    OptionsVariant v_string = std::string("test");
+    EXPECT_EQ(get_format(v_string), OptionsDataFormat::String);
+}
+
+TEST(OptionsHelpers, HeterogeneousLookupWithStringView) {
+    OptionsMap opts;
+    opts["key"] = 42;
+
+    // Test heterogeneous lookup with string_view
+    std::string_view sv = "key";
+    auto result = get_option<int>(opts, sv);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(*result, 42);
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

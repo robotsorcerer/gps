@@ -176,16 +176,16 @@ jobs:
                || true   # non-blocking until mypy baseline is clean
 
   # =========================================================================
-  # 5. C++ build + unit tests — ROS Noetic (official ros:noetic-robot image)
-  #    Uses the canonical ROS 1 Docker image so catkin_make, the PR2 packages,
-  #    and the ROS dependency tree all match the target runtime environment.
+  # 5. C++ build + unit tests — ROS 2 Humble (official ros:humble image)
+  #    Uses the canonical ROS 2 Docker image with colcon build system.
+  #    C++20 standard is required for concepts, ranges, and other modern features.
   #    CPU LibTorch is installed via pip; TORCH_ROOT locates the cmake config.
   # =========================================================================
   cpp-build:
-    name: C++17 / ROS Noetic build + tests
+    name: C++20 / ROS 2 Humble build + tests
     runs-on: ubuntu-22.04
     container:
-      image: ros:noetic-robot
+      image: ros:humble
 
     steps:
       - uses: actions/checkout@v4
@@ -199,35 +199,34 @@ jobs:
             libeigen3-dev \
             libgtest-dev \
             libboost-system-dev \
-            ros-noetic-pr2-controller-interface \
-            ros-noetic-pr2-controller-manager \
-            ros-noetic-pr2-controllers \
-            ros-noetic-pr2-mechanism-model \
-            ros-noetic-control-toolbox \
-            ros-noetic-realtime-tools \
-            ros-noetic-orocos-kdl \
-            ros-noetic-pluginlib \
-            ros-noetic-tf
+            ros-humble-rclcpp \
+            ros-humble-sensor-msgs \
+            ros-humble-geometry-msgs \
+            ros-humble-std-msgs \
+            ros-humble-tf2-ros \
+            ros-humble-rosidl-default-generators
 
       - name: Install CPU LibTorch
         run: pip3 install --upgrade pip && pip3 install torch --index-url https://download.pytorch.org/whl/cpu
 
-      - name: Build catkin workspace
+      - name: Build colcon workspace
         run: |
-          . /opt/ros/noetic/setup.sh
+          . /opt/ros/humble/setup.sh
           export TORCH_ROOT=$(python3 -c "import torch, os; print(os.path.dirname(torch.__file__))")
+          export ROS_VERSION=2
           mkdir -p /ros_ws/src
           cp -r $GITHUB_WORKSPACE/gps_agent_pkg /ros_ws/src/
           cd /ros_ws
-          catkin_make -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          colcon build --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
       - name: Run C++ unit tests
         run: |
-          . /opt/ros/noetic/setup.sh
+          . /opt/ros/humble/setup.sh
           export TORCH_ROOT=$(python3 -c "import torch, os; print(os.path.dirname(torch.__file__))")
+          export ROS_VERSION=2
           cd /ros_ws
-          catkin_make run_tests
-          catkin_test_results
+          colcon test
+          colcon test-result --verbose
 
   # =========================================================================
   # 6. ThreadSanitizer (TSan) — standalone test build, no ROS / LibTorch
@@ -256,7 +255,7 @@ jobs:
           mkdir -p /tmp/tsan_build
           cd /tmp/tsan_build
           cmake $GITHUB_WORKSPACE/gps_agent_pkg/test \
-            -DCMAKE_CXX_STANDARD=17 \
+            -DCMAKE_CXX_STANDARD=20 \
             -DCMAKE_CXX_FLAGS="-fsanitize=thread -g -O1" \
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
             -DCMAKE_C_COMPILER=clang-15 \

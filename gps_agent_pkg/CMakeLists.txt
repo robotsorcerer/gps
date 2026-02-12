@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.14)
 project(gps_agent_pkg)
 
 # ---------------------------------------------------------------------------
-# C++17 — required for std::variant, std::optional, structured bindings
+# C++20 — required for concepts, ranges, std::format, constexpr improvements
+# Minimum compiler versions: GCC 10+, Clang 12+, MSVC 19.29+
 # ---------------------------------------------------------------------------
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 

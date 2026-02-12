@@ -177,7 +177,7 @@ void RobotPlugin::update_sensors(ros::Time current_time, bool is_controller_step
     for (int sensor = 0; sensor < sensors_.size(); sensor++)
     {
         sensors_[sensor]->update(this, current_time, is_controller_step);
-        if (trial_controller_ != NULL){
+        if (trial_controller_ != nullptr) {
             sensors_[sensor]->set_sample_data(current_time_step_sample_,
                 trial_controller_->get_step_counter());
         }
@@ -212,7 +212,7 @@ void RobotPlugin::update_controllers(ros::Time current_time, bool is_controller_
     // TODO - don't pass in wrong sample if used
     passive_arm_controller_->update(this, current_time, current_time_step_sample_, passive_arm_torques_);
 
-    bool trial_init = trial_controller_ != NULL && trial_controller_->is_configured() && controller_initialized_;
+    bool trial_init = trial_controller_ != nullptr && trial_controller_->is_configured() && controller_initialized_;
     if(!is_controller_step && trial_init){
         return;
     }
@@ -228,7 +228,7 @@ void RobotPlugin::update_controllers(ros::Time current_time, bool is_controller_
         publish_sample_report(current_time_step_sample_, trial_controller_->get_trial_length());
         //Clear the trial controller.
         trial_controller_->reset(current_time);
-        trial_controller_.reset(NULL);
+        trial_controller_.reset();
 
         // Set the active arm controller to NO_CONTROL.
         OptionsMap options;
@@ -560,7 +560,7 @@ void RobotPlugin::get_fk_solver(std::shared_ptr<KDL::ChainFkSolverPos> &fk_solve
 
 void RobotPlugin::tf_robot_action_command_callback(const gps_agent_pkg::TfActionCommand::ConstPtr& msg){
 
-    bool trial_init = trial_controller_ != NULL && trial_controller_->is_configured();
+    bool trial_init = trial_controller_ != nullptr && trial_controller_->is_configured();
     if(trial_init){
         // Unpack the action vector
         int idx = 0;
