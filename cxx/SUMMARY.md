@@ -7,7 +7,7 @@
 **Duration:** Sprint 13
 **Total Tests:** 85 (all passing)
 **Lines of Code:** 6,967+ lines of C++20
-**User Turns:** 21 meaningful turns
+**User Turns:** 23 meaningful turns
 
 ---
 
@@ -406,6 +406,27 @@ auto loaded = ConfigLoader::load("experiment.yaml");
 
 ---
 
+### Turn 22: "Great! Now, move the python folder to python.bak"
+
+**User Input:** Request to rename python folder
+
+**Actions Taken:**
+- Renamed `python/` to `python.bak/`
+- 123 files moved to backup location
+- Original Python code preserved for reference
+
+**Commit:** `347d575 Rename python/ to python.bak/ (C++ migration complete)`
+
+---
+
+### Turn 23: "update the summary"
+
+**User Input:** Request to update summary with latest changes
+
+**Actions Taken:** Added turns 22-23 to this file
+
+---
+
 ## Files Created/Modified
 
 ### New Files in `cxx/` (40 files, 6,967+ lines)
@@ -476,6 +497,8 @@ cxx/
 | `546aac2` | Add comprehensive sprint summary documentation |
 | `8cb371f` | Remove .ipynb_checkpoints folders |
 | `df03f76` | Add C++ experiment configuration system replacing Python hyperparams.py |
+| `c0a6971` | Update SUMMARY.md with turns 17-21 and final statistics |
+| `347d575` | Rename python/ to python.bak/ (C++ migration complete) |
 
 ---
 
@@ -595,7 +618,8 @@ The C++20 GPS algorithm port is complete and production-ready with:
 | Unit Tests | 85 |
 | Load/Soak Tests | 8 |
 | Config Presets | 30+ |
-| Git Commits | 5 |
-| User Turns | 21 |
+| Git Commits | 7 |
+| User Turns | 23 |
 | Memory Leaks | 0 |
 | Test Failures | 0 |
+| Python Files Backed Up | 123 |
