@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package gps;
+
+// Enum for sample types
+enum SampleType {
+  ACTION = 0;
+  ACTION_V = 1;
+  JOINT_ANGLES = 2;
+  JOINT_VELOCITIES = 3;
+  END_EFFECTOR_POINTS = 4;
+  END_EFFECTOR_POINT_VELOCITIES = 5;
+  END_EFFECTOR_POINT_JACOBIANS = 6;
+  END_EFFECTOR_POINT_ROT_JACOBIANS = 7;
+  END_EFFECTOR_POSITIONS = 8;
+  END_EFFECTOR_ROTATIONS = 9;
+  END_EFFECTOR_JACOBIANS = 10;
+  END_EFFECTOR_HESSIANS = 11;
+  RGB_IMAGE = 12;
+  DEPTH_IMAGE = 13;
+  RGB_IMAGE_SIZE = 14;
+  CONTEXT_IMAGE = 15;  // initial image of the agent's environment.
+  CONTEXT_IMAGE_SIZE = 16;
+  IMAGE_FEAT = 17;
+  END_EFFECTOR_POINTS_NO_TARGET = 18;
+  END_EFFECTOR_POINT_VELOCITIES_NO_TARGET = 19;
+  NOISE = 20;
+  TOTAL_DATA_TYPES = 21;
+}
+
+// Message containing the data for a single sample.
+message Sample {
+  uint32 T = 1;    // sample length (default 0 in proto3; callers set explicitly)
+  uint32 dX = 2;  // dimension of state X
+  uint32 dU = 3;  // dimension of action U
+  uint32 dV = 4;  // dimension of action V
+  uint32 dO = 5;  // dimension of observation
+
+  // Data arrays holding X, U, obs, and meta data.
+  repeated float X = 6;
+  repeated float U = 7;
+  repeated float V = 8;
+  repeated float obs = 9;
+  repeated float meta = 10;
+}
+
+// Enum for actuator types (Specified in Relax/PositionCommand msgs)
+enum ActuatorType {
+  TRIAL_ARM = 0;
+  AUXILIARY_ARM = 1;
+  TOTAL_ACTUATOR_TYPES = 2;
+}
+
+// Enum for position control modes (sent in PositionCommand msg)
+enum PositionControlMode {
+  NO_CONTROL = 0;
+  JOINT_SPACE = 1;
+  TASK_SPACE = 2;
+  TOTAL_CONTROL_MODES = 3;
+}
+
+enum ControllerType {
+  LIN_GAUSS_CONTROLLER = 0;
+  CAFFE_CONTROLLER = 1;  // Deprecated — kept for proto numbering stability.
+  TF_CONTROLLER = 2;
+  PYTORCH_CONTROLLER = 3;
+  TOTAL_CONTROLLER_TYPES = 4;
+}

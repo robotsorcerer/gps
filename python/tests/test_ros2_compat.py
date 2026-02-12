@@ -17,6 +17,10 @@ PKG_DIR    = REPO_ROOT / 'gps_agent_pkg'
 PACKAGE_XML = PKG_DIR / 'package.xml'
 CMAKE_FILE  = PKG_DIR / 'CMakeLists.txt'
 
+# The full dual-ROS1/ROS2 + C++ CMakeLists lives in the deprecated folder
+# after the C++ → Python migration.
+DEPRECATED_CMAKE_FILE = REPO_ROOT / 'deprecated' / 'gps_agent_pkg' / 'CMakeLists.txt'
+
 
 # ---------------------------------------------------------------------------
 # package.xml
@@ -136,13 +140,18 @@ class TestCMakeLists:
     def cmake_text(self):
         return CMAKE_FILE.read_text()
 
+    @pytest.fixture(scope='class')
+    def deprecated_cmake_text(self):
+        """Reads the legacy dual-ROS1/ROS2 CMakeLists from the deprecated tree."""
+        return DEPRECATED_CMAKE_FILE.read_text()
+
     def test_cmake_minimum_required(self, cmake_text):
         assert 'cmake_minimum_required(VERSION 3.14)' in cmake_text
 
-    def test_ros_version_detection_block(self, cmake_text):
-        assert 'ROS_VERSION' in cmake_text, \
-            "CMakeLists.txt must detect ROS_VERSION env var"
-        assert 'GPS_ROS2_BUILD' in cmake_text
+    def test_ros_version_detection_block(self, deprecated_cmake_text):
+        assert 'ROS_VERSION' in deprecated_cmake_text, \
+            "Deprecated CMakeLists.txt must detect ROS_VERSION env var"
+        assert 'GPS_ROS2_BUILD' in deprecated_cmake_text
 
     def test_ros2_path_uses_ament_cmake(self, cmake_text):
         assert 'find_package(ament_cmake REQUIRED)' in cmake_text
@@ -156,24 +165,24 @@ class TestCMakeLists:
     def test_ros2_path_calls_ament_package(self, cmake_text):
         assert 'ament_package()' in cmake_text
 
-    def test_ros1_path_uses_catkin(self, cmake_text):
-        assert 'find_package(catkin REQUIRED COMPONENTS' in cmake_text
+    def test_ros1_path_uses_catkin(self, deprecated_cmake_text):
+        assert 'find_package(catkin REQUIRED COMPONENTS' in deprecated_cmake_text
 
-    def test_ros1_path_add_message_files(self, cmake_text):
-        assert 'add_message_files(' in cmake_text
+    def test_ros1_path_add_message_files(self, deprecated_cmake_text):
+        assert 'add_message_files(' in deprecated_cmake_text
 
-    def test_ros1_path_add_service_files(self, cmake_text):
-        assert 'add_service_files(' in cmake_text
+    def test_ros1_path_add_service_files(self, deprecated_cmake_text):
+        assert 'add_service_files(' in deprecated_cmake_text
 
-    def test_ros1_path_generate_messages(self, cmake_text):
-        assert 'generate_messages(' in cmake_text
+    def test_ros1_path_generate_messages(self, deprecated_cmake_text):
+        assert 'generate_messages(' in deprecated_cmake_text
 
-    def test_wall_werror_flags_present(self, cmake_text):
-        assert '-Wall' in cmake_text
-        assert '-Werror' in cmake_text
+    def test_wall_werror_flags_present(self, deprecated_cmake_text):
+        assert '-Wall' in deprecated_cmake_text
+        assert '-Werror' in deprecated_cmake_text
 
-    def test_torch_find_package(self, cmake_text):
-        assert 'find_package(Torch REQUIRED)' in cmake_text
+    def test_torch_find_package(self, deprecated_cmake_text):
+        assert 'find_package(Torch REQUIRED)' in deprecated_cmake_text
 
     def test_ros2_portable_sources_exclude_pr2(self, cmake_text):
         """The ROS 2 source list must not include pr2plugin.cpp."""
@@ -185,11 +194,11 @@ class TestCMakeLists:
             assert 'pr2plugin.cpp' not in ros2_section, \
                 "pr2plugin.cpp must not be in the ROS 2 source list"
 
-    def test_pytorch_controller_in_both_paths(self, cmake_text):
-        assert cmake_text.count('src/pytorchcontroller.cpp') >= 2, \
+    def test_pytorch_controller_in_both_paths(self, deprecated_cmake_text):
+        assert deprecated_cmake_text.count('src/pytorchcontroller.cpp') >= 2, \
             "pytorchcontroller.cpp must be in both ROS 1 and ROS 2 build paths"
 
-    def test_endif_closes_ros2_block(self, cmake_text):
-        assert 'GPS_ROS2_BUILD' in cmake_text
+    def test_endif_closes_ros2_block(self, deprecated_cmake_text):
+        assert 'GPS_ROS2_BUILD' in deprecated_cmake_text
         # Both if(GPS_ROS2_BUILD) and endif() must be present
-        assert cmake_text.count('GPS_ROS2_BUILD') >= 2
+        assert deprecated_cmake_text.count('GPS_ROS2_BUILD') >= 2
