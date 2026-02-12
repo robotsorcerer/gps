@@ -17,6 +17,7 @@ add_executable(test_gps_algorithm
     test_traj_opt.cpp
     test_python_parity.cpp
     test_load_soak.cpp
+    test_config.cpp
 )
 
 target_link_libraries(test_gps_algorithm

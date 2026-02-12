@@ -56,6 +56,10 @@ set(GPS_SOURCES
     # Algorithm - Core
     algorithm/algorithm_utils.cpp
     algorithm/algorithm.cpp
+
+    # Configuration
+    config/experiment_config.cpp
+    config/config_loader.cpp
 )
 
 # Header files for installation
@@ -81,6 +85,9 @@ set(GPS_HEADERS
 
     algorithm/algorithm_utils.h
     algorithm/algorithm.h
+
+    config/experiment_config.h
+    config/config_loader.h
 )
 
 # Create library
