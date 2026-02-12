@@ -82,3 +82,20 @@ target_link_libraries(test_obs_normalization
     pthread
 )
 add_test(NAME test_obs_normalization COMMAND test_obs_normalization)
+
+# ---------------------------------------------------------------------------
+# test_concurrency_stress — stress tests for C++20 thread-safety fixes
+# Tests atomic operations, mutex protection, and memory ordering
+# Requires: Eigen3, GTest, C++20 threading support
+# Run with TSan for maximum data race detection coverage
+# ---------------------------------------------------------------------------
+add_executable(test_concurrency_stress test_concurrency_stress.cpp)
+target_include_directories(test_concurrency_stress PRIVATE
+    ${EIGEN3_INCLUDE_DIRS}
+    ${GTEST_INCLUDE_DIRS}
+)
+target_link_libraries(test_concurrency_stress
+    ${GTEST_LIBRARIES}
+    pthread
+)
+add_test(NAME test_concurrency_stress COMMAND test_concurrency_stress)

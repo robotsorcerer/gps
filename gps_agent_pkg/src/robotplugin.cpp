@@ -34,8 +34,8 @@ void RobotPlugin::initialize(ros::NodeHandle& n)
     ROS_INFO_STREAM("Initializing RobotPlugin");
     trial_data_request_waiting_ = false;
     aux_data_request_waiting_ = false;
-    sensors_initialized_ = false;
-    controller_initialized_ = false;
+    sensors_initialized_.store(false, std::memory_order_release);
+    controller_initialized_.store(false, std::memory_order_release);
 
     // Initialize all ROS communication infrastructure.
     initialize_ros(n);
@@ -105,7 +105,7 @@ void RobotPlugin::initialize_sensors(ros::NodeHandle& n)
     aux_current_time_step_sample_.reset(new Sample(1));
     initialize_sample(aux_current_time_step_sample_, gps::AUXILIARY_ARM);
 
-    sensors_initialized_ = true;
+    sensors_initialized_.store(true, std::memory_order_release);
 }
 
 
@@ -113,7 +113,7 @@ void RobotPlugin::initialize_sensors(ros::NodeHandle& n)
 void RobotPlugin::configure_sensors(OptionsMap &opts)
 {
     ROS_INFO("configure sensors");
-    sensors_initialized_ = false;
+    sensors_initialized_.store(false, std::memory_order_release);
     for (int i = 0; i < sensors_.size(); i++)
     {
         sensors_[i]->configure_sensor(opts);
@@ -130,7 +130,7 @@ void RobotPlugin::configure_sensors(OptionsMap &opts)
         aux_sensors_[i]->configure_sensor(opts);
         aux_sensors_[i]->set_sample_data_format(aux_current_time_step_sample_);
     }
-    sensors_initialized_ = true;
+    sensors_initialized_.store(true, std::memory_order_release);
 }
 
 // Initialize position controllers.
@@ -171,19 +171,21 @@ void RobotPlugin::initialize_sample(std::unique_ptr<Sample>& sample, gps::Actuat
 // Update the sensors at each time step.
 void RobotPlugin::update_sensors(ros::Time current_time, bool is_controller_step)
 {
-    if (!sensors_initialized_) return; // Don't try to use sensors until initialization finishes.
+    // Use acquire to synchronize with the release in initialize_sensors/configure_sensors
+    if (!sensors_initialized_.load(std::memory_order_acquire)) return;
 
     // Update all of the sensors and fill in the sample.
     for (int sensor = 0; sensor < sensors_.size(); sensor++)
     {
         sensors_[sensor]->update(this, current_time, is_controller_step);
-        if (trial_controller_ != nullptr) {
-            sensors_[sensor]->set_sample_data(current_time_step_sample_,
-                trial_controller_->get_step_counter());
+        int step_counter = 0;
+        {
+            std::lock_guard<std::mutex> lock(trial_controller_mutex_);
+            if (trial_controller_ != nullptr) {
+                step_counter = trial_controller_->get_step_counter();
+            }
         }
-        else {
-            sensors_[sensor]->set_sample_data(current_time_step_sample_, 0);
-        }
+        sensors_[sensor]->set_sample_data(current_time_step_sample_, step_counter);
     }
 
     // Update all of the auxiliary sensors and fill in the sample.
@@ -212,33 +214,50 @@ void RobotPlugin::update_controllers(ros::Time current_time, bool is_controller_
     // TODO - don't pass in wrong sample if used
     passive_arm_controller_->update(this, current_time, current_time_step_sample_, passive_arm_torques_);
 
-    bool trial_init = trial_controller_ != nullptr && trial_controller_->is_configured() && controller_initialized_;
+    // Thread-safe check of trial controller state
+    bool trial_init = false;
+    {
+        std::lock_guard<std::mutex> lock(trial_controller_mutex_);
+        trial_init = trial_controller_ != nullptr &&
+                     trial_controller_->is_configured() &&
+                     controller_initialized_.load(std::memory_order_acquire);
+    }
+
     if(!is_controller_step && trial_init){
         return;
     }
 
     // If we have a trial controller, update that, otherwise update position controller.
-    if (trial_init) trial_controller_->update(this, current_time, current_time_step_sample_, active_arm_torques_);
-    else active_arm_controller_->update(this, current_time, current_time_step_sample_, active_arm_torques_);
+    if (trial_init) {
+        std::lock_guard<std::mutex> lock(trial_controller_mutex_);
+        if (trial_controller_) {  // Re-check under lock
+            trial_controller_->update(this, current_time, current_time_step_sample_, active_arm_torques_);
+        }
+    }
+    else {
+        active_arm_controller_->update(this, current_time, current_time_step_sample_, active_arm_torques_);
+    }
 
     // Check if the trial controller finished and delete it.
-    if (trial_init && trial_controller_->is_finished()) {
+    if (trial_init) {
+        std::lock_guard<std::mutex> lock(trial_controller_mutex_);
+        if (trial_controller_ && trial_controller_->is_finished()) {
+            // Publish sample after trial completion
+            publish_sample_report(current_time_step_sample_, trial_controller_->get_trial_length());
+            //Clear the trial controller.
+            trial_controller_->reset(current_time);
+            trial_controller_.reset();
 
-        // Publish sample after trial completion
-        publish_sample_report(current_time_step_sample_, trial_controller_->get_trial_length());
-        //Clear the trial controller.
-        trial_controller_->reset(current_time);
-        trial_controller_.reset();
+            // Set the active arm controller to NO_CONTROL.
+            OptionsMap options;
+            options["mode"] = gps::NO_CONTROL;
+            active_arm_controller_->configure_controller(options);
 
-        // Set the active arm controller to NO_CONTROL.
-        OptionsMap options;
-        options["mode"] = gps::NO_CONTROL;
-        active_arm_controller_->configure_controller(options);
-
-        // Switch the sensors to run at full frequency.
-        for (int sensor = 0; sensor < TotalSensorTypes; sensor++)
-        {
-            //sensors_[sensor]->set_update(active_arm_controller_->get_update_delay());
+            // Switch the sensors to run at full frequency.
+            for (int sensor = 0; sensor < TotalSensorTypes; sensor++)
+            {
+                //sensors_[sensor]->set_update(active_arm_controller_->get_update_delay());
+            }
         }
     }
     if (active_arm_controller_->report_waiting){
@@ -335,7 +354,8 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
     OptionsMap controller_params;
     ROS_INFO_STREAM("received trial command");
 
-    controller_initialized_ = false;
+    // Mark controller as not initialized while we reconfigure
+    controller_initialized_.store(false, std::memory_order_release);
 
     //Read out trial information
     uint32_t T = msg->T;  // Trial length
@@ -369,7 +389,10 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
     if(msg->controller.controller_to_execute == gps::LIN_GAUSS_CONTROLLER){
         //
         gps_agent_pkg::LinGaussParams lingauss = msg->controller.lingauss;
-        trial_controller_.reset(new LinearGaussianController());
+        {
+            std::lock_guard<std::mutex> lock(trial_controller_mutex_);
+            trial_controller_.reset(new LinearGaussianController());
+        }
         int dX = (int) lingauss.dX;
         int dU = (int) lingauss.dU;
         //Prepare options map
@@ -396,7 +419,10 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
     }
     else if (msg->controller.controller_to_execute == gps::PYTORCH_CONTROLLER) {
         gps_agent_pkg::TorchParams params = msg->controller.torch;
-        trial_controller_.reset(new PyTorchController());
+        {
+            std::lock_guard<std::mutex> lock(trial_controller_mutex_);
+            trial_controller_.reset(new PyTorchController());
+        }
 
         int dim_bias = params.dim_bias;
         int dU = static_cast<int>(params.dU);
@@ -430,7 +456,10 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
         trial_controller_->configure_controller(controller_params);
     }
     else if (msg->controller.controller_to_execute == gps::TF_CONTROLLER) {
-        trial_controller_.reset(new TfController());
+        {
+            std::lock_guard<std::mutex> lock(trial_controller_mutex_);
+            trial_controller_.reset(new TfController());
+        }
         controller_params["T"] = (int)msg->T;
         gps_agent_pkg::TfParams tfparams = msg->controller.tf;
         int dU = (int) tfparams.dU;
@@ -441,7 +470,10 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
         ROS_ERROR("Unknown trial controller type: %d",
                   static_cast<int>(msg->controller.controller_to_execute));
         // Ensure no stale controller remains active, then abort this trial.
-        trial_controller_.reset();
+        {
+            std::lock_guard<std::mutex> lock(trial_controller_mutex_);
+            trial_controller_.reset();
+        }
         return;
     }
 
@@ -478,7 +510,7 @@ void RobotPlugin::trial_subscriber_callback(const gps_agent_pkg::TrialCommand::C
 
     configure_sensors(sensor_params);
 
-    controller_initialized_ = true;
+    controller_initialized_.store(true, std::memory_order_release);
 }
 
 void RobotPlugin::test_callback(const std_msgs::Empty::ConstPtr& msg){
@@ -560,23 +592,20 @@ void RobotPlugin::get_fk_solver(std::shared_ptr<KDL::ChainFkSolverPos> &fk_solve
 
 void RobotPlugin::tf_robot_action_command_callback(const gps_agent_pkg::TfActionCommand::ConstPtr& msg){
 
-    bool trial_init = trial_controller_ != nullptr && trial_controller_->is_configured();
-    if(trial_init){
+    // Thread-safe check and access of trial_controller_
+    std::lock_guard<std::mutex> lock(trial_controller_mutex_);
+    if (trial_controller_ != nullptr && trial_controller_->is_configured()) {
         // Unpack the action vector
-        int idx = 0;
         int dU = (int)msg->dU;
         Eigen::VectorXd latest_action_command;
         latest_action_command.resize(dU);
         for (int i = 0; i < dU; ++i)
         {
             latest_action_command[i] = msg->action[i];
-            idx++;
         }
-        int last_command_id_received = msg ->id;
+        int last_command_id_received = msg->id;
         trial_controller_->update_action_command(last_command_id_received, latest_action_command);
-
     }
-
 }
 
 void RobotPlugin::tf_publish_obs(Eigen::VectorXd obs){

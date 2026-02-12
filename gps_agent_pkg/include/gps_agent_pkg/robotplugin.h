@@ -5,7 +5,9 @@ with the robot.
 #pragma once
 
 // Headers.
+#include <atomic>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <Eigen/Dense>
 #include <ros/ros.h>
@@ -95,10 +97,12 @@ protected:
     bool trial_data_request_waiting_;
     // Is a auxiliary data request pending?
     bool aux_data_request_waiting_;
-    // Are the sensors initialized?
-    bool sensors_initialized_;
-    // Is everything initialized for the trial controller?
-    bool controller_initialized_;
+    // Are the sensors initialized? (atomic for thread-safe access from callbacks)
+    std::atomic<bool> sensors_initialized_;
+    // Is everything initialized for the trial controller? (atomic for thread-safe access)
+    std::atomic<bool> controller_initialized_;
+    // Mutex to protect trial_controller_ access from concurrent callbacks
+    mutable std::mutex trial_controller_mutex_;
     //tf publisher
     ros_publisher_ptr(gps_agent_pkg::TfObsData) tf_publisher_;
     //tf action subscriber

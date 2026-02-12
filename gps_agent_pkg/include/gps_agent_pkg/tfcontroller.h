@@ -4,6 +4,8 @@ Controller that executes a trial using a neural network policy using tf.
 #pragma once
 
 // Headers.
+#include <atomic>
+#include <mutex>
 #include <vector>
 #include <Eigen/Dense>
 
@@ -30,7 +32,12 @@ namespace gps_control
         //publish the observations as we use them to act.
         virtual void publish_obs(Eigen::VectorXd obs, RobotPlugin *plugin);
 
-        int last_command_id_received, last_command_id_acted_upon, failed_attempts;
+        // Command state — protected by command_mutex_ for thread-safe access
+        // from concurrent callbacks and control loop
+        mutable std::mutex command_mutex_;
+        std::atomic<int> last_command_id_received{0};
+        int last_command_id_acted_upon{0};
+        int failed_attempts{0};
         Eigen::VectorXd last_action_command_received;
     };
 
